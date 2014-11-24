@@ -1,5 +1,5 @@
 <?php
-//namespace Sargazos.net;
+//namespace Dune;
 
 /**
  * Clase modelo de datos generico
@@ -23,19 +23,19 @@ abstract class Modelazo {
 			$this->sBaseDir = str_replace('\\', '/', realpath(dirname(__FILE__).$sSalto)).'/';
 		}
 
-		if(defined(DB_ENGINE)) $this->aDatabase['tipo'] = DB_ENGINE;
-		if(defined(DB_SERVER)) $this->aDatabase['servidor'] = DB_SERVER;
-		if(defined(DB_USER)) $this->aDatabase['usuario'] = DB_USER;
-		if(defined(DB_PASSWORD)) $this->aDatabase['clave'] = DB_PASSWORD;
-		if(defined(DB_DATABASE)) $this->aDatabase['esquema'] = DB_DATABASE;
-		if(defined(DB_PREFIJOTABLAS)) $this->aDatabase['prefijotablas'] = DB_PREFIJOTABLAS;
-		if(defined(DB_TRAZABILIDAD)) $this->aDatabase['trazabilidad'] = DB_TRAZABILIDAD;
+		if(defined('DB_ENGINE')) $this->aDatabase['tipo'] = DB_ENGINE;
+		if(defined('DB_SERVER')) $this->aDatabase['servidor'] = DB_SERVER;
+		if(defined('DB_USER')) $this->aDatabase['usuario'] = DB_USER;
+		if(defined('DB_PASSWORD')) $this->aDatabase['clave'] = DB_PASSWORD;
+		if(defined('DB_DATABASE')) $this->aDatabase['esquema'] = DB_DATABASE;
+		if(defined('DB_PREFIJOTABLAS')) $this->aDatabase['prefijotablas'] = DB_PREFIJOTABLAS;
+		if(defined('DB_TRAZABILIDAD')) $this->aDatabase['trazabilidad'] = DB_TRAZABILIDAD;
 
 		$this->conectar();
 	}
 
 	function __destruct(){
-		$this->oDDBB->desconectar();
+		//$this->oDDBB->desconectar();
 	}
 
 	/*conexion a base de datos*/

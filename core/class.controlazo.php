@@ -1,5 +1,5 @@
 <?php
-//namespace Sargazos.net;
+//namespace Dune;
 
 /**
  * Clase controlador generico
@@ -12,40 +12,43 @@ abstract class Controlazo {
 
 	protected $oModel;
 
-	protected $aMod;
-	protected $sMetas;
-	protected $sTitle;
-	protected $sCss;
-	protected $sJs;
-
-	//datos listos para usar en el pintado de la plantilla
-	protected $aDatos = array();
+	/**
+	 *
+	 * @var array
+	 */
+	protected $aDatos = array(
+			'aMod' => false, //
+			'sMetas' => false, //
+			'sTitle' => false, //
+			'sCss' => false, //
+			'sJs' => false, //
+			);
 
 	function __construct(){
 		/*$this->cargaModelo(__CLASS__);*/
 
-		$this->aMod[__CLASS__] = array('title' => $this->trad(__CLASS__));
+		$this->aDatos['aMod'][__CLASS__] = array('title' => $this->trad(__CLASS__));
 
-		$this->sMetas = '';
-		$this->sTitle = $this->aMod[__CLASS__]['title'];
-		$this->sCss .= '';
-		$this->sJs .= '';
+		$this->aDatos['sMetas'] = '';
+		$this->aDatos['sTitle'] = $this->aDatos['aMod'][__CLASS__]['title'];
+		$this->aDatos['sCss'] .= '';
+		$this->aDatos['sJs'] .= '';
 	}
 
 	//intenta instanciar el modelo de datos
 	protected function cargaModelo($clase){
 		$clase = $clase.'_model';
-		if(class_exists($clase)){
+		if(!class_exists($clase)){
 			$this->oModel = new $clase();
 		}
 	}
 
 	//devuelve los datos que se usaran en el pintado de la plantilla
 	public function getDatos(){
-		return $aDatos;
+		return $this->aDatos;
 	}
 
-	private function trad($cadena){
+	protected function trad($cadena){
 		if(function_exists('_tradR')){
 			$cadena = _tradR($cadena);
 		}

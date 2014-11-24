@@ -2,6 +2,6 @@
 /**
  * no poner nada mas en este fichero
  */
-require('./dune.php');
+require('./core/dune.php');
 
 new Dune();
