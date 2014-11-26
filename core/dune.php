@@ -7,6 +7,12 @@
  * - el controlador (si existe) ha de ser hijo de la clase "core/class.controlazo.php" y tiene el nombre del modulo con sufijo "_contr", ej: portada_contr.php
  *   la clase model puede estar en el mismo fichero que la clase controlador, pero no al reves
  * - el modelo (si existe) ha de ser hijo de "core/class.modelazo.php" y tiene el nombre del modulo con sufijo "_model", ej: portada_model.php
+ * URL: http://dominio.tld/directorio/?modulo=metodo&parametro=valor[...]
+ * - dominio.tld -> es el dominio donde corre la aplicacion
+ * - directorio -> de momento no tiene mas uso que ser el directorio donde se encuentra Dune (en caso de que no este en el raiz)
+ * - modulo -> el modulo a cargar; si se omite se cargara el modulo por defecto (portada), si no se encuentra se cargara el modulo de error (si no se encuentra se envia un mensaje de aviso)
+ * - metodo -> metodo a cargar del modulo pedido; se puede omitir, si no existe se ignora
+ * - parametro=valor -> cualquier numero de parametros con o sin valor, en el formato ordinario de una URL (separados por &); de momento se recogen por post, no se pasan como parametros al metodo llamado
  *
  * @since 2014-11-23
  * @author jm_carnero@sargazos.net
@@ -18,60 +24,40 @@ class Dune {
 	 * - core: clases core
 	 * - libs: librerias
 	 * - mods: modulos, directorio para los ficheros de vistas, controladores y modelos de cada modulo
+	 * - tpl: plantillas, ficheros con extension ".tpl"
 	 *
 	 * @var array
 	 * @access protected
 	 */
-	protected $aDirectorios = array('core' => 'core/', 'libs' => 'incs/', 'mods' => 'mods/');
+	protected $aDirectorios = array('core' => 'core/', 'libs' => 'incs/', 'mods' => 'mods/', 'tpl' => 'tpl/');
+
+	/**
+	 * Nombres de ficheros de configuracion, plantilla base, etc.
+	 * - config: fichero de configuracion
+	 * - plantilla: fichero base de plantilla
+	 * - sesion: controlador de sesion //TODO de momento no integrado como objeto
+	 *
+	 * @var array
+	 * @access protected
+	 */
+	protected $aFicheros = array('config' => 'config.php', 'plantilla' => 'dune.tpl', 'sesion' => 'sesion.php');
 
 	protected $sContenidos = false; //contenidos cargados de la vista/controlador/modelo
-	protected $oControlador = false; //instancia de la clase controlador
-	protected $oModelo = false; //instancia de la clase modelo
+	protected $oControlazo = false; //instancia de la clase controlador
 	private $sModulo = 'error'; //nombre del modulo a cargar
 
 	function __construct(){
 		Dune::baseDir();
 
 		//includes comunes
-		require(BASE_DIR.$this->aDirectorios['libs'].'config.php'); //parametros basicos de la aplicacion
-
+		require(D_BASE_DIR.$this->aDirectorios['libs'].$this->aFicheros['config']); //parametros basicos de la aplicacion
 		$this->setDebug();
-
-		require(BASE_DIR.$this->aDirectorios['libs'].'sesion.php'); //variables e inicio de sesion
-
-		//internacionalizacion y localizacion de la pagina
-		//LENGUAJE_DEFECTO
-		include_once(BASE_DIR.$this->aDirectorios['libs'].'class.l10n.inc');
-		l10n_sel();
-		_locale();
-		//_trad('clave_test');
-
-		//includes core
-		require(BASE_DIR.$this->aDirectorios['core'].'class.controlazo.php');
-		require(BASE_DIR.$this->aDirectorios['core'].'class.modelazo.php');
+		require(D_BASE_DIR.$this->aDirectorios['libs'].$this->aFicheros['sesion']); //variables e inicio de sesion
 
 		$this->ipCliente();
 		$this->tempDir();
 
-		define('LOGOUT', BASE_URL.'?logout');
-
-		/* variables globales */
-		$sTitle = ''; //titulo de la pagina
-		$sMetas = ''; //tags meta
-		$sCss = ''; //CSS de la pagina
-		$sJs = ''; //scripts javascript
-
-		//mensajes devueltos por el procesado de formularios y otros eventos
-		$sMensajes = false;
-		if(!empty($_SESSION['mensajes'])){
-			$sMensajes = $_SESSION['mensajes'];
-		}
-		/* variables globales fin */
-
-		/*construye pagina*/
-		$this->cargaModulo();
-		$this->cargaControladorModelo();
-		$this->cargaContenidos();
+		define('LOGOUT', D_BASE_URL.'?logout');
 
 		/* final */
 		$this->pintaPagina();
@@ -82,53 +68,34 @@ class Dune {
 	 * por esto la clase init debe estar en el directorio raiz
 	 */
 	public static function baseDir(){
-		if(!defined('BASE_DIR')) define('BASE_DIR', str_replace('\\', '/', realpath(dirname(__FILE__).'/..')).'/');
-		if(!defined('BASE_URL')){
-			$cadBase = array_pop(explode('/', trim(BASE_DIR, '/')));
+		if(!defined('D_BASE_DIR')) define('D_BASE_DIR', str_replace('\\', '/', realpath(dirname(__FILE__).'/..')).'/');
+		if(!defined('D_BASE_URL')){
+			$cadBase = array_pop(explode('/', trim(D_BASE_DIR, '/')));
 			$phpSelf = trim(dirname($_SERVER['PHP_SELF']), '/');
 			$cadBase = substr($phpSelf, strpos($phpSelf, $cadBase) + strlen($cadBase));
 			$cadBase = $cadBase === false?array():explode('/', trim($cadBase, '/'));
-			define('BASE_URL', str_repeat('../', count($cadBase)));
+			define('D_BASE_URL', str_repeat('../', count($cadBase)));
 		}
 	}
 
 	/**
-	 * Carga los contenidos relacionados con el modulo
+	 * Carga el controlador relacionado con el modulo,
+	 * deja una instancia del controlador en $this->oControlazo
 	 */
-	private function cargaContenidos(){
-		$this->oControlador;
+	private function cargaControlador(){
+		//clases base de controlador y modelo
+		require(D_BASE_DIR.$this->aDirectorios['core'].'class.controlazo.php');
+		require(D_BASE_DIR.$this->aDirectorios['core'].'class.modelazo.php');
 
-		ob_start();
-		include(BASE_DIR.$this->aDirectorios['mods'].$this->sModulo.'.php'); //carga del modulo
-
-		$this->sContenidos = ob_get_contents(); //contenidos a mostrar procesados
-		ob_end_clean();
-	}
-
-	/**
-	 * Carga el controlador/modelo relacionado con el modulo,
-	 * deja una instancia del modelo en $this->oModelo (solo debe ser usado por el controlador, asi que no se hace nada mas aqui con este objeto),
-	 * deja una instancia del controlador en $this->oControlador
-	 */
-	private function cargaControladorModelo(){
-		//intenta cargar el modelo
-		if(empty($this->oModelo) && is_readable(BASE_DIR.$this->aDirectorios['mods'].$this->sModulo.SUFIJO_MODELO.'.php')){
-			include(BASE_DIR.$this->aDirectorios['mods'].$this->sModulo.SUFIJO_MODELO.'.php');
-		}
 		//intenta cargar el controlador (puede contener tambien el modelo)
-		if(is_readable(BASE_DIR.$this->aDirectorios['mods'].$this->sModulo.SUFIJO_CONTROLADOR.'.php')){
-			include(BASE_DIR.$this->aDirectorios['mods'].$this->sModulo.SUFIJO_CONTROLADOR.'.php');
+		if(is_readable(D_BASE_DIR.$this->aDirectorios['mods'].$this->sModulo.D_SUFIJO_CONTROLADOR.'.php')){
+			include(D_BASE_DIR.$this->aDirectorios['mods'].$this->sModulo.D_SUFIJO_CONTROLADOR.'.php');
 		}
 
-		//carga el modelo si existe
-		$aux = ucfirst(strtolower($this->sModulo.'_model'));
-		if(class_exists($aux)){
-			$this->oModelo = new $aux();
-		}
 		//carga el controlador si existe
 		$aux = ucfirst(strtolower($this->sModulo));
 		if(class_exists($aux)){
-			$this->oControlador = new $aux();
+			$this->oControlazo = new $aux();
 			//TODO llamar a un metodo pedido en la URL?
 		}
 
@@ -139,13 +106,13 @@ class Dune {
 	 * si no existe busca el modulo de error,
 	 * si tampoco existe avisa con un mensaje
 	 */
-	private function cargaModulo(){
+	private function buscaModulo(){
 		$sId = ''; //valor de la id para la seccion solicitada
 
 		//seleccion de modulo, portada por defecto
 		$this->sModulo = empty($_GET)?'portada':key($_GET); //nombre del modulo
 
-		if(in_array($this->sModulo.'.php', array_map('basename', glob(BASE_DIR.$this->aDirectorios['mods'].'*.php')))){ //todo los modulos que se encuentran en el directorio "mods"
+		if(in_array($this->sModulo.'.php', array_map('basename', glob(D_BASE_DIR.$this->aDirectorios['mods'].'*.php')))){ //todo los modulos que se encuentran en el directorio "mods"
 			if(isset($_GET[$this->sModulo])) $sId = (string)$_GET[$this->sModulo];
 		}
 		else{ //portada o seccion desconocida
@@ -160,7 +127,7 @@ class Dune {
 			}
 		}
 
-		if(!is_readable(BASE_DIR.$this->aDirectorios['mods'].$this->sModulo.'.php')){
+		if(!is_readable(D_BASE_DIR.$this->aDirectorios['mods'].$this->sModulo.'.php')){
 			echo "Error fatal.\n\nNo se puede cargar el m&oacute;dulo [".$this->sModulo.'].'; //TODO cambiar esto por algo mas elaborado
 			exit(0);
 		}
@@ -178,33 +145,43 @@ class Dune {
 		elseif(!empty($_SERVER['REMOTE_ADDR']))
 			$sIpCliente = $_SERVER['REMOTE_ADDR'];
 
-		define('IP_CLIENTE', $sIpCliente);
+		define('D_IP_CLIENTE', $sIpCliente);
 	}
 
 	/**
 	 * Compone la pagina y la envia al navegador
+	 *
 	 */
 	private function pintaPagina(){
 		if(!headers_sent($file, $line)){
 			header('Content-Type: text/html; charset=UTF-8');
 		}
-		elseif(DEBUG){
+		elseif(D_DEBUG){
 			echo 'Headers ya enviados en ['.$file.'] en linea ['.$line;
 		}
 
-		if(!empty($this->sContenidos)){
-			$aDatos = $this->oControlador->getDatos();
-			if(!empty($aDatos)){
-				foreach($aDatos as $clave => $valor){
-					$$clave = $valor; //cada clave del array de datos se podra usar como una variable directa en la plantilla, igual que los contenidos obtenidos dl modulo (abajo, $sContenidos)
-				}
-			}
-			$sContenidos = $this->sContenidos; //contenidos del modulo
-		}
-		require(BASE_DIR.'tpl/dune.tpl');
+		/*construye pagina*/
+		$this->buscaModulo();
+		$this->cargaControlador();
 
-		if(DEBUG){
-			echo('uso de traducciones:');print_r(l10n_sel()->getTraduccionUso(-1));
+		if($this->oControlazo === false){ //no hay controlador de contenidos, solo vista, los contenidos se cargan desde aqui
+			ob_start();
+			include(D_BASE_DIR.$this->aDirectorios['mods'].$this->sModulo.'.php'); //carga del modulo
+
+			$this->sContenidos = ob_get_contents(); //contenidos a mostrar procesados
+			ob_end_clean();
+
+			if(!empty($this->sContenidos)){
+				$sContenidos = $this->sContenidos; //contenidos del modulo
+			}
+			require(D_BASE_DIR.$this->aDirectorios['tpl'].$this->aFicheros['plantilla']);
+		}
+		else{ //si hay controlador, la carga de contenidos se pasa al controlador
+			$this->oControlazo->pintaPagina(D_BASE_DIR.$this->aDirectorios['tpl'].$this->aFicheros['plantilla']);
+		}
+
+		if(D_DEBUG){
+			//echo('uso de traducciones:');print_r(l10n_sel()->getTraduccionUso(-1));
 		}
 	}
 
@@ -213,7 +190,7 @@ class Dune {
 	 * en modo debug se muestran errores
 	 */
 	private function setDebug(){
-		if(defined('DEBUG') && DEBUG){
+		if(defined('D_DEBUG') && D_DEBUG){
 			error_reporting(E_ALL);
 			//error_reporting(E_ALL ^ E_NOTICE);
 			ini_set('display_errors', '1');
@@ -247,7 +224,17 @@ class Dune {
 			}
 		}
 
-		define('TEMP_PATH', $sTempDir);
+		define('D_TEMP_PATH', $sTempDir);
+	}
+
+	//traduccion de textos
+	//sustituye a la ce Controlazo cuando no hay controlador //TODO buscar una solucion mejor que tenerla duplicada
+	protected function trad($cadena){
+		if(function_exists('_tradR')){
+			$cadena = _tradR($cadena);
+		}
+
+		return $cadena;
 	}
 
 }
