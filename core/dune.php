@@ -1,4 +1,23 @@
 <?php
+# Copyright (C) 2014 José M. Carnero <jm_carnero@sargazos.net>
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+# http://www.gnu.org/copyleft/gpl.html
+
+//namespace Dune;
+
 /**
  * Inicializador
  *
@@ -14,8 +33,11 @@
  * - metodo -> metodo a cargar del modulo pedido; se puede omitir, si no existe se ignora
  * - parametro=valor -> cualquier numero de parametros con o sin valor, en el formato ordinario de una URL (separados por &); de momento se recogen por post, no se pasan como parametros al metodo llamado
  *
+ * @author José M. Carnero
  * @since 2014-11-23
- * @author jm_carnero@sargazos.net
+ * @version 1b
+ * @license http://www.gnu.org/copyleft/gpl.html
+ * @package Dune
  */
 class Dune {
 
@@ -27,7 +49,6 @@ class Dune {
 	 * - tpl: plantillas, ficheros con extension ".tpl"
 	 *
 	 * @var array
-	 * @access protected
 	 */
 	protected $aDirectorios = array('core' => 'core/', 'libs' => 'incs/', 'mods' => 'mods/', 'tpl' => 'tpl/');
 
@@ -38,7 +59,6 @@ class Dune {
 	 * - sesion: controlador de sesion //TODO de momento no integrado como objeto
 	 *
 	 * @var array
-	 * @access protected
 	 */
 	protected $aFicheros = array('config' => 'config.php', 'plantilla' => 'dune.tpl', 'sesion' => 'sesion.php');
 
@@ -53,6 +73,12 @@ class Dune {
 		require(D_BASE_DIR.$this->aDirectorios['libs'].$this->aFicheros['config']); //parametros basicos de la aplicacion
 		$this->setDebug();
 		require(D_BASE_DIR.$this->aDirectorios['libs'].$this->aFicheros['sesion']); //variables e inicio de sesion
+
+		//gestion de errores
+		if(D_DEBUG){
+			include(D_BASE_DIR.$this->aDirectorios['core'].'class.errorHandler.inc');
+			//logFile('errors.err');
+		}
 
 		$this->ipCliente();
 		$this->tempDir();
@@ -98,6 +124,11 @@ class Dune {
 			$this->oControlazo = new $aux();
 			//TODO llamar a un metodo pedido en la URL?
 		}
+		elseif(class_exists('Controlazo')){ //si no existe el controlador del modulo pedido se instancia el controlador base
+			$this->oControlazo = new Controlazo();
+			//TODO llamar a un metodo pedido en la URL?
+		}
+		$this->oControlazo->setDirectorios($this->aDirectorios);
 
 	}
 
@@ -164,21 +195,7 @@ class Dune {
 		$this->buscaModulo();
 		$this->cargaControlador();
 
-		if($this->oControlazo === false){ //no hay controlador de contenidos, solo vista, los contenidos se cargan desde aqui
-			ob_start();
-			include(D_BASE_DIR.$this->aDirectorios['mods'].$this->sModulo.'.php'); //carga del modulo
-
-			$this->sContenidos = ob_get_contents(); //contenidos a mostrar procesados
-			ob_end_clean();
-
-			if(!empty($this->sContenidos)){
-				$sContenidos = $this->sContenidos; //contenidos del modulo
-			}
-			require(D_BASE_DIR.$this->aDirectorios['tpl'].$this->aFicheros['plantilla']);
-		}
-		else{ //si hay controlador, la carga de contenidos se pasa al controlador
-			$this->oControlazo->pintaPagina(D_BASE_DIR.$this->aDirectorios['tpl'].$this->aFicheros['plantilla']);
-		}
+		$this->oControlazo->pintaPagina(D_BASE_DIR.$this->aDirectorios['tpl'].$this->aFicheros['plantilla']);
 
 		if(D_DEBUG){
 			//echo('uso de traducciones:');print_r(l10n_sel()->getTraduccionUso(-1));
@@ -225,16 +242,6 @@ class Dune {
 		}
 
 		define('D_TEMP_PATH', $sTempDir);
-	}
-
-	//traduccion de textos
-	//sustituye a la ce Controlazo cuando no hay controlador //TODO buscar una solucion mejor que tenerla duplicada
-	protected function trad($cadena){
-		if(function_exists('_tradR')){
-			$cadena = _tradR($cadena);
-		}
-
-		return $cadena;
 	}
 
 }

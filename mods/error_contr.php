@@ -16,14 +16,29 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 # http://www.gnu.org/copyleft/gpl.html
 
+//namespace Dune;
+if(!defined('DUNE')) die('...');
+
 /**
- * NO SE TOCA!
+ * Controlador de errores
  *
  * @author José M. Carnero
+ * @since 2014-11-26
  * @version 1b
  * @license http://www.gnu.org/copyleft/gpl.html
  * @package Dune
  */
-require('./core/dune.php');
+class Error extends Controlazo {
 
-new Dune();
+	function __construct(){
+		parent::__construct(__FILE__);
+
+		$this->aDatos['aMod']['error'] = array('title' => $this->trad('Error'));
+
+		$this->aDatos['sMetas'] = '<meta name="keywords" content="Sargazos.net">';
+		$this->aDatos['sTitle'] = $this->aDatos['aMod']['error']['title'];
+		$this->aDatos['sCss'] .= '';
+		$this->aDatos['sJs'] .= '';
+	}
+
+}
