@@ -1,11 +1,22 @@
-Dune [José M. Carnero]
+# Dune [José M. Carnero](http://sargazos.net)
 ====
 
-PHP FrameWork ligero.
-MVC, desacoplado.
+## PHP framework.
+
+- Ligero.
+- MVC.
+- Desacoplado.
+- DDBB.
+- Formularios.
 
 ====
-In English:
+**In English:**
 
-Lightweight PHP Framework.
-MVC, decoupled.
+## PHP framework.
+
+- Lightweight.
+- MVC.
+- Decoupled.
+- DDBB.
+- Forms.
+

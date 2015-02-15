@@ -2,7 +2,7 @@
 defined('DUNE') or define('DUNE', true); //constante de comprobacion del sitio; los includes llevan comprobacion de esta constante como primera directiva
 
 //constantes de core
-defined('D_SUFIJO_CONTROLADOR') or define('D_SUFIJO_CONTROLADOR', '_contr'); //sufijo que llevan las clases controlador como nombre de fichero, ej.: portada_contr.php
+//defined('D_SUFIJO_CONTROLADOR') or define('D_SUFIJO_CONTROLADOR', '_contr'); //sufijo que llevan las clases controlador como nombre de fichero, ej.: portada_contr.php
 defined('D_SUFIJO_MODELO') or define('D_SUFIJO_MODELO', '_model'); //sufijo que llevan las clases modelo como nombre de fichero, ej.: portada_model.php
 
 //constantes de site

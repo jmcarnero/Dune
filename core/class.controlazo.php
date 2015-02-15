@@ -29,19 +29,8 @@
  */
 class Controlazo {
 
-	/**
-	 * Rutas a los directorios del framework; se pasan desde dune.php
-	 * - libs: librerias
-	 * - mods: modulos, directorio para los ficheros de vistas, controladores y modelos de cada modulo
-	 * - tpl: plantillas, ficheros con extension ".tpl"
-	 *
-	 * @var array
-	 * @see Controlazo::setDirectorios($aDirectorios)
-	 */
-	protected $aDirectorios = array('libs' => 'incs/', 'mods' => 'mods/', 'tpl' => 'tpl/');
-
 	protected $oModelo; //modelo correspondiente a este controlador ("Modulo_model")
-	private $aModulo = array('path' => '', 'mod' => ''); //path y nombre del modulo que se ha cargado, lo envia el constructor hijo
+	private $sModulo = ''; //nombre del modulo que se ha cargado, lo envia el constructor hijo
 
 	/**
 	 * Este array contiene todos los datos que se podran usar como variables en los modulos/plantillas,
@@ -57,12 +46,20 @@ class Controlazo {
 			'sJs' => false, //tag script a insertar en el head de la pagina (javascript)
 		);
 
+	/**
+	 * Contenidos del modulo a mostrar despues de ser procesados y listo para ser integrados en la plantilla o enviados al navegador
+	 *
+	 * @var string
+	 * @see Controlazo::pintaPagina($plantilla)
+	 */
+	protected $sContenidos = '';
+
 	function __construct($file = false){
 		if($file === false) $file = __FILE__;
 
 		$this->rutaModulo($file); //TODO depende de que el usuario haga la llamada correcta a este constructor
-		if(empty($this->aModulo['mod'])){
-			throw new ErrorException('El constructor de su controlador debe incluir como primera instruccion: "parent::__construct(__FILE__);"');
+		if(empty($this->sModulo)){
+			throw new ErrorException('El constructor de su controlador debe incluir: "parent::__construct(__FILE__);"');
 		}
 		/*//internacionalizacion y localizacion de la pagina
 		//LENGUAJE_DEFECTO
@@ -73,10 +70,10 @@ class Controlazo {
 
 		$this->cargaModelo();
 
-		$this->aDatos['aMod'][$this->aModulo['mod']] = array('title' => $this->trad($this->aModulo['mod']));
+		$this->aDatos['aMod'][$this->sModulo] = array('title' => $this->trad($this->sModulo));
 
 		$this->aDatos['sMetas'] = '';
-		$this->aDatos['sTitle'] = $this->aDatos['aMod'][$this->aModulo['mod']]['title'];
+		$this->aDatos['sTitle'] = $this->aDatos['aMod'][$this->sModulo]['title'];
 		$this->aDatos['sCss'] .= '';
 		$this->aDatos['sJs'] .= '';
 
@@ -94,21 +91,24 @@ class Controlazo {
 	 * y la clase debe llamarse 'nombre_clase'
 	 *
 	 * @todo no permitir la carga de sqlazo (ya lo hace el modelo)
-	 * @param string $inc Nombre de la libreria a cargar; corresponde a nombres de clases en el directorio de librerias
+	 * @param string $lib Nombre de la libreria a cargar; corresponde a nombres de clases en el directorio de librerias
+	 * @param string $nombre Nombre con que se instanciara la clase para ser usada en siguientes llamadas, por defecto el mismo que $lib
 	 * @return boolean True si se ha cargado correctamente, false si no
 	 */
-	protected function carga($lib = false){
+	protected function carga($lib = false, $nombre = null){
 		if(empty($lib)){
 			return false; //no se ha pedido nada para cargar
 		}
+		if(empty($nombre))
+			$nombre = $lib;
 
-		if(is_readable(D_BASE_DIR.$this->aDirectorios['libs'].'class.'.$lib.'.inc')){
-			include_once(D_BASE_DIR.$this->aDirectorios['libs'].'class.'.$lib.'.inc');
+		if(is_readable(D_BASE_DIR.D_DIR_LIBS.'class.'.$lib.'.inc')){
+			include_once(D_BASE_DIR.D_DIR_LIBS.'class.'.$lib.'.inc');
 		}
 
 		//carga el modelo si existe
 		if(class_exists($lib) && !isset($this->$lib)){
-			$this->$lib = new $lib();
+			$this->$nombre = new $lib();
 			return true;
 		}
 
@@ -118,18 +118,17 @@ class Controlazo {
 	//intenta instanciar el modelo de datos
 	public function cargaModelo(){
 		//ruta/nombre del fichero de modelo
-		$sModelo = ucfirst($this->aModulo['mod']).D_SUFIJO_MODELO;
-		$sRuta = strtolower($this->aModulo['mod']).D_SUFIJO_MODELO.'.php';
+		$sModelo = ucfirst($this->sModulo).D_SUFIJO_MODELO;
+		$sRuta = strtolower($this->sModulo).'.php';
 
 		//intenta cargar el modelo
-		if(empty($this->oModelo) && is_readable($this->aModulo['path'].$sRuta)){
-			include($this->aModulo['path'].$sRuta);
+		if(empty($this->oModelo) && is_readable(D_BASE_DIR.D_DIR_MODEL.$sRuta)){
+			include(D_BASE_DIR.D_DIR_MODEL.$sRuta);
 		}
 
 		if(class_exists($sModelo)){
 			$this->oModelo = new $sModelo();
-			$this->oModelo->setDirectorioLibs($this->aDirectorios['libs']);
-			//return true;
+			return true;
 		}
 
 		return false; //no se ha cargado el modelo o ya estaba cargado //TODO mensaje de error si ha habido problemas en la carga
@@ -137,47 +136,37 @@ class Controlazo {
 
 	/**
 	 * Compone la pagina y la envia al navegador
+	 * Si no se quiere plantilla (como cuando se ha de cargar la pagina por AJAX) sobreescribir este metodo en el controlador heredado sin parametro plantilla (o como sea necesario)
 	 *
 	 * @param string $plantilla Ruta y nombre de la plantilla a cargar
 	 */
 	public function pintaPagina($plantilla = false){
-		ob_start();
-
-		if(is_readable($this->aModulo['path'].$this->aModulo['mod'].'.php')){
-			include($this->aModulo['path'].$this->aModulo['mod'].'.php'); //carga del modulo, debe tener el mismo nombre de esta clase (en minusculas) y estar en el mismo directorio
-		}
-
-		$sContenidos = ob_get_contents(); //contenidos del modulo a mostrar procesados
-
-		ob_end_clean();
-
 		if(!empty($this->aDatos)){
 			foreach($this->aDatos as $clave => $valor){
 				$$clave = $valor; //cada clave del array de datos se podra usar como una variable directa en la plantilla, igual que los contenidos obtenidos del modulo (abajo, $sContenidos)
 			}
 		}
 
-		require($plantilla);
+		ob_start();
+		if(is_readable(D_BASE_DIR.D_DIR_VISTA.$this->sModulo.'.php')){
+			include(D_BASE_DIR.D_DIR_VISTA.$this->sModulo.'.php'); //carga del modulo, debe tener el mismo nombre de esta clase (en minusculas)
+		}
+		$this->sContenidos = ob_get_contents(); //contenidos del modulo a mostrar procesados
+		ob_end_clean();
+
+		if($plantilla && is_readable($plantilla)){
+			$sContenidos = $this->sContenidos;
+			require($plantilla);
+		}
 	}
 
 	//separa ruta y nombre del modulo a partir de la constante __FILE__
 	//TODO no contempla rutas windows
 	private function rutaModulo($file){
-		$this->aModulo['path'] = dirname($file) . '/';
-
-		$this->aModulo['mod'] = substr(basename($file), 0, strpos(basename($file), D_SUFIJO_CONTROLADOR));
+		$this->sModulo = substr(basename($file), 0, strpos(basename($file), '.'));
 
 		//puede instanciarse este controlador base (que no tiene sufijo); por ejemplo para llamar al modulo de error
-		if(empty($this->aModulo['mod']) && stripos(basename($file), __CLASS__) > 0) $this->aModulo['mod'] = __CLASS__;
-	}
-
-	/**
-	 * Asigna los directorios de la aplicacion, llamada desde dune.php
-	 */
-	public function setDirectorios($aDirectorios){
-		if(!empty($aDirectorios['libs'])) $this->aDirectorios['libs'] = $aDirectorios['libs'];
-		if(!empty($aDirectorios['mods'])) $this->aDirectorios['mods'] = $aDirectorios['mods'];
-		if(!empty($aDirectorios['tpl'])) $this->aDirectorios['tpl'] = $aDirectorios['tpl'];
+		if(empty($this->sModulo) && stripos(basename($file), __CLASS__) > 0) $this->sModulo = __CLASS__;
 	}
 
 	 //traduccion de textos
