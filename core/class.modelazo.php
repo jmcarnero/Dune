@@ -60,12 +60,15 @@ abstract class Modelazo {
 
 	/*conexion a base de datos*/
 	private function conectar(){
-		require($this->sBaseDir.'class.sqlazo.inc'); //parametrizar nombre del fichero?
+		/*require($this->sBaseDir.'class.sqlazo.inc'); //parametrizar nombre del fichero?
 		$this->oDB = sqlazo_sel($this->aDatabase['tipo']);
 		$this->oDB->conectar($this->aDatabase['servidor'], $this->aDatabase['usuario'], $this->aDatabase['clave'], $this->aDatabase['esquema']);
 		$this->oDB->sPrefijo = $this->aDatabase['prefijotablas'];
 		$this->oDB->bTrazabilidad = $this->aDatabase['trazabilidad'];
-		$this->oDB->setIdUsuario(empty($_SESSION['idUsuario'])?0:$_SESSION['idUsuario']);
+		$this->oDB->setIdUsuario(empty($_SESSION['idUsuario'])?0:$_SESSION['idUsuario']);/**/
+
+		require_once $this->sBaseDir.'class.redatazo.inc'; //parametrizar nombre del fichero?
+		$this->oDB = new Redatazo(array('motor' => $this->aDatabase['tipo'], 'server' => $this->aDatabase['servidor'], 'database' => $this->aDatabase['esquema'], 'usuario' => $this->aDatabase['usuario'], 'clave' => $this->aDatabase['clave']));
 	}
 
 }

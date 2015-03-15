@@ -29,6 +29,8 @@
  */
 class Controlazo {
 
+	protected $aSesion = array();
+
 	protected $oModelo; //modelo correspondiente a este controlador ("Modulo_model")
 	private $sModulo = ''; //nombre del modulo que se ha cargado, lo envia el constructor hijo
 
@@ -61,12 +63,15 @@ class Controlazo {
 		if(empty($this->sModulo)){
 			throw new ErrorException('El constructor de su controlador debe incluir: "parent::__construct(__FILE__);"');
 		}
-		/*//internacionalizacion y localizacion de la pagina
-		//LENGUAJE_DEFECTO
-		include_once(BASE_DIR.$this->aDirectorios['libs'].'class.l10n.inc');
-		l10n_sel();
-		_locale();
-		//_trad('clave_test');*/
+
+		if(is_readable(D_BASE_DIR . D_DIR_LIBS . 'class.l10n.inc')){
+			$sLang = empty($_SESSION['D_idioma']) ? (defined('D_IDIOMA_DEFECTO') ? D_IDIOMA_DEFECTO : false) : $_SESSION['D_idioma'];
+			//internacionalizacion y localizacion de la pagina
+			include_once (D_BASE_DIR . D_DIR_LIBS . 'class.l10n.inc');
+			l10n_sel($sLang, false, 'csv', D_BASE_DIR . 'l10n');
+			_locale($sLang);
+			//_trad('clave_test');
+		}
 
 		$this->cargaModelo();
 
@@ -79,8 +84,8 @@ class Controlazo {
 
 		//mensajes devueltos por el procesado de formularios y otros eventos
 		$sMensajes = false;
-		if(!empty($_SESSION['mensajes'])){
-			$sMensajes = $_SESSION['mensajes']; //TODO borrar o conservar este mensaje?
+		if(!empty($_SESSION['D_mensajes'])){
+			$sMensajes = $_SESSION['D_mensajes']; //TODO borrar o conservar este mensaje?
 		}
 	}
 
@@ -90,25 +95,30 @@ class Controlazo {
 	 * el fichero debe ser "class.nombre_clase.php"
 	 * y la clase debe llamarse 'nombre_clase'
 	 *
-	 * @todo no permitir la carga de sqlazo (ya lo hace el modelo)
+	 * @todo no permitir la carga de redatazo (ya lo hace el modelo)
 	 * @param string $lib Nombre de la libreria a cargar; corresponde a nombres de clases en el directorio de librerias
+	 * @param array $parametros Array de parametros a pasar al nuevo constructor
 	 * @param string $nombre Nombre con que se instanciara la clase para ser usada en siguientes llamadas, por defecto el mismo que $lib
 	 * @return boolean True si se ha cargado correctamente, false si no
 	 */
-	protected function carga($lib = false, $nombre = null){
+	protected function carga($lib = false, $parametros = array(), $nombre = null){
 		if(empty($lib)){
 			return false; //no se ha pedido nada para cargar
 		}
 		if(empty($nombre))
 			$nombre = $lib;
 
-		if(is_readable(D_BASE_DIR.D_DIR_LIBS.'class.'.$lib.'.inc')){
-			include_once(D_BASE_DIR.D_DIR_LIBS.'class.'.$lib.'.inc');
+		if(is_readable(D_BASE_DIR . D_DIR_LIBS . 'class.' . $lib . '.inc')){
+			include_once (D_BASE_DIR . D_DIR_LIBS . 'class.' . $lib . '.inc');
 		}
 
-		//carga el modelo si existe
+		//carga la clase si existe
 		if(class_exists($lib) && !isset($this->$lib)){
-			$this->$nombre = new $lib();
+			if(empty($parametros))
+				$this->$nombre = new $lib();
+			else
+				$this->$nombre = new $lib($parametros); //TODO de momento solo acepta un array de parametros o nada
+
 			return true;
 		}
 
@@ -116,14 +126,14 @@ class Controlazo {
 	}
 
 	//intenta instanciar el modelo de datos
-	public function cargaModelo(){
+	protected function cargaModelo(){
 		//ruta/nombre del fichero de modelo
-		$sModelo = ucfirst($this->sModulo).D_SUFIJO_MODELO;
-		$sRuta = strtolower($this->sModulo).'.php';
+		$sModelo = ucfirst($this->sModulo) . D_SUFIJO_MODELO;
+		$sRuta = strtolower($this->sModulo) . '.php';
 
 		//intenta cargar el modelo
-		if(empty($this->oModelo) && is_readable(D_BASE_DIR.D_DIR_MODEL.$sRuta)){
-			include(D_BASE_DIR.D_DIR_MODEL.$sRuta);
+		if(empty($this->oModelo) && is_readable(D_BASE_DIR . D_DIR_MODEL . $sRuta)){
+			include (D_BASE_DIR . D_DIR_MODEL.$sRuta);
 		}
 
 		if(class_exists($sModelo)){
@@ -140,7 +150,7 @@ class Controlazo {
 	 *
 	 * @param string $plantilla Ruta y nombre de la plantilla a cargar
 	 */
-	public function pintaPagina($plantilla = false){
+	protected function pintaPagina($plantilla = false){
 		if(!empty($this->aDatos)){
 			foreach($this->aDatos as $clave => $valor){
 				$$clave = $valor; //cada clave del array de datos se podra usar como una variable directa en la plantilla, igual que los contenidos obtenidos del modulo (abajo, $sContenidos)
@@ -148,16 +158,46 @@ class Controlazo {
 		}
 
 		ob_start();
-		if(is_readable(D_BASE_DIR.D_DIR_VISTA.$this->sModulo.'.php')){
-			include(D_BASE_DIR.D_DIR_VISTA.$this->sModulo.'.php'); //carga del modulo, debe tener el mismo nombre de esta clase (en minusculas)
+		if(is_readable(D_BASE_DIR . D_DIR_VISTA . $this->sModulo . '.php')){
+			include (D_BASE_DIR . D_DIR_VISTA . $this->sModulo . '.php'); //carga del modulo, debe tener el mismo nombre de esta clase (en minusculas)
 		}
 		$this->sContenidos = ob_get_contents(); //contenidos del modulo a mostrar procesados
 		ob_end_clean();
 
 		if($plantilla && is_readable($plantilla)){
 			$sContenidos = $this->sContenidos;
-			require($plantilla);
+			require $plantilla;
 		}
+	}
+
+	/**
+	 * Devuelve, si existe, la clave $clave en los super globales GET o POST
+	 *
+	 * @since 2015-02-28
+	 * @param string $clave Clave a buscar
+	 * @param string $sglobal SuperGlobal en la que buscar ('post', 'get')
+	 * @return string Valor encontrado, null si no encontrado
+	 */
+	protected function post($clave, $sglobal = null){
+		$sRet = null;
+		$sglobal = empty($sglobal) ? null : '_' . strtoupper($sglobal);
+
+		$aSGlobal = array('_POST', '_GET'); //lista de super globales en los que buscar $clave, devuelve el primero que corresponda (en el orden de este array), a no ser que se pida $sglobal
+
+		if(in_array($sglobal, $aSGlobal)){
+			if(!empty($sglobal) && isset($GLOBALS["$global"][$clave]))
+				$sRet = $GLOBALS["$global"][$clave];
+		}
+		else{
+			foreach($aSGlobal as $global){
+				if(isset($GLOBALS["$global"][$clave])){
+					$sRet = $GLOBALS["$global"][$clave];
+					break;
+				}
+			}
+		}
+
+		return $sRet;
 	}
 
 	//separa ruta y nombre del modulo a partir de la constante __FILE__
@@ -170,7 +210,7 @@ class Controlazo {
 	}
 
 	 //traduccion de textos
-	protected function trad($cadena){
+	protected function trad($cadena = ''){
 		if(function_exists('_tradR')){
 			$cadena = _tradR($cadena);
 		}

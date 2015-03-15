@@ -34,4 +34,34 @@ class Portada_model extends Modelazo {
 		parent::__construct();
 	}
 
+	public function ejemplo1(){
+		$sQuery = <<<SQL
+SELECT campo, campo2
+FROM tabla
+WHERE condicion = 1
+ORDER BY campo
+SQL;
+		$this->oDB->consulta($sQuery, $aParams, $iNum, $iPag);
+		//var_dump($this->oDB->getConsulta(), $this->oDB->totalFilas());
+	
+		return $this->oDB->getFilas();
+	}
+
+	function ejemplo2(){
+		$this->carga('redatazo', array('motor' => 'mysql'));
+		$this->redatazo->select('ent.entId, ent.estado, ent.fechaPub');
+		$this->redatazo->select('con.conId, con.titulo, con.texto, con.fecha, con.idioma');
+		$this->redatazo->select('usu.usuId, usu.email, usu.nombre, usu.apellidos');
+		$this->redatazo->from('entradas ent');
+		$this->redatazo->join('contenidos con', 'ent.entId=con.entId');
+		$this->redatazo->join('usuarios usu', 'ent.usuId=usu.usuId');
+		$this->redatazo->where('(usu.activo IS NOT NULL AND usu.activo = 1)');
+		$this->redatazo->where('ent.estado', '+');
+		$this->redatazo->order_by('ent.fechaPub', 'desc');
+		$this->redatazo->order_by('con.fecha', 'desc');
+
+		var_dump($this->redatazo->consulta());
+		var_dump($this->redatazo->getConsulta());
+	}
+
 }

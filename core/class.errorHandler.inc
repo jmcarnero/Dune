@@ -171,7 +171,7 @@ class errorHandler {
 	 * @return array
 	 */
 	private function _t($texto){
-		if(function_exists('_tradR')) $texto = _tradR($texto);
+		//if(function_exists('_tradR')) $texto = _tradR($texto);
 
 		//trigger_error($this->getMensaje(__METHOD__), E_USER_NOTICE);
 		return($texto);

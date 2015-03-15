@@ -296,7 +296,7 @@ http://www.gnu.org/copyleft/gpl.html*/
 		 */
 		genId: function (len){
 			var gid = 'JaSper_';
-			if(!len || (len.length < (gid.length + 3))) len = gid.length + 3;
+			if(!len || (len.length < (gid.length + 5))) len = gid.length + 5;
 
 			var chars = "0123456789abcdefghijklmnopqurstuvwxyzABCDEFGHIJKLMNOPQURSTUVWXYZ";
 			var rnum;
