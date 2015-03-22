@@ -17,17 +17,13 @@
 # http://www.gnu.org/copyleft/gpl.html
 
 /**
-\mainpage
  * Generador de formularios
-\section Description
- * \~spanish Clase generadora de formularios HTML.
- * \~english HTML forms generator\~
+ * Clase generadora de formularios HTML
  *
  * @author José M. Carnero
- * @brief \~spanish Generador de formularios HTML\~english HTML forms generator\~
  * @version 4
  * @license http://www.gnu.org/copyleft/gpl.html
- * @package formazo
+ * @package Formazo
  */
 
 /*
@@ -36,37 +32,14 @@
 if(!defined('CLASSFORM_DIR')) define('CLASSFORM_DIR', dirname(__FILE__));
 
 /**
- * \~spanish Selector de tipo de pintado de los formularios.
- * \~english Class selector.\~
- *
- * @access public
- * @param string $pintado \~spanish Tipo de pintado (tabla, ...)\~english Paint type (use "tabla" for HTML table, "capas" for HTML divs)\~
- * @return object
- */
-function &formazo_sel($pintado = ''){
-	$class = 'formazo'.(empty($pintado)?'':'_'.$pintado);
-
-	@include_once(CLASSFORM_DIR.'/class.'.$class.'.inc'); //si no existe el fichero a incluir no se devuelve error, se controla a continuacion
-
-	if(!class_exists($class)){
-		die('No se puede usar el tipo de formazo -> '.$class."\n");
-		return(false);
-	}
-
-	$obj = new $class();
-	return($obj);
-}
-
-/**
- * \~spanish Clase generadora de formularios HTML.
+ * Clase generadora de formularios HTML.
  * Genera un formulario completo (entre "<form>" y "</form>", incluidos), con todo lo necesario para hacerlo funcionar, a partir de un array que defina que campos y con que caracteristicas.
- * Requiere de una clase de procesado de datos, "class.formazo_proc.inc" (con una pagina que la implemente).
+ * Requiere de una clase de procesado de datos, "class.Formazo_proc.inc" (con una pagina que la implemente).
  * La validacion javascript se apoya en los nombres de clases css, es completamente externa a la clase (no asi la validacion cuando se procesa en el servidor), aunque la clase provee codigo necesario para campos ligados y dependientes,
  * debe encontrarse en la seccion "head" (html) de la pagina, un ejemplo:
-<script type="text/javaScript" src="jsframe_core.js"></script>
-<script type="text/javaScript" src="jsframe_formazo.js"></script>
+<script type="text/javaScript" src="JaSper.js"></script>
+<script type="text/javaScript" src="JaSper_formazo.js"></script>
  * Ejemplo de uso:
- * \~english HTML forms generator.\~
  * \code{.php}
 include_once("class.formazo.inc");
 
@@ -79,7 +52,7 @@ $aCampos = array(
 'activa' => array('tipo' => 'checkbox', 'titulo' => 'Activa: ')
 );
 
-$oForm = formazo_sel('tabla'); //tambien se puede $oForm = new formazo();
+$oForm = formazo_sel('tabla'); //tambien se puede $oForm = new Formazo();
 //$oForm->sRutaFicheros = 'img/';
 //$oForm->sQueryTabla = 'tabla_ej';
 //$oForm->sRowId = 'id'; //nombre de id a actualizar/borrar
@@ -100,19 +73,18 @@ $oForm->pintaFormulario();
  * @author José Manuel Carnero
  * @version 4
  */
-class formazo{
+class Formazo{
+
 	/**
-	 * \~spanish En este array se recoge el de GET o POST, segun el que se haya utilizado para llegar a esta pagina; si no se queda con un array vacio.
-	 * \~english Has GET or POST values.\~
+	 * En este array se recoge el de GET o POST, segun el que se haya utilizado para llegar a esta pagina; si no se queda con un array vacio
 	 *
 	 * @var array
 	 * @access private
 	 */
 	private $aVariablesRequest;
-	
+
 	/**
-	 * \~spanish Indice de tabulacion.
-	 * \~english Tabulation index.\~
+	 * Indice de tabulacion.
 	 *
 	 * @todo posibilidad de "compartirlo" entre varios formularios
 	 * @var integer
@@ -121,18 +93,16 @@ class formazo{
 	private static $iTabIndex;
 
 	/**
-	 * \~spanish Lista de textos visibles por los usuarios finales usados en funciones javascript y html.
-	 * \~english Messages visibles in HTML and javascript.\~
+	 * Lista de textos visibles por los usuarios finales usados en funciones javascript y html
 	 *
 	 * @var array
-	 * @see formazo::getMetodosMensaje($clave),formazo::setMetodosMensaje($clave, $valor)
+	 * @see Formazo::getMetodosMensaje($clave),Formazo::setMetodosMensaje($clave, $valor)
 	 * @access private
 	 */
 	private $aMetodosMensajes;
 
 	/**
-	 * \~spanish Accion del formulario (url que recoge y procesa los datos).
-	 * \~english Form action.\~
+	 * Accion del formulario (url que recoge y procesa los datos)
 	 *
 	 * @var string
 	 * @access public
@@ -140,18 +110,16 @@ class formazo{
 	public $sAction;
 
 	/**
-	 * \~spanish Campo oculto con la accion a realizar en base de datos: upd (UPDATE), ins (INSERT), del(DELETE), busc(SELECT, busqueda) tambien define que SQL devolvera este objeto.
-	 * \~english Hide field with dabatase action: upd[ate], ins[ert], del[ete], busc (search)\~
+	 * Campo oculto con la accion a realizar en base de datos: upd (UPDATE), ins (INSERT), del(DELETE), busc(SELECT, busqueda) tambien define que SQL devolvera este objeto
 	 *
 	 * @var string
-	 * @see formazo::setActionHide($sActionHide)
+	 * @see Formazo::setActionHide($sActionHide)
 	 * @access protected
 	 */
 	protected $sActionHide;
 
 	/**
-	 * \~spanish Permite tener un solo formulario para actualizacion y borrado; guarda el titulo para el boton de borrado extra o nada (actualizacion y borrado por separado).
-	 * \~english Allows two action in one form: update and delete.\~
+	 * Permite tener un solo formulario para actualizacion y borrado; guarda el titulo para el boton de borrado extra o nada (actualizacion y borrado por separado)
 	 *
 	 * @var string
 	 * @access public
@@ -159,8 +127,7 @@ class formazo{
 	public $sActionUpdDel;
 
 	/**
-	 * \~spanish Metodo del formulario "get" o "post" (por defecto).
-	 * \~english Form method: "get" or "post" (default).\~
+	 * Metodo del formulario "get" o "post" (por defecto)
 	 *
 	 * @var string
 	 * @access public
@@ -168,8 +135,7 @@ class formazo{
 	public $sMethod;
 
 	/**
-	 * \~spanish Booleano, si debe aparecer los botones en la parte de arriba del formulario.
-	 * \~english Repeats form buttons on top.\~
+	 * Booleano, si debe aparecer los botones en la parte de arriba del formulario
 	 *
 	 * @var boolean
 	 * @access public
@@ -177,51 +143,50 @@ class formazo{
 	public $bBtmTop;
 
 	/**
-	 * \~spanish Elementos del formulario.
+	 * Elementos del formulario
 	 * (si un elemento no tiene 'tipo' se ignora, ya que puede ser un array de elementos compartido con class.listado.inc)
-	 * \~english Form elements.\~
-	 * key -> \~spanish nombre (mismos que la tabla donde lanzar la SQL)\~english same as database field\~
-	 * 'tipo' -> \~spanish tipo de cada elemento; tipos: ('checkbox', 'group', 'heading', 'hidden', 'multiple', 'password', 'radio', 'select', 'text', 'textarea'), siendo cada elemento del array el nombre del tag o de tipo de INPUT, excepto "group" que crea agrupaciones de elementos (todos aquellos que tengan 'group' => id_grupo) y "heading" que solo crea cabeceras (titulos de secciones o similar); se ignoran los elementos sin tipo\~english element type, same as HTML form type; elements with no type will be ignored\~
-	 * 'validacion' -> \~spanish validacion, tipo de datos que contendra; validado por javascript; la cadena se pondra directamente en el atributo "class", asi permite varios tipos de validacion para el mismo campo y es completamente externa a la clase\~english javascript and server side validations\~
-	 * 'obligatorio' -> \~spanish not null; 0 (opcional), 1 (obligatorio), string (llamada a una funcion que controle su obligatoriedad, tanto en creacion de formulario como en procesado, la cadena pasada es el nombre de la funcion -sin parentesis-); pasar "0" si se necesitan los siguientes y no es obligatorio\~english mandatory, could be 0 (optional), 1 (mandatory) or string (call this function)\~
-	 * 'longitud' -> \~spanish longitud maxima (input text, input password, textarea), si =0 -> solo lectura (disabled="disabled") y valor actual en campo hidden; longitud maxima en caso de ficheros (se pasa en bytes); opcional\~english Max length, if 0 will be disabled\~
-	 * 'titulo' -> \~spanish titulo (humano) del campo\~english field title (for humans)\~
-	 * 'valor' -> \~spanish valor del campo; en caso de "SELECT" el valor es el que toma por defecto\~english field value\~
-	 * 'valores' -> \~spanish array con los valores para los "OPTION" o para radioButtons, siendo la clave el valor del "OPTION" y [0] su texto; en select y multiple si cualquier valor es un array se convierte en agrupado (la clave sera la etiqueta del agrupado y el array los options contenidos, en el mismo formato que cualquier option)\~english options and radiobuttons values\~
-	 * 'group' -> \~spanish id del grupo al que pertenece; si vacio no pertenece a ningun grupo\~english group id, if needed\~
-	 * 'hint' -> \~spanish pista (tooltip) sobre el elemento\~english hint (for humans)\~
-	 * 'help' -> \~spanish asociativo con texto de ayuda del elemento, clave indica posicion, valor el texto de ayuda\~english help text (for humans); in array, key is position\~
-	 * 	 0 => \~spanish antes del elemento (antes de label)\~english before label\~, 1 => \~spanish despues del elemento\~english after\~
-	 * 'ligado' -> \~spanish para select enlazado (normal o multiple), contiene la id del select del que depende el actual (mas detalles en el metodo)\~english linked select\~
-	 * 'depende' -> \~spanish campos dependientes de otro, contiene la id del campo del que depende\~english dependant select\~
-	 * 	 'id' => \~spanish campo del que depende\~english field this depends\~
-	 * 	 'val' => \~spanish valor que debe tener el campo 'id' para que este se muestre\~english if the other has this value this is visible\~
-	 * 	 'hid' => 'line' \~spanish muestra/oculta toda la linea (por defecto)\~english show/hide all line\~, 'tag' \~spanish muestra/oculta solo el tag (input) afectado)\~english show/hide only element\~
+	 *
+	 * key -> nombre (mismos que la tabla donde lanzar la SQL)
+	 * 'tipo' -> tipo de cada elemento; tipos: ('checkbox', 'group', 'heading', 'hidden', 'multiple', 'password', 'radio', 'select', 'text', 'textarea'), siendo cada elemento del array el nombre del tag o de tipo de INPUT, excepto "group" que crea agrupaciones de elementos (todos aquellos que tengan 'group' => id_grupo) y "heading" que solo crea cabeceras (titulos de secciones o similar); se ignoran los elementos sin tipo
+	 * 'validacion' -> validacion, tipo de datos que contendra; validado por javascript; la cadena se pondra directamente en el atributo "class", asi permite varios tipos de validacion para el mismo campo y es completamente externa a la clase
+	 * 'obligatorio' -> not null; 0 (opcional), 1 (obligatorio), string (llamada a una funcion que controle su obligatoriedad, tanto en creacion de formulario como en procesado, la cadena pasada es el nombre de la funcion -sin parentesis-); pasar "0" si se necesitan los siguientes y no es obligatorio
+	 * 'longitud' -> longitud maxima (input text, input password, textarea), si =0 -> solo lectura (disabled="disabled") y valor actual en campo hidden; longitud maxima en caso de ficheros (se pasa en bytes); opcional
+	 * 'titulo' -> titulo (humano) del campo
+	 * 'valor' -> valor del campo; en caso de "SELECT" el valor es el que toma por defecto
+	 * 'valores' -> array con los valores para los "OPTION" o para radioButtons, siendo la clave el valor del "OPTION" y [0] su texto; en select y multiple si cualquier valor es un array se convierte en agrupado (la clave sera la etiqueta del agrupado y el array los options contenidos, en el mismo formato que cualquier option)
+	 * 'group' -> id del grupo al que pertenece; si vacio no pertenece a ningun grupo
+	 * 'hint' -> pista (tooltip) sobre el elemento
+	 * 'help' -> asociativo con texto de ayuda del elemento, clave indica posicion, valor el texto de ayuda
+	 * 	 0 => antes del elemento (antes de label), 1 => despues del elemento
+	 * 'ligado' -> para select enlazado (normal o multiple), contiene la id del select del que depende el actual (mas detalles en el metodo)
+	 * 'depende' -> campos dependientes de otro, contiene la id del campo del que depende
+	 * 	 'id' => campo del que depende
+	 * 	 'val' => valor que debe tener el campo 'id' para que este se muestre
+	 * 	 'hid' => 'line' muestra/oculta toda la linea (por defecto), 'tag' muestra/oculta solo el tag (input) afectado)
 	// * 'repetir' -> repetir elemento o grupo (como tener un text con la talla de unos zapatos, repetir la caja text para poner otra talla y asi sucesivamente), tiene como valor un identificador que agrupa a los elementos a repetir con ese mismo identificador permitiendo repetir un solo elemento o un grupo de ellos; su valor tambien puede ser el identificador (no array) si no se requiere maximo y/o minimo
 	// * 	 'id' => identificador de grupo repetido
 	// * 	 'min' => minimo de repeticiones (0 por defecto)
 	// * 	 'max' => maximo de repeticiones (indefinido por defecto)
-	 * 'val_submit' -> \~spanish condiciones extra para el evento de submit del formulario; en la forma 'funcion(parametros) ', debe devolver cierto o falso y solo tener un espacio final (sustituir cualquier otro espacio y caracter problematico con $this->limpiaJs())\~english javascript conditions for submit; must return true or false and have only one space (at the end)\~
-	 * 'separador' -> \~spanish solo para campos "multiple", guarda el separador de la lista de valores\~english values separator, only for select multiple\~
-	 * 'css' -> \~spanish clase CSS que llevara el elemento (en caso de radio lo llevarian todos)\~english CSS class\~
-	 * 'extra' -> \~spanish array asociativo, clave indica posicion y tipo del elemento\~english extra text or HTML added\~:
-	 * 	 0 => \~spanish izquierda de label\~english left of label\~, 1 => \~spanish derecha de label\~english right of label\~, 2 => \~spanish izquierda de elemento\~english left of element\~, 3 => \~spanish derecha del elemento\~english right of element\~
-	 * 	 'p0' => \~spanish antes de 'texto'\~english before text\~, 'p1' => \~spanish despues de 'campo', estas ultimas opciones se usan en postprocesado, como dibujado en tablas; estas suman el valor al elemento ya formado (como una imagen que sirva para llevar a una ayuda especifica del campo); debe ser html completo, no se trata, simplemente se suma; no se pasa al procesado\~english after the field; this options will be done in postprocesing\~
-	 * 	 'modo' => \~spanish modo de representacion del elemento, en caso de "group" define el tipo de grupo ([repeat|tab|block|row|fieldset]), en caso de "heading" define si es una cabecera o un simple parrafo (tendra como valor el tipo de etiqueta html que lo contendra, o nada), para "select" puede ser [vacio|select] (select normal) o [radio] (las opciones del select se pintaran como radio buttons, para "multiple" puede ser [nada|multiple] (select multiple normal) o [checkbox] (las opciones del select multiple se pintaran como checkbox)\~english representation mode\~
-	 * 'dataSource' => \~spanish origen de datos para campos select //debe ser una llamada a funcion prefijada con "php:" o "js:" (javascript), si no tiene prefijo se asume que es javascript //el primer parametro debe ser '$id$' (incluyendo las comillas), que sera sustituido por la id del campo select que rellenara; asi, el formato de la funcion debe ser "nombre_funcion('$id$'[, otros_parametros]);"//si es llamada a php espera que se devuelva un select completo, si es js solo sus options (aunque al pasarse el id es sencillo substituirlo entero)\~english data source for select elements\~
+	 * 'val_submit' -> condiciones extra para el evento de submit del formulario; en la forma 'funcion(parametros) ', debe devolver cierto o falso y solo tener un espacio final (sustituir cualquier otro espacio y caracter problematico con $this->limpiaJs())
+	 * 'separador' -> solo para campos "multiple", guarda el separador de la lista de valores
+	 * 'css' -> clase CSS que llevara el elemento (en caso de radio lo llevarian todos)
+	 * 'extra' -> array asociativo, clave indica posicion y tipo del elemento
+	 * 	 0 => izquierda de label, 1 => derecha de label, 2 => izquierda de elemento, 3 => derecha del elemento
+	 * 	 'p0' => antes de 'texto', 'p1' => despues de 'campo', estas ultimas opciones se usan en postprocesado, como dibujado en tablas; estas suman el valor al elemento ya formado (como una imagen que sirva para llevar a una ayuda especifica del campo); debe ser html completo, no se trata, simplemente se suma; no se pasa al procesado
+	 * 	 'modo' => modo de representacion del elemento, en caso de "group" define el tipo de grupo ([repeat|tab|block|row|fieldset]), en caso de "heading" define si es una cabecera o un simple parrafo (tendra como valor el tipo de etiqueta html que lo contendra, o nada), para "select" puede ser [vacio|select] (select normal) o [radio] (las opciones del select se pintaran como radio buttons, para "multiple" puede ser [nada|multiple] (select multiple normal) o [checkbox] (las opciones del select multiple se pintaran como checkbox)
+	 * 'dataSource' => origen de datos para campos select //debe ser una llamada a funcion prefijada con "php:" o "js:" (javascript), si no tiene prefijo se asume que es javascript //el primer parametro debe ser '$id$' (incluyendo las comillas), que sera sustituido por la id del campo select que rellenara; asi, el formato de la funcion debe ser "nombre_funcion('$id$'[, otros_parametros]);"//si es llamada a php espera que se devuelva un select completo, si es js solo sus options (aunque al pasarse el id es sencillo substituirlo entero)
 	 *
 	 * @var array
-	 * @see formazo::setCampos($campos),formazo::getCampos()
+	 * @see Formazo::setCampos($campos),Formazo::getCampos()
 	 * @access protected
 	 */
 	protected $aCampos;
 
 	/**
-	 * \~spanish Clases CSS para los elementos del formulario: label -> todos los label, cada tipo de elemento segun su nombre, dis -> deshabilitado, o en borrado(funciona como sufijo a la clase normal), obligatorio -> obligatorios, fecha -> en inputs (text) validados como fecha
+	 * Clases CSS para los elementos del formulario: label -> todos los label, cada tipo de elemento segun su nombre, dis -> deshabilitado, o en borrado(funciona como sufijo a la clase normal), obligatorio -> obligatorios, fecha -> en inputs (text) validados como fecha
 	 * Clases de las filas (grupo label + elemento + ... - extras), asociativo: 'titulo' (primera fila), 'fimpar' (filas impares), 'fpar' (filas pares), 'ultima' (ultima fila)
-	 * \~english Form elements CSS classes.\~
 	 *
-	 * @see formazo::getCss(),formazo::setCss($clave, $valor)
+	 * @see Formazo::getCss(),Formazo::setCss($clave, $valor)
 	 * @since 2012-12-24
 	 * @var array
 	 * @access protected
@@ -229,31 +194,29 @@ class formazo{
 	protected $aCss;
 
 	/**
-	 * \~spanish Mensajes de error\~english Error messages\~.
+	 * Mensajes de error
 	 *
 	 * @var string
-	 * @see formazo::getError(),formazo::setError()
+	 * @see Formazo::getError(),Formazo::setError()
 	 * @access private
 	 */
 	private $aError;
 
 	/**
-	 * \~spanish Mensajes de error la clase, a fin de que puedan ser traducidos/modificados.
+	 * Mensajes de error la clase, a fin de que puedan ser traducidos/modificados
 	 * Las secuencias %s deben dejarse ya que corresponden a variables que seran luego sustituidas, si es necesario poner un % se pondra como %%
-	 * \~english Predefined error messages. %s placeholders need to be preserved; literal % symbol must be %%\~
 	 *
 	 * @var array
-	 * @see formazo::setErrorMensaje($clave, $valor),formazo::getErrorMensaje($clave)
+	 * @see Formazo::setErrorMensaje($clave, $valor),Formazo::getErrorMensaje($clave)
 	 * @access private
 	 */
 	private $aErrorMensajes;
 
 	/**
-	 * \~spanish Identificador del formulario se le añadira el prefijo "frm" ("name = frm".$this->sFormNombre).
-	 * Se usa tambien para la variable de sesion que guarda la query SQL, asi se pueden enviar varias querys por pagina, se envia como campo oculto.
-	 * Tambien concatenada a "id" de cada elemento del formulario, asi es posible construirlos con los mismos valores de nombre, que se haran distintos al construir el formulario.
-	 * Ya que se pasa como valor oculto, posteriormente (en el procesado) puede retirarse si se necesitan los nombres originales de los campos.
-	 * \~english Form id. Prefixed wit "frm". Each form element id has this added.\~
+	 * Identificador del formulario se le añadira el prefijo "frm" ("name = frm".$this->sFormNombre)
+	 * Se usa tambien para la variable de sesion que guarda la query SQL, asi se pueden enviar varias querys por pagina, se envia como campo oculto
+	 * Tambien concatenada a "id" de cada elemento del formulario, asi es posible construirlos con los mismos valores de nombre, que se haran distintos al construir el formulario
+	 * Ya que se pasa como valor oculto, posteriormente (en el procesado) puede retirarse si se necesitan los nombres originales de los campos
 	 *
 	 * @var string
 	 * @see getFormNombre(),setFormNombre($formName)
@@ -262,13 +225,13 @@ class formazo{
 	protected $sFormNombre;
 
 	/**
-	 * \~spanish Formulario resultado; asociativo.\~english Result form.\~
-	 * \~spanish El inicio del formulario se llama \~english Start form is \~"$this->aFormulario['frmInicio']", \~spanish el final \~english end form is \~"$this->aFormulario['frmFinal']" \~spanish y los elementos por su nombre; cada elemento contiene un array asociativo, donde (excepto si se indica lo contrario todos los elementos son necesarios para construir un formulario funcional)\~english and each element with his name\~;
-	 * -> "$this->aFormulario['frmBtnSubmit']" \~spanish es el boton de submit\~english submit button\~,
-	 * -> "$this->aFormulario['frmValidar']" \~spanish contiene las validaciones javascript del formulario, debe escribirse en la seccion "head" de la pagina\~english javascript validations\~,
-	 * -> "$this->aFormulario['frmElementos']['nombre_elemento_formulario']['texto']" \~spanish es el titulo que acompana al elemento\~english element title\~,
-	 * -> "$this->aFormulario['frmElementos']['nombre_elemento_formulario']['campo']" \~spanish es el elemento propiamente dicho\~english element tag\~
-	 * -> \~spanish y\~english and\~ "$this->aFormulario['frmElementos']['nombre_elemento_formulario']['file']" \~spanish es el fichero (imagen reducida o referencia a fichero) que acompana a los elementos "file", si existe\~english is the file in "file" elements\~
+	 * Formulario resultado; asociativo
+	 * El inicio del formulario se llama "$this->aFormulario['frmInicio']", el final "$this->aFormulario['frmFinal']" y los elementos por su nombre; cada elemento contiene un array asociativo, donde (excepto si se indica lo contrario todos los elementos son necesarios para construir un formulario funcional);
+	 * -> "$this->aFormulario['frmBtnSubmit']" es el boton de submit,
+	 * -> "$this->aFormulario['frmValidar']" contiene las validaciones javascript del formulario, debe escribirse en la seccion "head" de la pagina,
+	 * -> "$this->aFormulario['frmElementos']['nombre_elemento_formulario']['texto']" es el titulo que acompana al elemento,
+	 * -> "$this->aFormulario['frmElementos']['nombre_elemento_formulario']['campo']" es el elemento propiamente dicho
+	 * -> y "$this->aFormulario['frmElementos']['nombre_elemento_formulario']['file']" es el fichero (imagen reducida o referencia a fichero) que acompana a los elementos "file", si existe
 	 *
 	 * @var array
 	 * @access public
@@ -279,24 +242,22 @@ class formazo{
 	 * Ruta del fichero que se usara como icono para "hints" (mensajes de ayuda de campos)
 	 *
 	 * @var string
-	 * @see formazo::setHintIco($hint)
+	 * @see Formazo::setHintIco($hint)
 	 * @access private
 	 */
 	private $sHintIco;
 
 	/**
-	 * \~spanish Código Javascript creado por las funciones formazo::fDepende() y formazo::fLigado()
-	 * \~english Javascript code created.\~
+	 * Codigo Javascript creado por las funciones Formazo::fDepende() y Formazo::fLigado()
 	 *
 	 * @var array
-	 * @see formazo::getJavaScript();
+	 * @see Formazo::getJavaScript();
 	 * @access private
 	 */
 	private $aJavaScript;
 
 	/**
-	 * \~spanish Tabla donde insertar/actualizar datos
-	 * \~english Database table for querys\~.
+	 * Tabla donde insertar/actualizar datos
 	 *
 	 * @var string
 	 * @access public
@@ -304,29 +265,26 @@ class formazo{
 	public $sQueryTabla;
 
 	/**
-	 * \~spanish Ruta (absoluta o relativa) donde se encuentran los ficheros (para mostrarlos en edicion/borrado).
-	 * \~english Path where upload and view files.\~
+	 * Ruta (absoluta o relativa) donde se encuentran los ficheros (para mostrarlos en edicion/borrado)
 	 *
 	 * @todo controlar si la ruta de los ficheros esta puesta en la base de datos ("file_exists"?)
 	 * @var string
-	 * @see formazo::setRutaFicheros($ruta)
+	 * @see Formazo::setRutaFicheros($ruta)
 	 * @access public
 	 */
 	protected $sRutaFicheros;
 
 	/**
-	 * \~spanish Lista de funciones permitidas para rellenar selects.
-	 * \~english Source functions list for select elements.\~
+	 * Lista de funciones permitidas para rellenar selects
 	 *
 	 * @var array
-	 * @see formazo::setSourceFuncs($funcs)
+	 * @see Formazo::setSourceFuncs($funcs)
 	 * @access protected
 	 */
 	protected $aSourceFuncs;
 
 	/**
-	 * \~spanish Valor (texto) del boton de submit
-	 * \~english Submit button value.\~
+	 * Valor (texto) del boton de submit
 	 *
 	 * @var string
 	 * @access public
@@ -334,11 +292,10 @@ class formazo{
 	public $sSubmit;
 
 	/**
-	 * \~spanish Tiempos consumidos en la generacion del formulario, tanto total como de elementos, ...
-	 * \~english Times used in methods\~
+	 * Tiempos consumidos en la generacion del formulario, tanto total como de elementos, ...
 	 *
 	 * @var array
-	 * @see formazo::getTiempos()
+	 * @see Formazo::getTiempos()
 	 * @access protected
 	 */
 	protected $aTiempos;
@@ -380,11 +337,10 @@ class formazo{
 	}
 
 	/**
-	 * \~spanish Agrupa los elementos y devuelve la cadena total.
-	 * \~english Groups elements and returns result string.\~
+	 * Agrupa los elementos y devuelve la cadena total
 	 *
 	 * @access protected
-	 * @param array $elementos \~spanish Elementos preparados en pintado\~english Ready to paint elements\~
+	 * @param array $elementos Elementos preparados en pintado
 	 * @return string
 	 */
 	protected function agrupaElementos($elementos){
@@ -406,10 +362,10 @@ class formazo{
 	}
 
 	/**
-	 * \~spanish Calcula CRC (16) para los datos pasados\~english Returns CRC (16)\~
+	 * Calcula CRC (16) para los datos pasados
 	 *
 	 * @access private
-	 * @param $data \~spanish Cadena de texto o numero\~english String or number\~
+	 * @param $data Cadena de texto o numero
 	 * @return string
 	 */
 	private function crc16($data){
@@ -423,10 +379,10 @@ class formazo{
 	}
 
 	/**
-	 * \~spanish Crea el formulario a partir del array de campos que se le pasa\~english Creates form with data fields\~.
+	 * Crea el formulario a partir del array de campos que se le pasa
 	 *
 	 * @access public
-	 * @param array $campos \~spanish Campos del formulario\~english Form fields\~
+	 * @param array $campos Campos del formulario
 	 * @return boolean
 	 */
 	public function creaFormulario($campos = array()){
@@ -465,44 +421,44 @@ class formazo{
 			//sin validaciones en borrado
 			if(!empty($this->sSubmit) && $this->sActionHide == 'del') $valor['validacion'] = '';
 
-			//NOTA si cambian los tipos cambiar los que se ignoran en formazo_proc::setCampos()
+			//NOTA si cambian los tipos cambiar los que se ignoran en Formazo_proc::setCampos()
 			switch(strtolower($valor['tipo'])){
 				case 'checkbox':
-					$oElemento = new formazoCheckbox($clave, $valor);
+					$oElemento = new FormazoCheckbox($clave, $valor);
 					break;
 				case 'file':
 					//poner "enctype"
 					if(strpos($this->aFormulario['frmInicio']['campo'], 'enctype') === false)
 						//header('Content-Disposition: form-data; name="frm'.$this->sFormNombre.'"');
 						$this->aFormulario['frmInicio']['campo'] = '<form enctype="multipart/form-data"'.substr($this->aFormulario['frmInicio']['campo'], 5);
-					$oElemento = new formazoFile($clave, $valor);
+					$oElemento = new FormazoFile($clave, $valor);
 					break;
 				case 'group':
-					$oElemento = new formazoGroup($clave, $valor);
+					$oElemento = new FormazoGroup($clave, $valor);
 					break;
 				case 'hidden':
-					$oElemento = new formazoHidden($clave, $valor);
+					$oElemento = new FormazoHidden($clave, $valor);
 					break;
 				case 'multiple': //select_multiple
-					$oElemento = new formazoMultiple($clave, $valor);
+					$oElemento = new FormazoMultiple($clave, $valor);
 					break;
 				case 'password': //text, pero se duplica
-					$oElemento = new formazoPassword($clave, $valor);
+					$oElemento = new FormazoPassword($clave, $valor);
 					break;
 				case 'radio':
-					$oElemento = new formazoRadio($clave, $valor);
+					$oElemento = new FormazoRadio($clave, $valor);
 					break;
 				case 'select': //select_one
-					$oElemento = new formazoSelect($clave, $valor);
+					$oElemento = new FormazoSelect($clave, $valor);
 					break;
 				case 'text':
-					$oElemento = new formazoText($clave, $valor);
+					$oElemento = new FormazoText($clave, $valor);
 					break;
 				case 'textarea':
-					$oElemento = new formazoTextarea($clave, $valor);
+					$oElemento = new FormazoTextarea($clave, $valor);
 					break;
 				default:
-					$this->setError('formazo::creaFormulario', $valor['tipo']);
+					$this->setError('Formazo::creaFormulario', $valor['tipo']);
 					return(false);
 			}
 
@@ -554,7 +510,7 @@ class formazo{
 			$this->aTiempos['elementos'][$clave] = $this->microtimeSeg(true) - $this->aTiempos['elementos'][$clave];
 		}
 		if(empty($this->aFormulario['frmElementos'])){
-			$this->setError('formazo::creaFormulario2');
+			$this->setError('Formazo::creaFormulario2');
 			return(false);
 		}
 
@@ -614,10 +570,10 @@ class formazo{
 	}
 
 	/**
-	 * \~spanish Prepara los datos de la informacion extra de los campos\~english Extra data for fields\~.
+	 * Prepara los datos de la informacion extra de los campos
 	 *
 	 * @access private
-	 * @param string $clave \~spanish Clave del campo\~english Field key\~
+	 * @param string $clave Clave del campo
 	 * @return integer
 	 */
 	private function extra($clave){
@@ -640,11 +596,11 @@ class formazo{
 	}
 
 	/**
-	 * \~spanish Construye el codigo JavaScript para los campos con dependencias\~english Makes JavaScript code for dependant fields\~.
+	 * Construye el codigo JavaScript para los campos con dependencias
 	 *
 	 * @access private
 	 * @since 2011-03-15
-	 * @param string $campo \~spanish Clave del campo\~english Field key\~
+	 * @param string $campo Clave del campo
 	 * @return boolean
 	 */
 	private function fDepende($clave){
@@ -671,16 +627,15 @@ class formazo{
 	}
 
 	/**
-	 * \~spanish Construye el codigo javascript para los campos ligados a otros campos (ej. select que cambian todos sus elementos en funcion del valor de otro select)
+	 * Construye el codigo javascript para los campos ligados a otros campos (ej. select que cambian todos sus elementos en funcion del valor de otro select)
 	 * Si los valores mostrados estan ligados a otro select, las etiquetas de grupo deben ser las mismas que las mostradas en el select del que dependen.
-	 * \~english Makes JavaScript code for linked fields.\~
 	 * ej:
 'select_normal' => array('tipo' => 'select', 'titulo' => 'select: ', 'valores' => array('' => 'ninguno', '0' => 'grupo cero', '1' => 'grupo uno', '2' => 'grupo dos', '3' => 'grupo tres')),
 'select_multiple' => array('tipo' => 'multiple', 'titulo' => 'multiple: ', 'valores' => array('' => array('nada'), '0' => array('0' => 'cero', 'c' => 'calabaza'), '1' => array('1' => 'uno', '1o' => 'primero'), '2' => array('2' => 'dos', '2nd' => 'segundo'), '3' => array('3' => 'tres', 'tr' => 'ternario', '3o' => 'tercero')), 'ligado' => 'select_normal'),
 	 *
 	 * @access private
 	 * @since 2011-01-22
-	 * @param string $campo \~spanish Clave del campo\~english Field key\~
+	 * @param string $campo Clave del campo
 	 * @return boolean
 	 */
 	private function fLigado($clave){
@@ -707,13 +662,12 @@ class formazo{
 	}
 
 	/**
-	 * \~spanish Crea el token de seguridad que se enviara con el formulario.
-	 * \~english Makes security token.\~
+	 * Crea el token de seguridad que se enviara con el formulario
 	 *
 	 * @todo comprobar si ip, sesion y user_agent se establecen correctamente cuando se envia por ajax o se redirecciona el procesado
 	 * @since 2012-09-14
 	 * @access private
-	 * @param boolean $session \~spanish Controla datos relacionados con sesion (true) o no\~english Uses session data (true) or not (false)\~
+	 * @param boolean $session Controla datos relacionados con sesion (true) o no
 	 * @return boolean
 	 */
 	private function generaToken($session = true){
@@ -736,8 +690,7 @@ class formazo{
 	}
 
 	/**
-	 * \~spanish Devuelve los campos que formaran el formulario
-	 * \~english Returns the form fields.\~
+	 * Devuelve los campos que formaran el formulario
 	 *
 	 * @since 2011-10-03
 	 * @access public
@@ -748,13 +701,12 @@ class formazo{
 	}
 
 	/**
-	 * \~spanish Muestra la clase CSS asignada a una clave.
-	 * Si no se pasa ninguna clave se muestran todos.
-	 * \~english Shows CSS class assigned, or all if no key is passed.\~
+	 * Muestra la clase CSS asignada a una clave
+	 * Si no se pasa ninguna clave se muestran todos
 	 *
 	 * @since 2012-12-24
 	 * @access public
-	 * @param $clave \~spanish Clave de la clase CSS, si se omite (o false) muestra el array completo\~english CSS class key\~
+	 * @param $clave Clave de la clase CSS, si se omite (o false) muestra el array completo
 	 * @return string
 	 */
 	public function getCss($clave = false){
@@ -763,8 +715,7 @@ class formazo{
 	}
 
 	/**
-	 * \~spanish Devuelve los errores que se hayan producido.
-	 * \~english Returns errors\~
+	 * Devuelve los errores que se hayan producido
 	 *
 	 * @access public
 	 * @return array
@@ -775,13 +726,12 @@ class formazo{
 	}
 
 	/**
-	 * \~spanish Muestra el texto asignado a un error.
+	 * Muestra el texto asignado a un error
 	 * Si no se pasa ninguna clave se muestran todos.
-	 * \~english Shows error assigned text, or all if no key is passed.\~
 	 *
 	 * @todo mostrar la clave de un texto de mensaje de error (invirtiendo el array y un foreach para buscar coincidencia de texto)
 	 * @access public
-	 * @param $clave \~spanish Clave del mensaje de error, si se omite (o false) muestra el array completo\~english Error message key\~
+	 * @param $clave Clave del mensaje de error, si se omite (o false) muestra el array completo
 	 * @return string
 	 */
 	public function getErrorMensaje($clave = false){
@@ -790,8 +740,7 @@ class formazo{
 	}
 
 	/**
-	 * \~spanish Devuelve el nombre del formulario (sin prefijo "frm").
-	 * \~english Returns form name (without "frm" prefix).\~
+	 * Devuelve el nombre del formulario (sin prefijo "frm")
 	 *
 	 * @since 2011-08-16
 	 * @access public
@@ -802,8 +751,7 @@ class formazo{
 	}
 
 	/**
-	 * \~spanish Devuelve el codigo Javascript creado durante el procesado de los campos.
-	 * \~english Returns Javascript code needed by some fields.\~
+	 * Devuelve el codigo Javascript creado durante el procesado de los campos
 	 *
 	 * @since 2011-08-24
 	 * @access public
@@ -837,13 +785,12 @@ class formazo{
 	}
 
 	/**
-	 * \~spanish Muestra el texto asignado a un mensaje o fragmento HTML.
-	 * Si no se pasa ninguna clave se muestra la lista de textos visibles por los usuarios finales usados en funciones JavaScript y HTML.
-	 * \~english Shows text assigend to some HTML/JavaScript fragment.\~
+	 * Muestra el texto asignado a un mensaje o fragmento HTML
+	 * Si no se pasa ninguna clave se muestra la lista de textos visibles por los usuarios finales usados en funciones JavaScript y HTML
 	 *
 	 * @todo mostrar la clave de un texto de mensaje de error (invirtiendo el array y un foreach para buscar coincidencia de texto)
 	 * @access public
-	 * @param $clave \~spanish Clave del mensaje\~english Message key\~
+	 * @param $clave Clave del mensaje
 	 * @return string
 	 */
 	public function getMetodosMensaje($clave = false){
@@ -852,8 +799,7 @@ class formazo{
 	}
 
 	/**
-	 * \~spanish Muestra los tiempos consumidos en la generacion del formulario, elementos, etc.
-	 * \~english Shows times used.\~
+	 * Muestra los tiempos consumidos en la generacion del formulario, elementos, etc
 	 *
 	 * @since 20110720
 	 * @access public
@@ -864,8 +810,7 @@ class formazo{
 	}
 
 	/**
-	 * \~spanish Devuelve microtime en segundos
-	 * \~english Returns microtime in seconds\~
+	 * Devuelve microtime en segundos
 	 *
 	 * @access protected
 	 * @param boolean $float Si true devuelve un numero flotante, si false devuelve formateado "legible para humanos" (parecido a ISO 8601)
@@ -879,13 +824,12 @@ class formazo{
 	}
 
 	/**
-	 * \~spanish Pinta el formulario. Recomendable sobreescribirlo en clases hijas destinadas a dar mejor aspecto al formulario.
-	 * \~english Paint form.\~
+	 * Pinta el formulario. Recomendable sobreescribirlo en clases hijas destinadas a dar mejor aspecto al formulario
 	 *
 	 * @todo pintado de elementos agrupados (group) y su contenido (otros elementos)
 	 * @access public
-	 * @param array $campos \~spanish Campos del formulario\~english Form fields\~
-	 * @param boolean $echo \~spanish Devuelve el formulario (false) o lo escribe (true, por defecto)\~english Returns (false) or echoes (true, defalt) the form\~
+	 * @param array $campos Campos del formulario
+	 * @param boolean $echo Devuelve el formulario (false) o lo escribe (true, por defecto)
 	 * @return string
 	 */
 	public function pintaFormulario($campos = array(), $echo = true){
@@ -941,12 +885,11 @@ class formazo{
 	}
 
 	/**
-	 *\~spanish Asigna la accion del formulario
-	 *\~english Assign form action\~
+	 * Asigna la accion del formulario
 	 *
 	 * @since 2011-10-19
 	 * @access public
-	 * @param string $sActionHide \~spanish Accion del formulario\~english Form action\~
+	 * @param string $sActionHide Accion del formulario
 	 * @return boolean
 	 */
 	public function setActionHide($sActionHide = false){
@@ -967,12 +910,11 @@ class formazo{
 	}
 
 	/**
-	 * \~spanish Recoge y prepara los campos que formaran el formulario
-	 * \~english Sets the form fields.\~
+	 * Recoge y prepara los campos que formaran el formulario
 	 *
 	 * @since 2011-07-20
 	 * @access public
-	 * @param array $campos \~spanish Array (o texto XML) con los campos que formaran el formulario\~english Array or XML string with form fields\~
+	 * @param array $campos Array (o texto XML) con los campos que formaran el formulario
 	 * @return boolean
 	 */
 	public function setCampos($campos = array()){
@@ -1013,7 +955,7 @@ class formazo{
 				if(isset($valor['tipo'])) $this->aCampos[$clave] = $valor; //evita procesar campos dedicados exclusivamente al pintado de listados
 			}
 		}
-		else{ //vacio, origen desconocido o ya asignado en formazo::setCampos()
+		else{ //vacio, origen desconocido o ya asignado en Formazo::setCampos()
 			if(empty($this->aCampos)){
 				$this->setError(__METHOD__.'_2');
 				return(false);
@@ -1066,13 +1008,12 @@ class formazo{
 	}
 
 	/**
-	 * \~spanish Asigna clases CSS.
-	 * \~english Sets CSS classes.\~
+	 * Asigna clases CSS
 	 *
 	 * @since 201-12-24
 	 * @access public
-	 * @param mixed $clave \~spanish Clave del array CSS; array completo o false para valores por defecto.\~english CSS array key; complete array or false for defaults.\~
-	 * @param mixed $clave \~spanish Clase CSS para la clave.\~english CSS class.\~
+	 * @param mixed $clave Clave del array CSS; array completo o false para valores por defecto
+	 * @param mixed $clave Clase CSS para la clave
 	 * @return boolean
 	 */
 	protected function setCss($clave = false, $clase = false){
@@ -1107,8 +1048,7 @@ class formazo{
 	}
 
 	/**
-	 * \~spanish Guarda los errores que se hayan producido.
-	 * \~english Saves errors that have occurred.\~
+	 * Guarda los errores que se hayan producido
 	 *
 	 * @access protected
 	 * @return string
@@ -1126,14 +1066,13 @@ class formazo{
 	}
 
 	/**
-	 * \~spanish Cambia mensajes de error (su texto).
-	 * Util, por ejemplo, para traducciones.
-	 * Si clave igual a false se reinicializan los mensajes.
-	 * \~english Changes error messages. Needed for translations.\~
+	 * Cambia mensajes de error (su texto)
+	 * Util, por ejemplo, para traducciones
+	 * Si clave igual a false se reinicializan los mensajes
 	 *
 	 * @access public
-	 * @param mixed $clave \~spanish Clave del mensaje de error, o un array con todos los mensajes de error (array('clave' => 'mensaje de error',[...]);)\~english Error message key or array with all error messages (array('key' => 'error message',[...]);)\~
-	 * @param string $valor \~spanish Nuevo texto para el mensaje de error\~english New error message\~
+	 * @param mixed $clave Clave del mensaje de error, o un array con todos los mensajes de error (array('clave' => 'mensaje de error',[...]);)
+	 * @param string $valor Nuevo texto para el mensaje de error
 	 * @return boolean
 	 */
 	public function setErrorMensaje($clave = false, $valor = false){
@@ -1141,14 +1080,14 @@ class formazo{
 			//TODO definir constantes de tipos de error para usar trigger_error() ademas de esto
 			//TODO se pierden los mensajes iniciales de las clases herederas
 			$this->aErrorMensajes = array(
-			'formazo::creaFormulario' => 'Tipo de elemento ("%s") no reconocido.',
-			'formazo::creaFormulario_2' => 'No se han podido procesar los campos.',
-			'formazo::setCampos' => 'Error XML: %s',
-			'formazo::setCampos_2' => 'No se puede crear un formulario sin campos.',
-			'formazoElementos::elemento' => 'Tipo de validación (%s) no reconocido.',
-			'formazoPassword::elemento' => 'Tipo de validación (%s) no reconocido.',
-			'formazoText::elemento' => 'Tipo de validación (%s) no reconocido.',
-			'formazoTextarea::elemento' => 'Tipo de validación (%s) no reconocido.'
+			'Formazo::creaFormulario' => 'Tipo de elemento ("%s") no reconocido.',
+			'Formazo::creaFormulario_2' => 'No se han podido procesar los campos.',
+			'Formazo::setCampos' => 'Error XML: %s',
+			'Formazo::setCampos_2' => 'No se puede crear un formulario sin campos.',
+			'FormazoElementos::elemento' => 'Tipo de validación (%s) no reconocido.',
+			'FormazoPassword::elemento' => 'Tipo de validación (%s) no reconocido.',
+			'FormazoText::elemento' => 'Tipo de validación (%s) no reconocido.',
+			'FormazoTextarea::elemento' => 'Tipo de validación (%s) no reconocido.'
 			);
 
 			return(true);
@@ -1166,12 +1105,11 @@ class formazo{
 	}
 
 	/**
-	 * \~spanish Asigna el nombre del formulario (sin "frm").
-	 * \~english Sets form name (without "frm").\~
+	 * Asigna el nombre del formulario (sin "frm")
 	 *
 	 * @since 2011-08-16
 	 * @access public
-	 * @param string $formName \~spanish Parte variable del nombre de formulario\~english Form name variable part\~
+	 * @param string $formName Parte variable del nombre de formulario
 	 * @return string
 	 */
 	public function setFormNombre($formName = ''){
@@ -1186,8 +1124,7 @@ class formazo{
 	}
 
 	/**
-	 *\~spanish Asigna el fichero de imagen que se usara como icono de "hint" (texto de ayuda de los campos)
-	 *\~english \~
+	 * Asigna el fichero de imagen que se usara como icono de "hint" (texto de ayuda de los campos)
 	 *
 	 * @since 2012-03-28
 	 * @access public
@@ -1201,31 +1138,30 @@ class formazo{
 	}
 
 	/**
-	 * \~spanish Cambia los actuales textos visibles por los usuarios finales usados en funciones javascript y html
+	 * Cambia los actuales textos visibles por los usuarios finales usados en funciones javascript y html
 	 * Util, por ejemplo, para traducciones.
 	 * Si clave igual a false se reinicializan los mensajes.
-	 * \~english Changes HTML/JavaScript visible text. Needed for translations.\~
 	 *
 	 * @access public
-	 * @param mixed $clave \~spanish Clave del mensaje, o un array con todos los mensajes {array('clave' => 'mensaje',[...]);}\~english Message key or array with all messages\~
-	 * @param string $valor \~spanish Nuevo texto para el mensaje\~english New message text\~
+	 * @param mixed $clave Clave del mensaje, o un array con todos los mensajes {array('clave' => 'mensaje',[...]);}
+	 * @param string $valor Nuevo texto para el mensaje
 	 * @return boolean
 	 */
 	public function setMetodosMensaje($clave = false, $valor = false){
 		if($clave === false){ //reinicio de mensajes
 			//TODO se pierden los mensajes iniciales de las clases herederas
 			$this->aMetodosMensajes = array(
-			'formazo::creaFormulario_1' => 'Esta accion no podrá deshacerse.\\n¿Desea continuar?',
-			'formazo::creaFormulario_2' => 'Esta accion no podrá deshacerse.\\n¿Desea continuar?',
-			'formazo::creaFormulario_3' => 'Limpiar valores',
-			'formazo::creaFormulario_4' => 'Cancelar',
-			'formazo::creaFormulario_5' => 'Si ha realizado cambios estos se perder\u00e1n.',
-			'formazo::creaFormulario_6' => 'Si ha realizado cambios estos se perder\u00e1n.',
-			'formazoFile::elemento_1' => 'Tama&ntilde;o m&aacute;ximo (bytes): ',
-			'formazoFile::elemento_2' => 'Fichero actual: ',
-			'formazoFile::elemento_3' => 'Borra fichero',
-			'formazoFile::elemento_4' => 'Actualice para completar.',
-			'formazoPassword::elemento' => 'Confirme '
+			'Formazo::creaFormulario_1' => 'Esta accion no podrá deshacerse.\\n¿Desea continuar?',
+			'Formazo::creaFormulario_2' => 'Esta accion no podrá deshacerse.\\n¿Desea continuar?',
+			'Formazo::creaFormulario_3' => 'Limpiar valores',
+			'Formazo::creaFormulario_4' => 'Cancelar',
+			'Formazo::creaFormulario_5' => 'Si ha realizado cambios estos se perder\u00e1n.',
+			'Formazo::creaFormulario_6' => 'Si ha realizado cambios estos se perder\u00e1n.',
+			'FormazoFile::elemento_1' => 'Tama&ntilde;o m&aacute;ximo (bytes): ',
+			'FormazoFile::elemento_2' => 'Fichero actual: ',
+			'FormazoFile::elemento_3' => 'Borra fichero',
+			'FormazoFile::elemento_4' => 'Actualice para completar.',
+			'FormazoPassword::elemento' => 'Confirme '
 			);
 			return(true);
 		}
@@ -1242,13 +1178,12 @@ class formazo{
 	}
 
 	/**
-	 *\~spanish Asigna la ruta donde subir ficheros.
-	 *\~english Path to uploaded files.\~
+	 * Asigna la ruta donde subir ficheros
 	 *
 	 * @todo comprobar si la ruta proporcionada es escribible, y accion en caso contrario
 	 * @since 2011-10-19
 	 * @access public
-	 * @param string $sRutaFicheros \~spanish Ruta donde subir ficheros\~english Path to uploaded files\~
+	 * @param string $sRutaFicheros Ruta donde subir ficheros
 	 * @return boolean
 	 */
 	public function setRutaFicheros($sRutaFicheros = false){
@@ -1257,12 +1192,11 @@ class formazo{
 	}
 
 	/**
-	 * \~spanish Asigna la lista de funciones que se permitiran para rellenar selects que tengan 'dataSource'.
-	 * $funcs sera un array con las funciones permitidas, 'Etiqueta visible para el usuario' => 'nombre_de_la_funcion' o solo 'nombre_de_la_funcion' (que sera tambien usada como etiqueta).
-	 * \~english Function list for selects with "dataSource".\~
+	 * Asigna la lista de funciones que se permitiran para rellenar selects que tengan 'dataSource'
+	 * $funcs sera un array con las funciones permitidas, 'Etiqueta visible para el usuario' => 'nombre_de_la_funcion' o solo 'nombre_de_la_funcion' (que sera tambien usada como etiqueta)
 	 *
 	 * @access public
-	 * @param array $funcs \~spanish Lista de funciones permitidas\~english Functions list\~
+	 * @param array $funcs Lista de funciones permitidas
 	 * @return boolean
 	 */
 	public function setSourceFuncs($funcs = false){
@@ -1280,12 +1214,11 @@ class formazo{
 	}
 
 	/**
-	 * \~spanish Convierte un documento XML con los elementos del formulario en el array normalizado
-	 * \~english Converts XML in array needed for this class\~
+	 * Convierte un documento XML con los elementos del formulario en el array normalizado
 	 *
 	 * @since 2011-07-07
 	 * @access private
-	 * @param object $xml \~spanish Objeto SimpleXML\~english SimpleXML object\~
+	 * @param object $xml Objeto SimpleXML
 	 * @return boolean
 	 */
 	private function xmlForm($xml, $group = false){
@@ -1373,21 +1306,19 @@ class formazo{
 //* * * * * * * * * * * * * * * * * * *
 
 /**
- * \~spanish Clase abstracta de clases para elementos del formulario.
- * \~english Abstract class for elements form.\~
+ * Clase abstracta de clases para elementos del formulario
  *
  * @todo un valor mas que guarde el valor actual del campo?
  * @since 2011-06-22
  */
-abstract class formazoElementos {
+abstract class FormazoElementos {
 	protected $sClave; //Nombre del campo
 
 	/**
-	 * \~spanish Caracteristicas de los elementos; de cual depende, titulo, valor, etc.
-	 * \~english Element definition.\~
+	 * Caracteristicas de los elementos; de cual depende, titulo, valor, etc
 	 *
 	 * @var array
-	 * @see formazoElementos::setDatos($datos)
+	 * @see FormazoElementos::setDatos($datos)
 	 * @access private
 	 */
 	protected $aDatos;
@@ -1398,11 +1329,10 @@ abstract class formazoElementos {
 	protected $sFormNombre; //Nombre del formulario
 
 	/**
-	 * \~spanish Lista de funciones permitidas para rellenar selects.
-	 * \~english Function list availables for fill selects.\~
+	 * Lista de funciones permitidas para rellenar selects
 	 *
 	 * @var array
-	 * @see formazoElementos::setSourceFuncs($funcs)
+	 * @see FormazoElementos::setSourceFuncs($funcs)
 	 * @access protected
 	 */
 	protected $aSourceFuncs;
@@ -1411,20 +1341,19 @@ abstract class formazoElementos {
 	protected $sRutaFicheros; //Ruta donde subir ficheros
 
 	/**
-	 * \~spanish Lista de textos visibles por los usuarios finales usados en html.
-	 * \~english Visible text in HTML.\~
+	 * Lista de textos visibles por los usuarios finales usados en html
 	 *
 	 * @var array
-	 * @see formazoElementos::setMetodosMensajes($clave, $valor),formazoElementos::getMetodosMensajes($clave)
+	 * @see FormazoElementos::setMetodosMensajes($clave, $valor),FormazoElementos::getMetodosMensajes($clave)
 	 * @access private
 	 */
 	private $aMetodosMensajes;
 
 	/**
-	 * \~spanish Mensajes de error\~english Errors\~
+	 * Mensajes de error
 	 *
 	 * @var string
-	 * @see formazoElementos::getError(),formazoElementos::setError()
+	 * @see FormazoElementos::getError(),FormazoElementos::setError()
 	 * @access public
 	 */
 	protected $aError;
@@ -1433,18 +1362,17 @@ abstract class formazoElementos {
 	 * Icono de los mensajes de ayuda de los campos
 	 *
 	 * @var string
-	 * @see formazoElementos::setHintIco()
+	 * @see FormazoElementos::setHintIco()
 	 * @access protected
 	 */
 	protected $sHintIco;
 
 	/**
-	 * \~spanish Mensajes de error la clase, a fin de que puedan ser traducidos/modificados.
+	 * Mensajes de error la clase, a fin de que puedan ser traducidos/modificados
 	 * Las secuencias %s deben dejarse ya que corresponden a variables que seran luego sustituidas, si es necesario poner un % se pondra como %%
-	 * \~english Error messages, needed for translation.\~
 	 *
 	 * @var array
-	 * @see formazoElementos::setErrorMensaje($clave, $valor),formazoElementos::getErrorMensaje($clave)
+	 * @see FormazoElementos::setErrorMensaje($clave, $valor),FormazoElementos::getErrorMensaje($clave)
 	 * @access public
 	 */
 	protected $aErrorMensajes;
@@ -1470,8 +1398,7 @@ abstract class formazoElementos {
 	}
 
 	/**
-	 *\~spanish Elemento del formulario.
-	 *\~english Form element.\~
+	 * Elemento del formulario
 	 *
 	 * @since 2011-06-24
 	 * @access protected
@@ -1481,8 +1408,7 @@ abstract class formazoElementos {
 	abstract protected function elemento();
 
 	/**
-	 *\~spanish Devuelve el elemento formado, validaciones, etc.
-	 *\~english Return processed element.\~
+	 * Devuelve el elemento formado, validaciones, etc
 	 *
 	 * @since 2011-06-22
 	 * @access public
@@ -1493,8 +1419,7 @@ abstract class formazoElementos {
 	}
 
 	/**
-	 * \~spanish Devuelve los errores que se hayan producido.
-	 * \~english Returns errors.\~
+	 * Devuelve los errores que se hayan producido
 	 *
 	 * @access public
 	 * @return array
@@ -1505,13 +1430,12 @@ abstract class formazoElementos {
 	}
 
 	/**
-	 * \~spanish Muestra el texto asignado a un error.
+	 * Muestra el texto asignado a un error
 	 * Si no se pasa ninguna clave se muestran todos.
-	 * \~english Shows error text.\~
 	 *
 	 * @todo mostrar la clave de un texto de mensaje de error (invirtiendo el array y un foreach para buscar coincidencia de texto)
 	 * @access public
-	 * @param string $clave \~spanish Clave del mensaje de error, si se omite (o false) muestra el array completo\~english Error message key\~
+	 * @param string $clave Clave del mensaje de error, si se omite (o false) muestra el array completo
 	 * @return string
 	 */
 	public function getErrorMensaje($clave = false){
@@ -1520,13 +1444,12 @@ abstract class formazoElementos {
 	}
 
 	/**
-	 * \~spanish Muestra el texto asignado a un fragmento HTML.
-	 * Si no se pasa ninguna clave se muestra la lista de textos visibles por los usuarios finales usados en funciones JavaScript y HTML.
-	 * \~english Shows HTML visible text.\~
+	 * Muestra el texto asignado a un fragmento HTML
+	 * Si no se pasa ninguna clave se muestra la lista de textos visibles por los usuarios finales usados en funciones JavaScript y HTML
 	 *
 	 * @todo mostrar la clave de un texto de mensaje de error (invirtiendo el array y un foreach para buscar coincidencia de texto)
 	 * @access public
-	 * @param string $clave \~spanish Clave del mensaje\~english Message key\~
+	 * @param string $clave Clave del mensaje
 	 * @return string
 	 */
 	public function getMetodosMensaje($clave = false){
@@ -1535,8 +1458,7 @@ abstract class formazoElementos {
 	}
 
 	/**
-	 * \~spanish Transforma la notación "php.ini" para números (como 2M) en enteros (2 * 1024 * 1024, en este caso).
-	 * \~english This function transforms the "php.ini" notation for numbers (like '2M') to an integer (2*1024*1024 in this case).\~
+	 * Transforma la notación "php.ini" para números (como 2M) en enteros (2 * 1024 * 1024, en este caso)
 	 *
 	 * @access protected
 	 * @param string $v Num
@@ -1562,12 +1484,11 @@ abstract class formazoElementos {
 	}
 
 	/**
-	 *\~spanish Recoge la accion del formulario
-	 *\~english Form action\~
+	 * Recoge la accion del formulario
 	 *
 	 * @since 2011-08-25
 	 * @access public
-	 * @param string $sActionHide \~spanish Accion del formulario\~english Form action\~
+	 * @param string $sActionHide Accion del formulario
 	 * @return boolean
 	 */
 	public function setActionHide($sActionHide = false){
@@ -1577,12 +1498,11 @@ abstract class formazoElementos {
 	}
 
 	/**
-	 *\~spanish Recoge clases CSS.
-	 *\~english CSS classes.\~
+	 * Recoge clases CSS
 	 *
 	 * @since 2011-06-24
 	 * @access public
-	 * @param array $aCss \~spanish Clases CSS a aplicar\~english CSS classes\~
+	 * @param array $aCss Clases CSS a aplicar
 	 * @return boolean
 	 */
 	public function setCss($aCss = array()){
@@ -1616,8 +1536,7 @@ abstract class formazoElementos {
 	}
 
 	/**
-	 * \~spanish Guarda los errores que se hayan producido.
-	 * \~english Saves errors that have occurred.\~
+	 * Guarda los errores que se hayan producido
 	 *
 	 * @access protected
 	 * @return string
@@ -1636,14 +1555,13 @@ abstract class formazoElementos {
 	}
 
 	/**
-	 * \~spanish Cambia mensajes de error (su texto).
-	 * Util, por ejemplo, para traducciones.
-	 * Si clave igual a false se reinicializan los mensajes.
-	 * \~english Changes error messages, needed for translations.\~
+	 * Cambia mensajes de error (su texto)
+	 * Util, por ejemplo, para traducciones
+	 * Si clave igual a false se reinicializan los mensajes
 	 *
 	 * @access public
-	 * @param mixed $clave \~spanish Clave del mensaje de error, o un array con todos los mensajes de error (array('clave' => 'mensaje de error',[...]);)\~english Error message key or array with all error messages\~
-	 * @param string $valor \~spanish Nuevo texto para el mensaje de error\~english New error text\~
+	 * @param mixed $clave Clave del mensaje de error, o un array con todos los mensajes de error (array('clave' => 'mensaje de error',[...]);)
+	 * @param string $valor Nuevo texto para el mensaje de error
 	 * @return boolean
 	 */
 	public function setErrorMensaje($clave = false, $valor = false){
@@ -1666,12 +1584,11 @@ abstract class formazoElementos {
 	}
 
 	/**
-	 *\~spanish Recoge los extras del elemento.
-	 *\~english Element extras.\~
+	 * Recoge los extras del elemento
 	 *
 	 * @since 2011-06-24
 	 * @access public
-	 * @param array $aExtra \~spanish Extras de los campos\~english Element extras\~
+	 * @param array $aExtra Extras de los campos
 	 * @return boolean
 	 */
 	public function setExtra($aExtra = array()){
@@ -1681,12 +1598,11 @@ abstract class formazoElementos {
 	}
 
 	/**
-	 *\~spanish Recoge el nombre del formulario
-	 *\~english Form name\~
+	 * Recoge el nombre del formulario
 	 *
 	 * @since 2011-06-24
 	 * @access public
-	 * @param string $sFormNombre \~spanish Nombre del formulario\~english Form name\~
+	 * @param string $sFormNombre Nombre del formulario
 	 * @return boolean
 	 */
 	public function setFormNombre($sFormNombre = ''){
@@ -1696,8 +1612,7 @@ abstract class formazoElementos {
 	}
 
 	/**
-	 *\~spanish Asigna el fichero de imagen que se usara como icono de "hint" (texto de ayuda de los campos)
-	 *\~english \~
+	 * Asigna el fichero de imagen que se usara como icono de "hint" (texto de ayuda de los campos)
 	 *
 	 * @since 2012-03-28
 	 * @access public
@@ -1711,14 +1626,13 @@ abstract class formazoElementos {
 	}
 
 	/**
-	 * \~spanish Actuales textos visibles por los usuarios finales usados en funciones JavaScript y HTML.
-	 * Util, por ejemplo, para traducciones.
-	 * Si clave igual a false se reinicializan los mensajes.
-	 * \~english Messages text in HTML fragments.\~
+	 * Actuales textos visibles por los usuarios finales usados en funciones JavaScript y HTML
+	 * Util, por ejemplo, para traducciones
+	 * Si clave igual a false se reinicializan los mensajes
 	 *
 	 * @access public
-	 * @param mixed $clave \~spanish Clave del mensaje, o un array con todos los mensajes {array('clave' => 'mensaje',[...]);}\~english Message key or array with all messages\~
-	 * @param string $valor \~spanish Nuevo texto para el mensaje\~english New text\~
+	 * @param mixed $clave Clave del mensaje, o un array con todos los mensajes {array('clave' => 'mensaje',[...]);}
+	 * @param string $valor Nuevo texto para el mensaje
 	 * @return boolean
 	 */
 	public function setMetodosMensaje($clave = false, $valor = false){
@@ -1740,12 +1654,11 @@ abstract class formazoElementos {
 	}
 
 	/**
-	 *\~spanish Asigna la ruta de subida de ficheros
-	 *\~english Upload path\~
+	 * Asigna la ruta de subida de ficheros
 	 *
 	 * @since 2011-10-19
 	 * @access public
-	 * @param string $sRutaFicheros \~spanish Ruta de subida de ficheros, por defecto el directorio actual\~english Upload path, default to this directory\~
+	 * @param string $sRutaFicheros Ruta de subida de ficheros, por defecto el directorio actual
 	 * @return boolean
 	 */
 	public function setRutaFicheros($sRutaFicheros = ''){
@@ -1754,11 +1667,10 @@ abstract class formazoElementos {
 	}
 
 	/**
-	 * \~spanish Asigna la lista de funciones que se permitiran para rellenar selects que tengan 'dataSource'.
-	 * \~english Functions list to fill selects.\~
+	 * Asigna la lista de funciones que se permitiran para rellenar selects que tengan 'dataSource'
 	 *
 	 * @access protected
-	 * @param array $funcs \~spanish Lista de funciones permitidas\~english Functions list\~
+	 * @param array $funcs Lista de funciones permitidas
 	 * @return boolean
 	 */
 	public function setSourceFuncs($funcs = false){
@@ -1769,12 +1681,11 @@ abstract class formazoElementos {
 	}
 
 	/**
-	 *\~spanish Recoge el indice de tabulacion
-	 *\~english Tab index\~
+	 * Recoge el indice de tabulacion
 	 *
 	 * @since 2011-06-24
 	 * @access public
-	 * @param integer $iTabIndex \~spanish Indice de tabulacion\~english Tab index\~
+	 * @param integer $iTabIndex Indice de tabulacion
 	 * @return boolean
 	 */
 	public function setTabIndex($iTabIndex = 0){
@@ -1786,13 +1697,12 @@ abstract class formazoElementos {
 }
 
 /**
- * \~spanish Campo 'input type="checkbox"'.
- * \~english Checkbox field.\~
+ * Campo 'input type="checkbox"'
  *
  * @since 2011-06-24
  * @todo implementar estado "indeterminado" (solo se puede controlar con javascript, y envia el mismo valor que inactivo): document.getElementById('checkbox').indeterminate = true;
  */
-class formazoCheckbox extends formazoElementos {
+class FormazoCheckbox extends FormazoElementos {
 	function __construct($clave, $valor){
 		parent::__construct($clave, $valor); //constructor de la clase padre
 	}
@@ -1826,12 +1736,11 @@ class formazoCheckbox extends formazoElementos {
 }
 
 /**
- * \~spanish Campo 'input type="file"'.
- * \~english File field.\~
+ * Campo 'input type="file"'
  *
  * @since 2011-06-24
  */
-class formazoFile extends formazoElementos {
+class FormazoFile extends FormazoElementos {
 	function __construct($clave, $valor){
 		parent::__construct($clave, $valor); //constructor de la clase padre
 	}
@@ -1895,13 +1804,12 @@ class formazoFile extends formazoElementos {
 }
 
 /**
- * \~spanish Agrupacion de elementos en 'fieldset'.
- * Observese que "$aElemento['texto']" es la apertura del grupo (apertura de div) y "$aElemento['campo']" es el cierre del grupo.
- * \~english Form groups in 'fieldset'.\~
+ * Agrupacion de elementos en 'fieldset'
+ * Observese que "$aElemento['texto']" es la apertura del grupo (apertura de div) y "$aElemento['campo']" es el cierre del grupo
  *
  * @since 2011-06-22
  */
-class formazoGroup extends formazoElementos {
+class FormazoGroup extends FormazoElementos {
 	function __construct($clave, $valor){
 		parent::__construct($clave, $valor); //constructor de la clase padre
 	}
@@ -1931,12 +1839,11 @@ class formazoGroup extends formazoElementos {
 }
 
 /**
- * \~spanish Campo 'input type="hidden"'.
- * \~english Hidden field.\~
+ * Campo 'input type="hidden"'
  *
  * @since 2011-06-22
  */
-class formazoHidden extends formazoElementos {
+class FormazoHidden extends FormazoElementos {
 	function __construct($clave, $valor){
 		parent::__construct($clave, $valor); //constructor de la clase padre
 	}
@@ -1952,15 +1859,14 @@ class formazoHidden extends formazoElementos {
 }
 
 /**
- * \~spanish Campo 'select' multiple,
- * Los valores seleccionados han de ser una lista separada por comas.
- * ej. valores con grupos: 'valores' => array('grupo 1' => array('valor 1' => 'texto 1', 'valor 2' => 'texto 2', 'valor 3' => 'texto 3'), 'grupo 2' => array('valor 4' => 'texto 4', 'valor 5' => 'texto 5')).
- * \~english Select multiple field.\~
+ * Campo 'select' multiple,
+ * Los valores seleccionados han de ser una lista separada por comas
+ * ej. valores con grupos: 'valores' => array('grupo 1' => array('valor 1' => 'texto 1', 'valor 2' => 'texto 2', 'valor 3' => 'texto 3'), 'grupo 2' => array('valor 4' => 'texto 4', 'valor 5' => 'texto 5'))
  *
  * @todo el nombre del campo acaba en "[]" para que PHP pueda recoger todos los valores enviados, pero esto da problemas de validacion; buscar otro sistema, quizas añadiendo [] con javascript antes de enviar el formulario?
  * @since 2011-06-22
  */
-class formazoMultiple extends formazoElementos {
+class FormazoMultiple extends FormazoElementos {
 	function __construct($clave, $valor){
 		parent::__construct($clave, $valor); //constructor de la clase padre
 	}
@@ -2038,12 +1944,11 @@ class formazoMultiple extends formazoElementos {
 }
 
 /**
- * \~spanish Campo 'input type="password"'.
- * \~english Password field.\~
+ * Campo 'input type="password"'
  *
  * @since 2011-06-22
  */
-class formazoPassword extends formazoElementos {
+class FormazoPassword extends FormazoElementos {
 	function __construct($clave, $valor){
 		parent::__construct($clave, $valor); //constructor de la clase padre
 	}
@@ -2082,12 +1987,11 @@ class formazoPassword extends formazoElementos {
 }
 
 /**
- * \~spanish Campo 'input type="radio"'.
- * \~english Radio field.\~
+ * Campo 'input type="radio"'
  *
  * @since 2011-06-22
  */
-class formazoRadio extends formazoElementos {
+class FormazoRadio extends FormazoElementos {
 	function __construct($clave, $valor){
 		parent::__construct($clave, $valor); //constructor de la clase padre
 	}
@@ -2131,13 +2035,12 @@ class formazoRadio extends formazoElementos {
 }
 
 /**
- * \~spanish Campo 'select'.
+ * Campo 'select'
  * ej. valores con grupos: 'valores' => array('grupo 1' => array('valor 1' => 'texto 1', 'valor 2' => 'texto 2', 'valor 3' => 'texto 3'), 'grupo 2' => array('valor 4' => 'texto 4', 'valor 5' => 'texto 5')).
- * \~english Select field\~
  *
  * @since 2011-06-22
  */
-class formazoSelect extends formazoElementos {
+class FormazoSelect extends FormazoElementos {
 	function __construct($clave, $valor){
 		parent::__construct($clave, $valor); //constructor de la clase padre
 	}
@@ -2161,7 +2064,7 @@ class formazoSelect extends formazoElementos {
 				break;
 			default:
 				//error, el lenguaje de programacion deberia ser uno de los anteriores
-				//eso debe estar controlado en formazo::setDatos()
+				//eso debe estar controlado en Formazo::setDatos()
 		}*/
 
 		$aElemento = $aCssTag = array();
@@ -2224,12 +2127,11 @@ class formazoSelect extends formazoElementos {
 }
 
 /**
- * \~spanish Campo 'input type="text"'.
- * \~english Text field.\~
+ * Campo 'input type="text"'
  *
  * @since 2011-06-22
  */
-class formazoText extends formazoElementos {
+class FormazoText extends FormazoElementos {
 	function __construct($clave, $valor){
 		parent::__construct($clave, $valor); //constructor de la clase padre
 	}
@@ -2269,12 +2171,11 @@ class formazoText extends formazoElementos {
 }
 
 /**
- * \~spanish Campo 'textarea'.
- * \~english Textarea field.\~
+ * Campo 'textarea'
  *
  * @since 2011-06-22
  */
-class formazoTextarea extends formazoElementos {
+class FormazoTextarea extends FormazoElementos {
 	function __construct($clave, $valor){
 		parent::__construct($clave, $valor); //constructor de la clase padre
 
@@ -2308,23 +2209,3 @@ class formazoTextarea extends formazoElementos {
 		return($aElemento);
 	}
 }
-
-
-/*
- * Two simple functions for encrypting and decrypting with RIJNDAEL 256
-//example
-echo RIJNDAEL_decrypt(RIJNDAEL_encrypt('Her name was lola!'));
- */
-/*function RIJNDAEL_encrypt($text){
-	$iv_size = mcrypt_get_iv_size(MCRYPT_RIJNDAEL_256, MCRYPT_MODE_ECB);
-	$iv = mcrypt_create_iv($iv_size, MCRYPT_RAND);
-	$key = "This is a very secret key";
-	return base64_encode(mcrypt_encrypt(MCRYPT_RIJNDAEL_256, $key, $text, MCRYPT_MODE_ECB, $iv));
-}
-function RIJNDAEL_decrypt($text){
-	$iv_size = mcrypt_get_iv_size(MCRYPT_RIJNDAEL_256, MCRYPT_MODE_ECB);
-	$iv = mcrypt_create_iv($iv_size, MCRYPT_RAND);
-	$key = "This is a very secret key";
-	//I used trim to remove trailing spaces
-	return trim(mcrypt_decrypt(MCRYPT_RIJNDAEL_256, $key, base64_decode($text), MCRYPT_MODE_ECB, $iv));
-}*/

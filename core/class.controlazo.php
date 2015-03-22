@@ -150,7 +150,7 @@ class Controlazo {
 	 *
 	 * @param string $plantilla Ruta y nombre de la plantilla a cargar
 	 */
-	protected function pintaPagina($plantilla = false){
+	public function pintaPagina($plantilla = false){
 		if(!empty($this->aDatos)){
 			foreach($this->aDatos as $clave => $valor){
 				$$clave = $valor; //cada clave del array de datos se podra usar como una variable directa en la plantilla, igual que los contenidos obtenidos del modulo (abajo, $sContenidos)

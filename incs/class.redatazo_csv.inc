@@ -106,6 +106,8 @@ class Redatazo_csv implements iRedatazo {
 		$this->sError = false;
 
 		$this->aCampos = array();
+
+		$this->conectar();
 	}
 
 	/*function __destruct(){
@@ -113,19 +115,14 @@ class Redatazo_csv implements iRedatazo {
 	}*/
 
 	/**
-	 * Ejecucion de consulta
-	 * del archivo CSV
+	 * Conectar con la clase CSV
 	 *
-	 * @access public
-	 * @return array
+	 * @todo eliminar esta conexion y hacer una nueva si cambian parametros, $this->setParametros
+	 * @access private
+	 * @return boolean
 	 */
-	public function consulta($consulta = null, $parametros = array(), $numFilas = null, $numPagina = null){
-		if(empty($this->aCampos) || empty($this->sFichero)){
-			$this->sError .= sprintf($this->aErrorMensajes['recupera_datos_csv::consulta1']);
-			return false; //si no hay fichero ni campos a importar se corta el proceso
-		}
+	private function conectar(){
 		$this->oCsv = new importarCsv();
-		$this->oCsv->aCampos = $this->aCampos;
 		if(!empty($this->aCamposVal)) $this->oCsv->aCamposVal = $this->aCamposVal;
 		if(!empty($this->aCamposSepMultiple)) $this->oCsv->aCamposSepMultiple = $this->aCamposSepMultiple;
 		if(!empty($this->aCamposExtra)) $this->oCsv->aCamposExtra = $this->aCamposExtra;
@@ -134,6 +131,25 @@ class Redatazo_csv implements iRedatazo {
 		if(!empty($this->sCercoCampos)) $this->oCsv->asCercoCampos = $this->sCercoCampos;
 		if(!empty($this->sFormatoFechas)) $this->oCsv->sFormatoFechas = $this->sFormatoFechas;
 		if(!empty($this->aTraducciones)) $this->oCsv->aTraducciones = $this->aTraducciones;
+
+		return true;
+	}
+
+	/**
+	 * Ejecucion de consulta
+	 * del archivo CSV
+	 *
+	 * @todo pasar $numFilas y $numPagina a $this->limit; teniendo en cuenta no pisar si no se pasa nada
+	 * @access public
+	 * @return array
+	 */
+	public function consulta($consulta = null, $parametros = array(), $numFilas = null, $numPagina = null){
+		if(empty($this->aCampos) || empty($this->sFichero)){
+			$this->sError .= sprintf($this->aErrorMensajes['recupera_datos_csv::consulta1']);
+			return false; //si no hay fichero ni campos a importar se corta el proceso
+		}
+
+		$this->oCsv->aCampos = $this->aCampos;
 
 		if(!empty($this->iFilasPag) && !empty($this->iFilasCant)){
 			$this->oCsv->iFilaInicial = $this->iFilasPag * $this->iFilasCant;

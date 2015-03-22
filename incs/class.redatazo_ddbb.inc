@@ -151,6 +151,7 @@ class Redatazo_ddbb implements iRedatazo {
 	/**
 	 * Conectar con la base de datos
 	 *
+	 * @todo eliminar esta conexion y hacer una nueva si cambian parametros, $this->setParametros
 	 * @access private
 	 * @return boolean
 	 */
@@ -168,12 +169,13 @@ class Redatazo_ddbb implements iRedatazo {
 			$this->oDDBB->sIdUsuario = $this->sTrazabilidad;
 		}
 
-		return(true);
+		return true;
 	}
 
 	/**
 	 * Ejecucion de consulta
 	 *
+	 * @todo pasar $numFilas y $numPagina a $this->limit; teniendo en cuenta no pisar si no se pasa nada
 	 * @access public
 	 * @param string $consulta Consulta a lanzar para recuperar datos; puede omitirse si se ha construido con select/from/...
 	 * @param array $parametros Parametros para la consulta, si no se pasa la consulta en el primer parametro, tal como los requiera el motor de datos concreto
@@ -185,7 +187,7 @@ class Redatazo_ddbb implements iRedatazo {
 		$this->setConsulta($consulta, $parametros);
 
 		if(!empty($numFilas)) $this->iNumeroFilas = $numFilas;
-		if(!empty($numPagina)) $this->iOffsetFilas = $numPagina;
+		if(!empty($numPagina)) $this->iOffsetFilas = ($numFilas * $numPagina);
 
 		if($this->oDDBB->consulta($this->sSql, $this->aSql, $this->iNumeroFilas, $this->iOffsetFilas)){
 			$this->sSql = $this->oDDBB->sQuery; //consulta lanzada

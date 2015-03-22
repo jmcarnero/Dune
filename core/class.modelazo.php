@@ -31,7 +31,19 @@
 abstract class Modelazo {
 
 	private $sBaseDir;
-	private $aDatabase = array('tipo' => 'motor', 'servidor' => 'localhost', 'usuario' => 'anon', 'clave' => '', 'esquema' => 'test', 'prefijotablas' => '', 'trazabilidad' => false);
+	private $aDatos = array(
+			'tipo' => 'motor',
+			//sql
+			'servidor' => 'localhost',
+			'usuario' => 'anon',
+			'clave' => '',
+			'esquema' => 'test',
+			'prefijotablas' => '',
+			'trazabilidad' => false,
+			//csv
+			'filaTitulos' => 0,
+			'separadorCampos' => ','
+		);
 
 	protected $oDB = null; //objeto sqlazo
 
@@ -43,14 +55,7 @@ abstract class Modelazo {
 			throw new ErrorException('Error fatal: No se puede acceder a las librerias, faltan constantes de directorios.');
 		}
 
-		if(defined('D_DB_ENGINE')) $this->aDatabase['tipo'] = D_DB_ENGINE;
-		if(defined('D_DB_SERVER')) $this->aDatabase['servidor'] = D_DB_SERVER;
-		if(defined('D_DB_USER')) $this->aDatabase['usuario'] = D_DB_USER;
-		if(defined('D_DB_PASSWORD')) $this->aDatabase['clave'] = D_DB_PASSWORD;
-		if(defined('D_DB_DATABASE')) $this->aDatabase['esquema'] = D_DB_DATABASE;
-		if(defined('D_DB_PREFIJOTABLAS')) $this->aDatabase['prefijotablas'] = D_DB_PREFIJOTABLAS;
-		if(defined('D_DB_TRAZABILIDAD')) $this->aDatabase['trazabilidad'] = D_DB_TRAZABILIDAD;
-
+		$this->getConfig();
 		$this->conectar();
 	}
 
@@ -58,7 +63,7 @@ abstract class Modelazo {
 		//$this->oDDBB->desconectar();
 	}
 
-	/*conexion a base de datos*/
+	/*conexion a la fuente de datos*/
 	private function conectar(){
 		/*require($this->sBaseDir.'class.sqlazo.inc'); //parametrizar nombre del fichero?
 		$this->oDB = sqlazo_sel($this->aDatabase['tipo']);
@@ -67,8 +72,35 @@ abstract class Modelazo {
 		$this->oDB->bTrazabilidad = $this->aDatabase['trazabilidad'];
 		$this->oDB->setIdUsuario(empty($_SESSION['idUsuario'])?0:$_SESSION['idUsuario']);/**/
 
-		require_once $this->sBaseDir.'class.redatazo.inc'; //parametrizar nombre del fichero?
-		$this->oDB = new Redatazo(array('motor' => $this->aDatabase['tipo'], 'server' => $this->aDatabase['servidor'], 'database' => $this->aDatabase['esquema'], 'usuario' => $this->aDatabase['usuario'], 'clave' => $this->aDatabase['clave']));
+		require_once $this->sBaseDir.'class.redatazo.inc';
+		$this->oDB = new Redatazo(array(
+				'motor' => $this->aDatos['tipo'],
+				//sql
+				'server' => $this->aDatos['servidor'],
+				'database' => $this->aDatos['esquema'],
+				'usuario' => $this->aDatos['usuario'],
+				'clave' => $this->aDatos['clave'],
+				//csv
+				'filaTitulos' => $this->aDatos['filaTitulos'],
+				'separadorCampos' => $this->aDatos['separadorCampos']
+			));
+	}
+
+	/*coge los parametros de configuracion de la fuente de datos*/
+	private function getConfig(){
+		if(defined('D_DATOS_MOTOR')) $this->aDatos['tipo'] = D_DATOS_MOTOR; //motor de datos: mysql, csv, xml, ...
+
+		//SQL
+		if(defined('D_DATOS_SERVIDOR')) $this->aDatos['servidor'] = D_DATOS_SERVIDOR;
+		if(defined('D_DATOS_USUARIO')) $this->aDatos['usuario'] = D_DATOS_USUARIO;
+		if(defined('D_DATOS_CLAVE')) $this->aDatos['clave'] = D_DATOS_CLAVE;
+		if(defined('D_DATOS_DATABASE')) $this->aDatos['esquema'] = D_DATOS_DATABASE;
+		if(defined('D_DB_PREFIJOTABLAS')) $this->aDatos['prefijotablas'] = D_DB_PREFIJOTABLAS;
+		if(defined('D_DB_TRAZABILIDAD')) $this->aDatos['trazabilidad'] = D_DB_TRAZABILIDAD;
+
+		//CSV
+		if(defined('D_DATOS_FILATITULOS')) $this->aDatos['filaTitulos'] = D_DATOS_FILATITULOS;
+		if(defined('D_DATOS_SEPARADORCAMPOS')) $this->aDatos['separadorCampos'] = D_DATOS_SEPARADORCAMPOS;
 	}
 
 }
