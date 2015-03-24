@@ -178,7 +178,7 @@ class Redatazo_csv implements iRedatazo {
 	 * @param array $condicion Condicion de borrado, array asociativo ('campo' => valor)
 	 * @return boolean
 	 */
-	public function delete($fichero, $condicion){
+	public function delete($fichero, $condicion = array()){
 		return false;
 	}
 
@@ -342,10 +342,11 @@ class Redatazo_csv implements iRedatazo {
 	 *
 	 * @access public
 	 * @param string $fichero Fichero en el que se hara la actualizacion
+	 * @param array $datos Datos a insertar, array asociativo ('campo' => valor)
 	 * @param array $condicion Condicion de actualizacion, array asociativo ('campo' => valor)
 	 * @return boolean
 	 */
-	public function update($fichero, $condicion){
+	public function update($fichero, $datos, $condicion = array()){
 		return false;
 	}
 

@@ -107,7 +107,7 @@ class Redatazo implements iRedatazo {
 	 * @param array $condicion Condicion de borrado, array asociativo ('campo' => valor)
 	 * @return boolean
 	 */
-	public function delete($almacen, $condicion){
+	public function delete($almacen, $condicion = array()){
 		return $this->oRedatazo->delete($almacen, $condicion);
 	}
 
@@ -243,10 +243,11 @@ class Redatazo implements iRedatazo {
 	 *
 	 * @access public
 	 * @param string $almacen Almacen de datos en el que se hara la actualizacion
+	 * @param array $datos Datos a insertar, array asociativo ('campo' => valor)
 	 * @param array $condicion Condicion de actualizacion, array asociativo ('campo' => valor)
 	 * @return boolean
 	 */
-	public function update($almacen, $condicion){
+	public function update($almacen, $datos, $condicion = array()){
 		return $this->oRedatazo->update($tabla, $condicion);
 	}
 
