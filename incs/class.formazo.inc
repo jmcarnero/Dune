@@ -54,9 +54,9 @@ $aCampos = array(
 
 $oForm = formazo_sel('tabla'); //tambien se puede $oForm = new Formazo();
 //$oForm->sRutaFicheros = 'img/';
-//$oForm->sQueryTabla = 'tabla_ej';
-//$oForm->sRowId = 'id'; //nombre de id a actualizar/borrar
-//$oForm->sRowIdVal = $sId; //valor de id a actualizar/borrar
+/REVISAR/$oForm->sQueryTabla = 'tabla_ej';
+/REVISAR/$oForm->sRowId = 'id'; //nombre de id a actualizar/borrar
+/REVISAR/$oForm->sRowIdVal = $sId; //valor de id a actualizar/borrar
 $oForm->sAction = 'proc_formazo.php';
 
 $oForm->creaFormulario($aCampos);
@@ -674,8 +674,11 @@ class Formazo{
 		//formulario y procesado deben estar en la misma maquina
 		$sSesion = $sUserAgent = '';
 		if($session){
-			@session_start(); //en PHP 4.3.3 o superior puede dar un E_NOTICE si se llama por segunda vez
 			$sSesion = session_id();
+			if(empty($sSesion)){
+				session_start(); //en PHP 4.3.3 o superior puede dar un E_NOTICE si se llama por segunda vez
+				$sSesion = session_id();
+			}
 			$sUserAgent = empty($_SERVER['HTTP_USER_AGENT'])?'':$_SERVER['HTTP_USER_AGENT'];
 		}
 		$sServer = empty($_SERVER['SERVER_ADDR'])?'':$_SERVER['SERVER_ADDR'];

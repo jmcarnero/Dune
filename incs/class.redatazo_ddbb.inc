@@ -217,7 +217,22 @@ class Redatazo_ddbb implements iRedatazo {
 	 * @param array $condicion Condicion de borrado, array asociativo ('campo' => valor)
 	 * @return boolean
 	 */
-	public function delete($tabla, $condicion){
+	public function delete($tabla, $condicion = array()){
+		$this->sSql = 'DELETE FROM ' . $tabla;
+
+		if(!empty($condicion) && is_array($condicion)){
+			foreach($condicion as $clave => $valor){
+				$this->where($clave, $valor);
+			}
+		}
+		if(!empty($this->aConsulta['where'])){ //TODO avisar que no se puede hacer un borrado sin condicion
+			$this->sSql .= 'WHERE ' . implode(' AND ', $this->aConsulta['where']) . "\n";
+			$this->aSql += $this->aConsulta['where_p'];
+
+			if($this->consulta())
+				return true;
+		}
+
 		return false;
 	}
 
@@ -258,7 +273,7 @@ class Redatazo_ddbb implements iRedatazo {
 	 * Devuelve las filas recuperadas en la consulta
 	 *
 	 * @access public
-	 * @return array
+	 * @return integer Id insertada
 	 */
 	public function getFilas(){
 		if($this->oDDBB->leeFilasTodos())
@@ -273,10 +288,24 @@ class Redatazo_ddbb implements iRedatazo {
 	 * @access public
 	 * @param string $tabla Tabla en la que se hara la insercion
 	 * @param array $datos Datos a insertar, array asociativo ('campo' => valor)
-	 * @return boolean
+	 * @return integer Id insertada o null (cuando error)
 	 */
 	public function insert($tabla, $datos){
-		return false;
+		$this->sSql = 'INSERT INTO ' . $tabla;
+
+		$aPreVal = $aPostVal = array();
+		foreach($datos as $clave => $valor){
+			$aPreVal[] = $clave;
+			$aPostVal[] = "'%s'";
+			$this->aSql[] = $valor;
+		}
+
+		$this->sSql .= ' (' . implode(', ', $aPreVal) . ') VALUES (' . implode(', ', $aPostVal) . ')';
+
+		if($this->consulta())
+			return $this->oDDBB->sUltimaId;
+
+		return null;
 	}
 
 	/**
@@ -417,12 +446,36 @@ class Redatazo_ddbb implements iRedatazo {
 	/**
 	 * Actualiza una o mas filas
 	 *
+	 * @todo generar una advertencia si no hay where
 	 * @access public
 	 * @param string $tabla Tabla en la que se hara la actualizacion
-	 * @param array $condicion Condicion de actualizacion, array asociativo ('campo' => valor)
+	 * @param array $datos Datos a insertar, array asociativo ('campo' => valor)
+	 * @param array $condicion Condicion de actualizacion, array asociativo ('campo' => valor); tambien se pueden asignar en el metodo where
 	 * @return boolean
 	 */
-	public function update($tabla, $condicion){
+	public function update($tabla, $datos, $condicion = array()){
+		$this->sSql = 'UPDATE ' . $tabla . ' SET';
+
+		$aVals = array();
+		foreach($datos as $clave => $valor){
+			$aVals[] = "$clave = '%s'";
+			$this->aSql[] = $valor;
+		}
+		$this->sSql .= ' ' . implode(', ', $aVals);
+
+		if(!empty($condicion) && is_array($condicion)){
+			foreach($condicion as $clave => $valor){
+				$this->where($clave, $valor);
+			}
+		}
+		if(!empty($this->aConsulta['where'])){
+			$this->sSql .= 'WHERE ' . implode(' AND ', $this->aConsulta['where']) . "\n";
+			$this->aSql += $this->aConsulta['where_p'];
+		}
+
+		if($this->consulta())
+			return true;
+
 		return false;
 	}
 
@@ -439,11 +492,17 @@ class Redatazo_ddbb implements iRedatazo {
 	public function where($campo, $valor = null){
 		$sAux = '';
 		if(!empty($valor)){
-			$this->aConsulta['where_p'][] = $valor;
-			if(is_numeric($valor))
+			if(is_null($valor)){
+				$sAux = " = null";
+			}
+			elseif(is_numeric($valor)){
 				$sAux = " = %u";
-			else
+				$this->aConsulta['where_p'][] = $valor;
+			}
+			else{
 				$sAux = " = '%s'";
+				$this->aConsulta['where_p'][] = $valor;
+			}
 		}
 		$this->aConsulta['where'][] = $campo . $sAux;
 	}
