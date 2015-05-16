@@ -25,8 +25,8 @@
  * @package REdAtazo
  */
 
-//Constante con el directorio donde se encuentran las clases derivadas y/o dependientes de esta.
-defined('CLASSES_DIR') or define('CLASSES_DIR',dirname(__FILE__));
+//Constante con el directorio donde se encuentran las clases derivadas y/o dependientes de esta
+defined('CLASSES_DIR') or define('CLASSES_DIR', dirname(__FILE__));
 include_once (CLASSES_DIR . '/interface.redatazo.inc');
 include_once (CLASSES_DIR . '/class.sqlazo.inc');
 

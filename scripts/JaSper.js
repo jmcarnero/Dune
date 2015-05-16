@@ -234,6 +234,7 @@ http://www.gnu.org/copyleft/gpl.html*/
 				return;
 			}
 
+			if(!extendObj) extendObj = {}; //crea el objeto si no existe
 			for(var a in addObj){
 				extendObj[a] = addObj[a];
 			}
@@ -757,11 +758,51 @@ $('<body>').addEvent('mousewheel', function (ev){
 JaSper.funcs.extend(JaSper.prototype, {
 
 	/**
+	 * Añade una clase CSS
+	 *
+	 * @since 2011-09-07
+	 * @param string cName Nombre de la clase
+	 * @return object
+	 */
+	addClass: function (cName){
+		if(typeof cName === "string"){
+			this.each(
+				function (){
+					if(this.className.indexOf(cName) == -1)
+						this.className += ' ' + cName; 
+				}
+			);
+		}
+
+		return this;
+	},
+
+	/**
 	 * recupera una regla css de document o del elemento pasado
 	 */
 	getStyle: function (cssRule){
 		var elem = this.nodes[0];
 		return JaSper.funcs.getStyle(elem, cssRule);
+	},
+
+	/**
+	 * Elimina una clase CSS
+	 *
+	 * @since 2011-09-07
+	 * @param string cName Nombre de la clase
+	 * @return object
+	 */
+	removeClass: function(cName){
+		if(typeof cName === "string"){
+			this.each(
+				function (){
+					if(this.className.indexOf(cName) > -1)
+						this.className = this.className.substr(0, this.className.indexOf(cName) - 1) + this.className.substr(this.className.indexOf(cName) + cName.length);
+				}
+			);
+		}
+
+		return this;
 	},
 
 	/**

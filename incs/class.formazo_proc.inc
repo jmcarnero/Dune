@@ -278,7 +278,7 @@ class Formazo_proc{
 		$sRet = ob_get_contents();
 		ob_end_clean();
 
-		return($sRet);
+		return $sRet;
 	}
 
 	/**
@@ -288,7 +288,7 @@ class Formazo_proc{
 	 * @return string
 	 */
 	public function getAccionForm(){
-		return($this->sAccionForm);
+		return $this->sAccionForm;
 	}
 
 	/**
@@ -299,7 +299,7 @@ class Formazo_proc{
 	 * @return array
 	 */
 	public function getCampos(){
-		return($this->aCampos);
+		return $this->aCampos;
 	}
 
 	/**
@@ -309,7 +309,7 @@ class Formazo_proc{
 	 * @return array
 	 */
 	public function getError(){
-		return(empty($this->aError)?false:$this->aError);
+		return empty($this->aError) ? false : $this->aError;
 	}
 
 	/**
@@ -322,8 +322,8 @@ class Formazo_proc{
 	 * @return string
 	 */
 	public function getErrorMensaje($clave = false){
-		if($clave === false) return($this->aErrorMensajes);
-		return($this->aErrorMensajes[$clave]);
+		if($clave === false) return $this->aErrorMensajes;
+		return $this->aErrorMensajes[$clave];
 	}
 
 	/**
@@ -334,7 +334,7 @@ class Formazo_proc{
 	 * @return string
 	 */
 	public function getFormNombre(){
-		return($this->sFormNombre);
+		return $this->sFormNombre;
 	}
 
 	/**
@@ -345,7 +345,7 @@ class Formazo_proc{
 	 * @return string
 	 */
 	public function getMensajes(){
-		return(empty($this->aMensajes)?false:$this->aMensajes);
+		return empty($this->aMensajes) ? false : $this->aMensajes;
 	}
 
 	/**
@@ -358,8 +358,8 @@ class Formazo_proc{
 	 * @return string
 	 */
 	public function getMensajesRetorno($clave = false){
-		if($clave === false) return($this->aMensajesRetorno);
-		return($this->aMensajesRetorno[$clave]);
+		if($clave === false) return $this->aMensajesRetorno;
+		return $this->aMensajesRetorno[$clave];
 	}
 
 	/**
@@ -372,7 +372,7 @@ class Formazo_proc{
 	 * @return array
 	 */
 	public function getRedatazo(){
-		return($this->aRedatazo);
+		return $this->aRedatazo;
 	}
 
 	/**
@@ -497,7 +497,7 @@ class Formazo_proc{
 	 * @return string
 	 */
 	private function limpiarNombreFichero($nombreFichero){
-		if($this->sLimpiarNombreFichero === false) return($nombreFichero);
+		if($this->sLimpiarNombreFichero === false) return $nombreFichero;
 
 		$nombreFichero = html_entity_decode(strip_tags($nombreFichero));
 		//$nombreFichero = ucwords($nombreFichero);
@@ -505,7 +505,7 @@ class Formazo_proc{
 		$nombreFichero = str_replace(str_split(preg_replace($patron, $this->sLimpiarNombreFichero, $nombreFichero)), $this->sLimpiarNombreFichero, $nombreFichero);
 		//if(strlen($nombreFichero) > 255) $nombreFichero = substr($nombreFichero, 0, 255);
 
-		return($nombreFichero);
+		return $nombreFichero;
 	}
 
 	/**
@@ -519,7 +519,7 @@ class Formazo_proc{
 		list($mseg, $seg) = explode(" ", microtime());
 
 		if($float) return((float)$mseg + (float)$seg);
-		else return(date('Y-m-d H:i:s', $seg).substr($mseg, 1));
+		else return date('Y-m-d H:i:s', $seg).substr($mseg, 1);
 	}
 
 	/**
@@ -534,28 +534,28 @@ class Formazo_proc{
 
 		if($this->sFormNombre === false || $this->sFormNombre == ''){
 			$this->setError(__METHOD__.'_1');
-			return(false);
+			return false;
 		}
 
 		if(empty($this->aCampos)){
 			$this->setError(__METHOD__.'_2', $this->sFormNombre);
-			return(false);
+			return false;
 		}
 
 		if(!$this->verificaToken()){ //no coincide el token enviado con el generado, posible ataque
 			$this->setError(__METHOD__.'_3');
-			return(false);
+			return false;
 		}
 
 
 		if(!$this->procesarValores()){
-			return(false); //errores en la recuperacion de valores del formulario
+			return false; //errores en la recuperacion de valores del formulario
 		}
 		if(!$this->setRedatazo()){
-			return(false); //errores en la construccion de la SQL
+			return false; //errores en la construccion de la SQL
 		}
 
-		return(true);
+		return true;
 	}
 
 	/**
@@ -566,6 +566,8 @@ class Formazo_proc{
 	 * @return boolean
 	 */
 	private function procesarValores(){
+		$bRet = true;
+
 		//recoger valores
 		foreach($this->aCampos as $clave => $valor){
 			//directorio donde subir ficheros
@@ -589,7 +591,7 @@ class Formazo_proc{
 				case 'select';
 				case 'text':
 				case 'textarea':
-					if(!$this->validarDato($clave, isset($valor['validacion'])?$valor['validacion']:'', isset($valor['obligatorio'])?$valor['obligatorio']:0)) return(false); //algun problema con la validacion
+					if(!$this->validarDato($clave, isset($valor['validacion']) ? $valor['validacion'] : '', isset($valor['obligatorio']) ? $valor['obligatorio'] : 0)) $bRet = false; //algun problema con la validacion
 					break;
 				case 'checkbox';
 					if(isset($this->aVariablesRequest[$clave]) && strtolower($this->aVariablesRequest[$clave]) == 'on') $this->aCampos[$clave]['valor'] = 1;
@@ -600,10 +602,10 @@ class Formazo_proc{
 					break;
 				default:
 					$this->setError(__METHOD__, $valor['tipo']);
-					return(false);
+					$bRet = false;
 			}
 		}
-		return(true);
+		return $bRet;
 	}
 
 	/**
@@ -628,10 +630,10 @@ class Formazo_proc{
 			}
 			else $num = '_0';
 
-			return($this->renombraArchivo($nombre.$num.'.'.$ext));
+			return $this->renombraArchivo($nombre.$num.'.'.$ext);
 		}
 
-		return($fichero);
+		return $fichero;
 	}
 
 	/**
@@ -656,10 +658,10 @@ class Formazo_proc{
 			default:
 				$this->sAccionForm = false;
 				$this->setError(__METHOD__, $act);
-				return(false);
+				return false;
 		}
 
-		return(true);
+		return true;
 	}
 
 	/**
@@ -685,7 +687,7 @@ class Formazo_proc{
 			if($xmlArray === false){
 				$this->setError(__METHOD__, implode(' ## ', libxml_get_errors()));
 				libxml_clear_errors();
-				return(false);
+				return false;
 			}
 
 			foreach($xmlArray->attributes() as $clave => $valor){ //guardar id del formulario
@@ -706,7 +708,7 @@ class Formazo_proc{
 			$this->aCampos = array();
 			if(!is_array($campos)){
 				$this->setError(__METHOD__.'_2');
-				return(false);
+				return false;
 			}
 
 			foreach($campos as $clave => $valor){
@@ -716,11 +718,11 @@ class Formazo_proc{
 		else{ //vacio, origen desconocido o ya asignado en formazo::setCampos()
 			if(empty($this->aCampos)){
 				$this->setError(__METHOD__.'_3');
-				return(false);
+				return false;
 			}
 		}
 
-		return(true);
+		return true;
 	}
 
 	/**
@@ -731,14 +733,14 @@ class Formazo_proc{
 	 */
 	private function setError(){
 		$argumentos = func_get_args();
-		if(empty($argumentos)) return(false);
+		if(empty($argumentos)) return false;
 
 		$clave = array_shift($argumentos);
 
 		$this->aError[] = '['.$this->microtimeSeg().'] '.vsprintf($this->aErrorMensajes[$clave], $argumentos);
 		//trigger_error($this->aError[count($this->aError)-1]);
 
-		return(true);
+		return true;
 	}
 
 	/**
@@ -770,7 +772,7 @@ class Formazo_proc{
 			'Formazo_proc::subeArchivo_2' => 'No se ha podido borrar el archivo <em>%s</em> en la ruta <em>%s</em>.',
 			'Formazo_proc::subeArchivo_3' => 'No se ha podido subir el archivo <em>%s</em> a la ruta <em>%s</em>.'
 			);
-			return(true);
+			return true;
 		}
 
 		$aMensajes = array();
@@ -781,7 +783,7 @@ class Formazo_proc{
 		foreach($aMensajes as $c => $v){
 			$this->aErrorMensajes[$c] = $v;
 		}
-		return(true);
+		return true;
 	}
 
 	/**
@@ -795,7 +797,7 @@ class Formazo_proc{
 	public function setFormNombre($nombre = false){
 		$this->sFormNombre = empty($nombre)?(isset($this->aVariablesRequest['frmFormName']) && $this->aVariablesRequest['frmFormName'] != ''?$this->aVariablesRequest['frmFormName']:false):$nombre;
 
-		return(true);
+		return true;
 	}
 
 	/**
@@ -811,7 +813,7 @@ class Formazo_proc{
 	public function setLimpiarNombreFichero($caracter = false){
 		$this->sLimpiarNombreFichero = strlen($caracter) > 1?substr($caracter, 0, 1):$caracter;
 
-		return(true);
+		return true;
 	}
 
 	/**
@@ -822,13 +824,13 @@ class Formazo_proc{
 	 */
 	private function setMensajes(){
 		$argumentos = func_get_args();
-		if(empty($argumentos)) return(false);
+		if(empty($argumentos)) return false;
 
 		$clave = array_shift($argumentos);
 
 		$this->aMensajes[] = vsprintf($this->aMensajesRetorno[$clave], $argumentos);
 
-		return(true);
+		return true;
 	}
 
 	/**
@@ -854,7 +856,7 @@ class Formazo_proc{
 			'Formazo_proc::validarDato_7' => 'El campo <em>%s</em> no es numérico y debe serlo.',
 			'Formazo_proc::validarDato_8' => 'El campo </em>%s</em> no es una URL correcta y debe serlo.'
 			);
-			return(true);
+			return true;
 		}
 
 		$aMensajes = array();
@@ -894,7 +896,7 @@ class Formazo_proc{
 		$this->sArchPrefijo = $prefijo;
 		$this->sArchSufijo = $sufijo;
 
-		return(true);
+		return true;
 	}
 
 	/**
@@ -958,7 +960,7 @@ class Formazo_proc{
 						break;
 					default:
 						$this->setError(__METHOD__.'_3', $valor['tipo']);
-						//return(false);
+						//return false;
 				}
 			}
 		}
@@ -1046,10 +1048,10 @@ class Formazo_proc{
 	 * @return boolean
 	 */
 	public function setRutaFicheros($ruta = false){
-		if($ruta === false || $ruta == '') return(false); //permite la ruta "0"
+		if($ruta === false || $ruta == '') return false; //permite la ruta "0"
 		if(!is_writable($ruta)){
 			$this->setError(__METHOD__, $ruta);
-			return(false);
+			return false;
 		}
 		$this->sRutaFicheros = rtrim($ruta, '\\/').'/'; //pone el ultimo /
 
@@ -1092,7 +1094,7 @@ class Formazo_proc{
 
 				if(strpos($tipos, ','.$fileExt.',') === false){
 					$this->setError(__METHOD__.'_1', $_FILES[$campo]['name']);
-					return(false);
+					return false;
 				}
 			}
 
@@ -1100,7 +1102,7 @@ class Formazo_proc{
 			if($this->aVariablesRequest['frmAccion'] == 'upd' && isset($this->aVariablesRequest['hid_'.$campo]) && $this->aVariablesRequest['hid_'.$campo] != '' && file_exists($this->sRutaFicheros.$this->aVariablesRequest['hid_'.$campo])){
 				if(!unlink($this->sRutaFicheros.$this->aVariablesRequest['hid_'.$campo])){ //borra fichero
 					$this->setError(__METHOD__.'_2', $_FILES[$campo]['name'], $this->sRutaFicheros);
-					return(false);
+					return false;
 				}
 			}
 
@@ -1119,7 +1121,7 @@ class Formazo_proc{
 			//mover el archivo a su ubicacion definitiva
 			if(!(@move_uploaded_file($_FILES[$campo]['tmp_name'], $this->sRutaFicheros.$sTempArchNombre))){
 				$this->setError(__METHOD__.'_3', $sTempArchNombre, $this->sRutaFicheros);
-				return(false);
+				return false;
 			}
 			else{ //guardado del nombre del fichero subido
 				$this->aCampos[$campo]['valor'] = rawurlencode($sTempArchNombre);
@@ -1129,7 +1131,7 @@ class Formazo_proc{
 		elseif($this->aVariablesRequest['frmAccion'] == 'del' && isset($this->aVariablesRequest['hid_'.$campo]) && $this->aVariablesRequest['hid_'.$campo] != '' && file_exists($this->sRutaFicheros.$this->aVariablesRequest['hid_'.$campo])){
 			if(!unlink($this->sRutaFicheros.$this->aVariablesRequest['hid_'.$campo])){
 				$this->setError(__METHOD__.'_2', $_FILES[$campo]['name'], $this->sRutaFicheros);
-				return(false);
+				return false;
 			}
 		}
 		//borrado con el boton de cada archivo en el formulario
@@ -1137,15 +1139,15 @@ class Formazo_proc{
 		elseif(isset($this->aVariablesRequest['hid_'.$campo.'d']) && $this->aVariablesRequest['hid_'.$campo.'d'] == 'del'){
 			if(! @unlink($this->sRutaFicheros.$this->aVariablesRequest['hid_'.$campo])){
 				$this->setError(__METHOD__.'_2', $this->aVariablesRequest['hid_'.$campo], $this->sRutaFicheros);
-				return(false);
+				return false;
 			}
 			$this->aCampos[$campo]['valor'] = $this->aVariablesRequest['hid_'.$campo] = '';
 		}
 		/*else
-			return(false); //no necesariamente situacion de error: se ha pedido subir un archivo de un campo sin archivo
+			return false; //no necesariamente situacion de error: se ha pedido subir un archivo de un campo sin archivo
 		}*/
 
-		return(true);
+		return true;
 	}
 
 	/**
@@ -1159,60 +1161,62 @@ class Formazo_proc{
 	 * @return boolean
 	 */
 	private function validarDato($campo, $validacion = '-', $obligatorio = 0){
-			//verificar validaciones y recoger valores
-			//$sTempPost = 'NULL'; //se pondra a nulo si no tiene valor correcto
+		$bRet = true;
 
-			if($this->sAccionForm == 'del') return(true); //sin validaciones en borrado
+		//verificar validaciones y recoger valores
+		//$sTempPost = 'NULL'; //se pondra a nulo si no tiene valor correcto
 
-			//obligatorio
-			if(is_string($obligatorio) && function_exists($obligatorio)){
-				$sTemp = eval($obligatorio.'()');
-				if($sTemp !== true){
-					$this->setMensajes(__METHOD__, $sTemp);
-					return(false);
-				}
+		if($this->sAccionForm == 'del') return true; //sin validaciones en borrado
+
+		//obligatorio
+		if(is_string($obligatorio) && function_exists($obligatorio)){
+			$sTemp = eval($obligatorio.'()');
+			if($sTemp !== true){
+				$this->setMensajes(__METHOD__, $sTemp);
+				$bRet = false;
 			}
-			elseif($obligatorio == 1){
-				if(!isset($this->aVariablesRequest[$campo]) || $this->aVariablesRequest[$campo] == ''){
-					$this->setMensajes(__METHOD__.'_2', $campo);
-					return(false);
-				}
+		}
+		elseif($obligatorio == 1){
+			if(!isset($this->aVariablesRequest[$campo]) || $this->aVariablesRequest[$campo] == ''){
+				$this->setMensajes(__METHOD__.'_2', $campo);
+				$bRet = false;
 			}
+		}
 
-			//TODO longitud maxima
+		//TODO longitud maxima
 
-			//validaciones
-			if(!empty($this->aVariablesRequest[$campo])){ //obligatorio ya se controla mas arriba
-				$sTempPost = $this->aVariablesRequest[$campo];
+		//validaciones
+		if(!empty($this->aVariablesRequest[$campo])){ //obligatorio ya se controla mas arriba
+			$sTempPost = $this->aVariablesRequest[$campo];
 
-				switch($validacion){
-					case 'clave':
-						break;
-					case 'email':
-						if(!preg_match('/\A([-a-zA-Z0-9_.])+\@(([-a-zA-Z0-9])+\.)+([a-zA-Z0-9]{2,4})+\Z/i', $sTempPost)) $this->setMensajes(__METHOD__.'_3', $campo);
-						//else $sTempPost = "'".$sTempPost."'";
-						break;
-					case 'entero':
-						if(!is_numeric($sTempPost)) $this->setMensajes(__METHOD__.'_4', $campo);
-						break;
-					case 'fecha':
-						$formato = 'yyyy-mm-dd';
-						if(!$this->is_date($sTempPost, $formato)) $this->setMensajes(__METHOD__.'_5', $campo, $formato);
-						//else $sTempPost = "'".$sTempPost."'";
-						break;
-					case 'nif':
-						if($this->is_nif($sTempPost) <= 0){
-							$this->setMensajes(__METHOD__.'_6', $campo);
-							return(false);
-						}
-						//else $sTempPost = "'".$sTempPost."'";
-						break;
-					case 'numerico':
-						if(!is_numeric($sTempPost)) $this->setMensajes(__METHOD__.'_7', $campo);
-						break;
-					case 'telefono':
-						break;
-					case 'url':
+			switch($validacion){
+				case 'clave':
+					break;
+				case 'email':
+					if(!preg_match('/\A([-a-zA-Z0-9_.])+\@(([-a-zA-Z0-9])+\.)+([a-zA-Z0-9]{2,4})+\Z/i', $sTempPost)) $this->setMensajes(__METHOD__.'_3', $campo);
+					//else $sTempPost = "'".$sTempPost."'";
+					break;
+				case 'entero':
+					if(!is_numeric($sTempPost)) $this->setMensajes(__METHOD__.'_4', $campo);
+					break;
+				case 'fecha':
+					$formato = 'yyyy-mm-dd';
+					if(!$this->is_date($sTempPost, $formato)) $this->setMensajes(__METHOD__.'_5', $campo, $formato);
+					//else $sTempPost = "'".$sTempPost."'";
+					break;
+				case 'nif':
+					if($this->is_nif($sTempPost) <= 0){
+						$this->setMensajes(__METHOD__.'_6', $campo);
+						return false;
+					}
+					//else $sTempPost = "'".$sTempPost."'";
+					break;
+				case 'numerico':
+					if(!is_numeric($sTempPost)) $this->setMensajes(__METHOD__.'_7', $campo);
+					break;
+				case 'telefono':
+					break;
+				case 'url':
 /*busca urls fqdn (http://www.dominio.com/pag -> si, www.dominio.com/pag -> no)
 ((?#
     the scheme:
@@ -1242,16 +1246,16 @@ directorios)(\/[\w;@%=+$\.\-]{1,})*(?#
 fichero)(\/[\w+$\.\-]*\.\w*)?(?#
 get)(\?([a-z0-9+$_\.\-]&?)*)?(?#
 ancla)(#[a-z_\.\-][a-z0-9+$_\.\-]*)?)\Z~i', $sTempPost)) $this->setMensajes('formularioProc::validarDato8', $campo);
-						//else $sTempPost = "'".$sTempPost."'";
-						break;
-					default:
-						//no se hace validacion
-				}
-
-				$this->aCampos[$campo]['valor'] = $sTempPost;
+					//else $sTempPost = "'".$sTempPost."'";
+					break;
+				default:
+					//no se hace validacion
 			}
 
-			return(true);
+			$this->aCampos[$campo]['valor'] = $sTempPost;
+		}
+
+		return $bRet;
 	}
 
 	/**
@@ -1280,7 +1284,7 @@ ancla)(#[a-z_\.\-][a-z0-9+$_\.\-]*)?)\Z~i', $sTempPost)) $this->setMensajes('for
 		$aCampos = /*empty($this->aCampos)?*/array()/*:array_keys($this->aCampos)*/;
 		$token = $this->sFormNombre.'/'.$sSesion.'/'.implode('', $aCampos).'/'.$sUserAgent.'/'.$sIp.'/'.$sServer;
 
-		return(!(empty($this->aVariablesRequest['frmTkn']) || md5($token) !== $this->aVariablesRequest['frmTkn']));
+		return !(empty($this->aVariablesRequest['frmTkn']) || md5($token) !== $this->aVariablesRequest['frmTkn']);
 	}
 
 	/**
@@ -1345,7 +1349,7 @@ ancla)(#[a-z_\.\-][a-z0-9+$_\.\-]*)?)\Z~i', $sTempPost)) $this->setMensajes('for
 
 		//echo $xmlArray->movie[0]->plot;
 		//echo $xml->movie->{'great-lines'}->line;
-		return(true);
+		return true;
 	}
 
 }
