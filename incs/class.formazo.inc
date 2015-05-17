@@ -38,11 +38,11 @@ $aCampos = array(
 'activa' => array('tipo' => 'checkbox', 'titulo' => 'Activa: ')
 );
 
-$oForm = new formazo();
-$this->formazo->setAction('accion.php');
-$this->formazo->setFormNombre('ejemplo');
-$this->formazo->setSubmit('Enviar ejemplo');
-$this->aDatos['sFormulario'] = $this->formazo->pinta($aCampos);
+$oForm = new Formazo();
+$oForm->setAction('accion.php');
+$oForm->setFormNombre('ejemplo');
+$oForm->setSubmit('Enviar ejemplo');
+$oForm->pinta($aCampos);
  * \endcode
  *
  * @author José M. Carnero
@@ -77,9 +77,9 @@ class Formazo {
 	 * 	'par' (filas pares),
 	 * 	'ultima' (ultima fila),
 	 * Clases para validaciones:
-	 * 	[ver formazo::setCss]
+	 * 	[ver Formazo::setCss]
 	 *
-	 * @see formazo::setCss($clave, $valor)
+	 * @see Formazo::setCss($clave, $valor)
 	 * @since 2012-12-24
 	 * @var array
 	 */
@@ -190,38 +190,38 @@ class Formazo {
 		foreach($this->aCampos as $clave => $valor){
 			if(empty($valor['tipo'])) continue; //ignora los elementos que no tengan "tipo"; permite leer selectivamente arrays comunes para este y el generador de listados
 
-			//NOTA si cambian los tipos cambiar los que se ignoran en formazo_proc::setCampos()
+			//NOTA si cambian los tipos cambiar los que se ignoran en FormazoProc::setCampos()
 			switch(strtolower($valor['tipo'])){
 				case 'checkbox':
-					$oElemento = new formazoCheckbox($clave, $valor);
+					$oElemento = new FormazoCheckbox($clave, $valor);
 					break;
 				case 'file':
 					//poner "enctype"
 					if(strpos($this->aFormulario['inicio']['campo'], 'enctype') === false)
 						//header('Content-Disposition: form-data; name="frm'.$this->sFormNombre.'"');
 						$this->aFormulario['inicio']['campo'] = '<form enctype="multipart/form-data"'.substr($this->aFormulario['inicio']['campo'], 5);
-					$oElemento = new formazoFile($clave, $valor);
+					$oElemento = new FormazoFile($clave, $valor);
 					break;
 				case 'hidden':
-					$oElemento = new formazoHidden($clave, $valor);
+					$oElemento = new FormazoHidden($clave, $valor);
 					break;
 				case 'multiple': //select_multiple
-					$oElemento = new formazoMultiple($clave, $valor);
+					$oElemento = new FormazoMultiple($clave, $valor);
 					break;
 				case 'password': //text, pero se duplica
-					$oElemento = new formazoPassword($clave, $valor);
+					$oElemento = new FormazoPassword($clave, $valor);
 					break;
 				case 'radio':
-					$oElemento = new formazoRadio($clave, $valor);
+					$oElemento = new FormazoRadio($clave, $valor);
 					break;
 				case 'select': //select_one
-					$oElemento = new formazoSelect($clave, $valor);
+					$oElemento = new FormazoSelect($clave, $valor);
 					break;
 				case 'text':
-					$oElemento = new formazoText($clave, $valor);
+					$oElemento = new FormazoText($clave, $valor);
 					break;
 				case 'textarea':
-					$oElemento = new formazoTextarea($clave, $valor);
+					$oElemento = new FormazoTextarea($clave, $valor);
 					break;
 				default:
 					trigger_error('Tipo de elemento ("' . $valor['tipo'] . '") no reconocido', E_USER_WARNING);
@@ -250,7 +250,7 @@ class Formazo {
 		//concluye formulario
 		$this->aFormulario['final']['campo'] = $this->aFormulario['btnSubmit']['campo'];
 		$this->aFormulario['final']['campo'] .= '<input id="formName' . $this->sFormNombre . '" name="formName" type="hidden" value="'.$this->sFormNombre . "\" />\n"; //nombre del formulario se utiliza para enviar la query a la pagina de procesado, mediante variable de sesion
-		$this->aFormulario['final']['campo'] .= '<input id="tkn' . $this->sFormNombre . '" name="tkn" type="hidden" value="' . $this->generaToken() . "\" />\n"; //token para verificar la integridad del envio
+		$this->aFormulario['final']['campo'] .= '<input id="tkn' . $this->sFormNombre . '" name="tkn' . $this->sFormNombre . '" type="hidden" value="' . $this->generaToken() . "\" />\n"; //token para verificar la integridad del envio
 		$this->aFormulario['final']['campo'] .= "</form>\n";
 
 		$this->aFormulario['final']['texto'] = '';
@@ -469,7 +469,7 @@ class Formazo {
  * @todo codificacion
  * @since 2011-06-22
  */
-abstract class formazoElementos {
+abstract class FormazoElementos {
 
 	protected $sClave; //Nombre del campo
 
@@ -480,7 +480,7 @@ abstract class formazoElementos {
 	 * \~english Element definition.\~
 	 *
 	 * @var array
-	 * @see formazoElementos::setDatos($datos)
+	 * @see FormazoElementos::setDatos($datos)
 	 */
 	protected $aDatos;
 
@@ -649,7 +649,7 @@ abstract class formazoElementos {
  * @since 2011-06-24
  * @todo implementar estado "indeterminado" (solo se puede controlar con javascript, y envia el mismo valor que inactivo): document.getElementById('checkbox').indeterminate = true;
  */
-class formazoCheckbox extends formazoElementos {
+class FormazoCheckbox extends FormazoElementos {
 
 	function __construct($clave, $valor){
 		parent::__construct($clave, $valor); //constructor de la clase padre
@@ -678,7 +678,7 @@ class formazoCheckbox extends formazoElementos {
  *
  * @since 2011-06-24
  */
-class formazoFile extends formazoElementos {
+class FormazoFile extends FormazoElementos {
 
 	function __construct($clave, $valor){
 		parent::__construct($clave, $valor); //constructor de la clase padre
@@ -700,7 +700,7 @@ class formazoFile extends formazoElementos {
  *
  * @since 2011-06-22
  */
-class formazoHidden extends formazoElementos {
+class FormazoHidden extends FormazoElementos {
 
 	function __construct($clave, $valor){
 		parent::__construct($clave, $valor); //constructor de la clase padre
@@ -725,7 +725,7 @@ class formazoHidden extends formazoElementos {
  * @todo el nombre del campo acaba en "[]" para que PHP pueda recoger todos los valores enviados, pero esto da problemas de validacion; buscar otro sistema, quizas añadiendo [] con javascript antes de enviar el formulario?
  * @since 2011-06-22
  */
-class formazoMultiple extends formazoElementos {
+class FormazoMultiple extends FormazoElementos {
 
 	function __construct($clave, $valor){
 		parent::__construct($clave, $valor); //constructor de la clase padre
@@ -789,7 +789,7 @@ class formazoMultiple extends formazoElementos {
  *
  * @since 2011-06-22
  */
-class formazoPassword extends formazoElementos {
+class FormazoPassword extends FormazoElementos {
 
 	function __construct($clave, $valor){
 		parent::__construct($clave, $valor); //constructor de la clase padre
@@ -811,7 +811,7 @@ class formazoPassword extends formazoElementos {
  *
  * @since 2011-06-22
  */
-class formazoRadio extends formazoElementos {
+class FormazoRadio extends FormazoElementos {
 
 	function __construct($clave, $valor){
 		parent::__construct($clave, $valor); //constructor de la clase padre
@@ -842,7 +842,7 @@ class formazoRadio extends formazoElementos {
  *
  * @since 2011-06-22
  */
-class formazoSelect extends formazoElementos {
+class FormazoSelect extends FormazoElementos {
 
 	function __construct($clave, $valor){
 		parent::__construct($clave, $valor); //constructor de la clase padre
@@ -893,7 +893,7 @@ class formazoSelect extends formazoElementos {
  *
  * @since 2011-06-22
  */
-class formazoText extends formazoElementos {
+class FormazoText extends FormazoElementos {
 
 	function __construct($clave, $valor){
 		parent::__construct($clave, $valor); //constructor de la clase padre
@@ -915,7 +915,7 @@ class formazoText extends formazoElementos {
  *
  * @since 2011-06-22
  */
-class formazoTextarea extends formazoElementos {
+class FormazoTextarea extends FormazoElementos {
 
 	function __construct($clave, $valor){
 		parent::__construct($clave, $valor); //constructor de la clase padre
