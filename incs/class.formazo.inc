@@ -62,6 +62,19 @@ class Formazo {
 	/**
 	 * Elementos del formulario
 	 *
+	 * clave -> nombre (mismos que la tabla donde lanzar la SQL)
+	 *  'tipo' -> tipo de cada elemento; tipos: ('checkbox', 'group', 'heading', 'hidden', 'multiple', 'password', 'radio', 'select', 'text', 'textarea'), siendo cada elemento del array el nombre del tag o de tipo de INPUT, excepto "group" que crea agrupaciones de elementos (todos aquellos que tengan 'group' => id_grupo) y "heading" que solo crea cabeceras (titulos de secciones o similar); se ignoran los elementos sin tipo
+	 *  'validacion' -> validacion, tipo de datos que contendra; validado por javascript; la cadena se pondra directamente en el atributo "class", asi permite varios tipos de validacion para el mismo campo y es completamente externa a la clase
+	 *  'obligatorio' -> not null; 0 (opcional), 1 (obligatorio), string (llamada a una funcion que controle su obligatoriedad, tanto en creacion de formulario como en procesado, la cadena pasada es el nombre de la funcion -sin parentesis-); pasar "0" si se necesitan los siguientes y no es obligatorio
+	 *  'longitud' -> longitud maxima (input text, input password, textarea), si =0 -> solo lectura (disabled="disabled") y valor actual en campo hidden; longitud maxima en caso de ficheros (se pasa en bytes); opcional
+	 *  'titulo' -> titulo (humano) del campo
+	 *  'valor' -> valor del campo; en caso de "SELECT" el valor es el que toma por defecto
+	 *  'valores' -> array con los valores para los "OPTION" o para radioButtons, siendo la clave el valor del "OPTION" y [0] su texto; en select y multiple si cualquier valor es un array se convierte en agrupado (la clave sera la etiqueta del agrupado y el array los options contenidos, en el mismo formato que cualquier option)
+	 *  'group' -> id del grupo al que pertenece; si vacio no pertenece a ningun grupo
+	 *  'separador' -> solo para campos "multiple", guarda el separador de la lista de valores
+	 *  'modo' => modo de representacion del elemento, para "select" puede ser [vacio|select] (select normal) o [radio] (las opciones del select se pintaran como radio buttons, para "multiple" puede ser [nada|multiple] (select multiple normal) o [checkbox] (las opciones del select multiple se pintaran como checkbox); para ficheros: si 'validacion' => 'fichero', 'modo' puede contener los tipos de ficheros permitidos como lista de extensiones separada por comas, ej: 'modo' => 'jpg,png,tiff'
+	 *  'rutaFichero' => ruta donde guardar el fichero (para campos file), o donde se encuentra para previsualizarlo
+	 *
 	 * @var array
 	 * @see Formazo::setCampos($campos), Formazo::getCampos()
 	 */
@@ -95,6 +108,12 @@ class Formazo {
 
 	/**
 	 * Formulario resultado; asociativo
+	 *
+	 * El inicio del formulario se llama "$this->aFormulario['inicio']", el final "$this->aFormulario['final']" y los elementos por su nombre; cada elemento contiene un array asociativo, donde (excepto si se indica lo contrario todos los elementos son necesarios para construir un formulario funcional)
+	 * -> "$this->aFormulario['btnSubmit']" \~spanish es el boton de submit\~english submit button\~,
+	 * -> "$this->aFormulario['elementos']['nombre_elemento_formulario']['texto']" es el titulo que acompana al elemento,
+	 * -> "$this->aFormulario['elementos']['nombre_elemento_formulario']['campo']" es el elemento propiamente dicho
+	 * -> y "$this->aFormulario['elementos']['nombre_elemento_formulario']['file']" es el fichero (imagen reducida o referencia a fichero) que acompana a los elementos "file", si existe
 	 *
 	 * @var array
 	 */
@@ -152,6 +171,31 @@ class Formazo {
 	}
 
 	/**
+	 * Agrupa los elementos y devuelve la cadena total
+	 *
+	 * @access protected
+	 * @param array $elementos Elementos preparados en pintado
+	 * @return string
+	 */
+	protected function agrupaElementos($elementos){
+		$ret = '';
+
+		foreach($elementos as $clave => $valor){
+			if(isset($valor['g'])){
+				$ret .= $valor[0];
+				$ret .= $this->agrupaElementos($valor['g']);
+				$ret .= $valor[1];
+			}
+			else{
+				$ret .= $valor[0];
+				$ret .= $valor[1];
+			}
+		}
+
+		return($ret);
+	}
+
+	/**
 	 * Calcula CRC (16) para los datos pasados
 	 *
 	 * @param $data Cadena de texto o numero
@@ -201,6 +245,9 @@ class Formazo {
 						//header('Content-Disposition: form-data; name="frm'.$this->sFormNombre.'"');
 						$this->aFormulario['inicio']['campo'] = '<form enctype="multipart/form-data"'.substr($this->aFormulario['inicio']['campo'], 5);
 					$oElemento = new FormazoFile($clave, $valor);
+					break;
+				case 'group':
+					$oElemento = new FormazoGroup($clave, $valor);
 					break;
 				case 'hidden':
 					$oElemento = new FormazoHidden($clave, $valor);
@@ -336,11 +383,29 @@ class Formazo {
 				//guardando en una variable para su posterior dibujado
 				$aEcho[$clave] = '<p id="' . $clave . $this->sFormNombre . '"' . $css . '>'.(isset($valor['texto']) ? $valor['texto'] : '') . $valor['campo'] . '</p>';
 				$i++;
+
+				//guardando en una variable para su posterior dibujado
+				if($this->aCampos[$clave]['tipo'] != 'group'){
+					$sApertura = '<p id="' . $clave . $this->sFormNombre . '"' . $css . '>' . (isset($valor['texto']) ? $valor['texto'] : '') . $valor['campo'];
+					$sCierre = '</p>';
+				}
+				else{
+					$sApertura = $valor['texto'];
+					$sCierre = $valor['campo'];
+				}
+
+				$i++;
+
+				if(!empty($this->aCampos[$clave]['group'])){
+					$aEcho[$this->aCampos[$clave]['group']]['g'][$clave] = array($sApertura, $sCierre);
+				}
+				else $aEcho[$clave] = array($sApertura, $sCierre);
 			}
 			else $sHidden .= $valor['campo'];
 		}
 
-		$sEcho .= implode('', $aEcho) . $this->aFormulario['final']['texto'] . $sHidden . $this->aFormulario['final']['campo'];
+		$sEcho .= $this->agrupaElementos($aEcho) . $this->aFormulario['final']['texto'] . $sHidden . $this->aFormulario['final']['campo'];
+		//$sEcho .= implode('', $aEcho) . $this->aFormulario['final']['texto'] . $sHidden . $this->aFormulario['final']['campo'];
 
 		if($echo) echo($sEcho);
 		else return($sEcho);
@@ -604,6 +669,33 @@ abstract class FormazoElementos {
 	}
 
 	/**
+	 * \~spanish Transforma la notación "php.ini" para números (como 2M) en enteros (2 * 1024 * 1024, en este caso).
+	 * \~english This function transforms the "php.ini" notation for numbers (like '2M') to an integer (2*1024*1024 in this case).\~
+	 *
+	 * @access protected
+	 * @param string $v Num
+	 * @return integer
+	 */
+	protected function let_to_num($v){
+		$l = substr($v, -1);
+		$ret = substr($v, 0, -1);
+		switch(strtoupper($l)){
+			case 'P':
+				$ret *= 1024;
+			case 'T':
+				$ret *= 1024;
+			case 'G':
+				$ret *= 1024;
+			case 'M':
+				$ret *= 1024;
+			case 'K':
+				$ret *= 1024;
+				break;
+		}
+		return $ret;
+	}
+
+	/**
 	 * Recoge clases CSS.
 	 *
 	 * @since 2011-06-24
@@ -688,7 +780,56 @@ class FormazoFile extends FormazoElementos {
 		$aElemento = array();
 
 		$aElemento['texto'] = $this->getLabel();
-		$aElemento['campo'] = '<input id="' . $this->sClave . $this->sFormNombre . '" name="' . $this->sClave . '" type="file"' . $this->getTabIndex() . $this->getCss() . ' />';
+
+		//fijar tamano maximo
+		//tamano maximo del fichero a subir en bytes (es facil saltarse esto, recontrolar con php en procesado del formulario)
+		$iMaxUpload = min($this->let_to_num(ini_get('post_max_size')), $this->let_to_num(ini_get('upload_max_filesize')));
+		if(isset($this->aDatos['longitud']) && $this->aDatos['longitud'] > 0){
+			$iMaxUpload = min($iMaxUpload, $this->aDatos['longitud']);
+		}
+		$this->aFormulario['elementos'][$this->sClave]['campo'] = '<input type="hidden" name="MAX_FILE_SIZE" value="' . $iMaxUpload . '" />';
+		$aElemento['campo'] = '<input id="' . $this->sClave . $this->sFormNombre . '" name="' . $this->sClave . '" type="file" ' . $this->getTabIndex() . $this->getCss() . ' />';
+		$aElemento['campo'] .= '<br />Tama&ntilde;o m&aacute;ximo: ' . $iMaxUpload . ' bytes';
+
+		//muestra la imagen (si lo es), o el nombre del fichero actual
+		if(isset($this->aDatos['valor']) && $this->aDatos['valor'] != ''){
+			$aElemento['file'] = '<br /><div id="div_' . $this->sClave . $this->sFormNombre . '">';
+			switch(strtolower(substr($this->aDatos['valor'], strrpos($this->aDatos['valor'], '.') +1 ))){
+				case 'jpg':
+				case 'jpeg':
+				case 'gif':
+				case 'png':
+					$aElemento['file'] .= '<img src="' . $this->aDatos['rutaFichero'] . rawurldecode($this->aDatos['valor']) . '" alt="Imagen actual" title="Imagen actual" />';
+					break;
+				default:
+					$aElemento['file'] .= 'Fichero actual: <a href="' . $this->aDatos['rutaFichero'] . rawurldecode($this->aDatos['valor']) . '" target="_blank">' . $this->aDatos['valor'] . '</a>';
+			}
+			$aElemento['file'] .= '</div>';
+		}
+
+		return($aElemento);
+	}
+
+}
+
+/**
+ * \~spanish Agrupacion de elementos en 'fieldset'.
+ * Observese que "$aElemento['texto']" es la apertura del grupo (apertura de div) y "$aElemento['campo']" es el cierre del grupo.
+ * \~english Form groups in 'fieldset'.\~
+ *
+ * @since 2011-06-22
+ */
+class FormazoGroup extends FormazoElementos {
+
+	function __construct($clave, $valor){
+		parent::__construct($clave, $valor); //constructor de la clase padre
+	}
+
+	protected function elemento(){
+		$aElemento = $aCssTag = array();
+
+		$aElemento['texto'] = '<fieldset id="' . $this->sClave . $this->sFormNombre . '"' . $this->getCss() . '><legend>' . $this->aDatos['titulo'] . '</legend>';
+		$aElemento['campo'] = '</fieldset>';
 
 		return($aElemento);
 	}

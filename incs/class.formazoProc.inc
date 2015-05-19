@@ -25,21 +25,28 @@
  *
  * Ejemplo de uso:
  * \code{.php}
-if(!empty($_POST['frmFormName'])){
+$aCampos = array(
+'titulo' => array('tipo' => 'text', 'validacion' => '-', 'obligatorio' => '0', 'longitud' => '100', 'titulo' => 'T&iacute;tulo: '),
+'texto' => array('tipo' => 'textarea', 'validacion' => '-', 'obligatorio' => '0', 'longitud' => '16000000', 'titulo' => 'Texto: '),
+'fichero' => array('tipo' => 'file', 'titulo' => 'Fichero: ', 'validacion' => 'fichero', 'modo' => 'jpg,gif,png'),
+'tipoSel' => array('tipo' => 'select', 'titulo' => 'Tipo select: ', 'valores' => array('' => 'ninguno', '0' => 'cero', '1' => 'uno', '2' => 'dos', '3' => 'tres'), 'modo' => 'radio'),
+'tipoMul' => array('tipo' => 'multiple', 'titulo' => 'Tipo multiple: ', 'valores' => array('' => 'ninguno', '0' => 'cero', '1' => 'uno', 'doses' => array('2' => 'dos', '2nd' => 'segundo'), '3' => 'tres'), 'valor' => '0,2', 'modo' => 'checkbox'), //select multiple con agrupados y dos valores preseleccionados
+'activa' => array('tipo' => 'checkbox', 'titulo' => 'Activa: ')
+);
+
+if(!empty($_POST['formName'])){
 	include_once("inc/class.formazoProc.inc");
 
-	$oProcFormulario = new FormazoProc();
+	$oProcFormulario = new FormazoProc($aCampos);
 
-	$oProcFormulario->setAccionForm('upd');
-	$oProcFormulario->setFuenteDatos('tablaSQL');
-	$oProcFormulario->setClavePrimaria('id', 'valor');
+	$aCampos['titulo']['valor'] = $oProcFormulario->getValor('titulo');
+	$aCampos['texto']['valor'] = $oProcFormulario->getValor('texto');
 
-	if($oProcFormulario->procesarFormulario($_POST['frmFormName'])){ //no hay problemas, procesar la SQL
-		var_dump('sql-> '.$oProcFormulario->getRedatazo);
+	if($oProcFormulario->procesarFormulario($_POST['formName'])){ //no hay problemas, procesar la SQL
+		//var_dump('sql-> '.$oProcFormulario->getRedatazo);
 	}
 	else{ //errores
-		var_dump('mens retorno-> ', $oProcFormulario->getMensajes()); //problemas de validacion, devolver a la pagina con estos mensajes
-		var_dump('error-> '.$oProcFormulario->getError()); //devolver a la pagina con mensaje de error (no necesariamente los de la propia clase)
+		$this->aDatos['frmError'] = $this->formazoProc->getError(); //problemas de validacion, devolver a la pagina con estos mensajes
 	}
 }
 else{
@@ -120,6 +127,47 @@ class FormazoProc {
 	}
 
 	/**
+	 * Recupera valores de campos, para rellenarlos (por ejemplo)
+	 *
+	 * @since 2015-05-17
+	 * @param string $campo Nombre del campo
+	 * @return mixed Si se pide un campo devuelve su valor (null si no se encuentra el nombre del campo), si no se devuelve un array con todos los valores
+	 */
+	public function getValor($campo = null){
+		if(empty($campo))
+			return $this->aVariablesRequest;
+		elseif(!empty($this->aVariablesRequest[$campo])){
+			return $this->aVariablesRequest[$campo];
+		}
+
+		return null;
+	}
+
+	/**
+	 * Limpia nombres de ficheros.
+	 *
+	 * Original: Cameron Perry (http://iamcam.wordpress.com/2007/03/20/clean-file-names-using-php-preg_replace/)
+	 *
+	 * @todo cortar el resultado (255 caracteres?) segun sistema operativo pueden dar problemas los nombres largos
+	 * @todo opcion para convertir el nombre a camelCase
+	 * @param $nombreFichero Nombre del fichero a limpiar
+	 * @return string
+	 */
+	private function limpiarNombreFichero($nombreFichero){
+		$sLimpiarNombreFichero = '';
+
+		if($sLimpiarNombreFichero === false) return($nombreFichero);
+
+		$nombreFichero = html_entity_decode(strip_tags($nombreFichero));
+		//$nombreFichero = ucwords($nombreFichero);
+		$patron = "/([[:alnum:]_\.-]*)/";
+		$nombreFichero = str_replace(str_split(preg_replace($patron, $sLimpiarNombreFichero, $nombreFichero)), $sLimpiarNombreFichero, $nombreFichero);
+		//if(strlen($nombreFichero) > 255) $nombreFichero = substr($nombreFichero, 0, 255);
+
+		return $nombreFichero;
+	}
+
+	/**
 	 * Procesar formulario
 	 *
 	 * @param string $nombreForm Nombre del formulario
@@ -193,6 +241,33 @@ class FormazoProc {
 		}
 
 		return $bRet;
+	}
+
+	/**
+	 * Comprueba si existe el nombre del fichero pasado y construye un nombre que no exista
+	 *
+	 * @param string $fichero Nombre del fichero
+	 * @return string
+	 */
+	private function renombraArchivo($fichero, $sRutaFicheros){
+		if(file_exists($sRutaFicheros . $fichero)){
+			$aTempArchNombre = explode('.', $fichero);
+			$ext = array_pop($aTempArchNombre); //extrae la extension
+			$nombre = implode('.', $aTempArchNombre); //nombre del fichero, sin extension
+
+			preg_match_all('/.*?(\d+)/i', $nombre, $nums, PREG_PATTERN_ORDER);
+			if(count($nums[1])){ //se ha encontrado una cadena numerica, se usara la ultima encontrada para el siguiente sumatorio para hacer diferente el nombre de fichero
+				$num = array_pop($nums[1]);
+				$nums[0][count($nums[0])-1] = str_replace($num, '', $nums[0][count($nums[0])-1]);
+				$nombre = implode('', $nums[0]); //nombre del fichero, sin extension y sin el numero final encontrado
+				$num++;
+			}
+			else $num = '_0';
+
+			return $this->renombraArchivo($nombre . $num . '.' . $ext, $sRutaFicheros);
+		}
+
+		return($fichero);
 	}
 
 	/**
@@ -293,23 +368,6 @@ class FormazoProc {
 	}
 
 	/**
-	 * Recupera valores de campos, para rellenarlos (por ejemplo)
-	 *
-	 * @since 2015-05-17
-	 * @param string $campo Nombre del campo
-	 * @return mixed Si se pide un campo devuelve su valor (null si no se encuentra el nombre del campo), si no se devuelve un array con todos los valores
-	 */
-	public function getValor($campo = null){
-		if(empty($campo))
-			return $this->aVariablesRequest;
-		elseif(!empty($this->aVariablesRequest[$campo])){
-			return $this->aVariablesRequest[$campo];
-		}
-
-		return null;
-	}
-
-	/**
 	 * Procesar los datos del formulario
 	 *
 	 * @param string $nombreForm Nombre del formulario
@@ -320,6 +378,71 @@ class FormazoProc {
 		if($_SERVER['REQUEST_METHOD'] == 'GET') $this->aVariablesRequest = &$_GET;
 		elseif($_SERVER['REQUEST_METHOD'] == 'POST') $this->aVariablesRequest = &$_POST;
 		else $this->aVariablesRequest = array(); //TODO recoger $_REQUEST?
+
+		return true;
+	}
+
+	/**
+	 * Asigna la ruta (por omision) donde se guardaran los ficheros que se suban,
+	 * solo se usa en ficheros que no llevan su propia ruta de guardado
+	 *
+	 * @since 2011-09-14
+	 * @param string $ruta Ruta de guardado
+	 * @return boolean
+	 */
+	private function setRutaFicheros($ruta = false){
+		if(empty($ruta) && $ruta != 0){
+			trigger_error('No se ha indicado la ruta para subir ficheros', E_USER_ERROR);
+			$ruta = null;
+		}
+		if(!is_writable($ruta)){
+			trigger_error('No se pueden subir ficheros al directorio [' . $ruta . ']', E_USER_ERROR);
+			$ruta = null;
+		}
+		$ruta = rtrim($ruta, '\\/').'/'; //pone el ultimo /
+
+		return $ruta;
+	}
+
+	/**
+	 * Sube ficheros
+	 *
+	 * @param string $campo Clave del campo que contiene el fichero a subir
+	 * @return boolean
+	 */
+	private function subeArchivo($campo){
+		if(isset($_FILES[$campo]) && is_uploaded_file($_FILES[$campo]['tmp_name'])){
+			$sRutaFicheros = $this->setRutaFicheros($this->aCampos[$campo]['rutaFichero']);
+			if(empty($sRutaFicheros)) //ruta de subida invalida
+				return false;
+
+			//validando tipo de fichero
+			if(isset($_FILES[$campo]) && !empty($this->aCampos[$campo]['validacion']) && $this->aCampos[$campo]['validacion'] == 'fichero' && isset($this->aCampos[$campo]['modo'])){
+				$tipos = ',' . strtolower($this->aCampos[$campo]['modo']) . ',';
+				$fileExt = strrpos($_FILES[$campo]['name'], '.');
+				if($fileExt === false) $fileExt = '';
+				else $fileExt = strtolower(substr($_FILES[$campo]['name'], $fileExt + 1));
+
+				if(strpos($tipos, ',' . $fileExt . ',') === false){
+					trigger_error('Tipo de fichero no permitido [' . $fileExt . ']', E_USER_WARNING);
+					return false;
+				}
+			}
+
+			//limpiando y preparando nombre
+			$sTempArchNombre = $_FILES[$campo]['name'];
+			$sTempArchNombre = $this->limpiarNombreFichero($sTempArchNombre);
+			$sTempArchNombre = $this->renombraArchivo($sTempArchNombre, $sRutaFicheros);
+
+			//mover el archivo a su ubicacion definitiva
+			if(!(@move_uploaded_file($_FILES[$campo]['tmp_name'], $sRutaFicheros . $sTempArchNombre))){
+				trigger_error('No se ha podido subir el fichero [' . $sTempArchNombre . '] a la ruta [' . $sRutaFicheros . ']', E_USER_WARNING);
+				return false;
+			}
+			else{ //guardado del nombre del fichero subido
+				$this->aCampos[$campo]['valor'] = rawurlencode($sTempArchNombre);
+			}
+		}
 
 		return true;
 	}
