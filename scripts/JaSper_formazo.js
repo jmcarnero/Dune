@@ -1,4 +1,4 @@
-/*Copyright (C) 2009 José M. Carnero <jm_carnero@sargazos.net>
+/*Copyright (C) 2015 José M. Carnero <jm_carnero@sargazos.net>
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -15,284 +15,378 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 http://www.gnu.org/copyleft/gpl.html*/
 
-/**
- * Funciones de validacion de formularios para JaSper
- * Al final script que las lanza
- */
+'use strict';
+
+/*****************************************************
+* Funciones de validacion de formularios para JaSper *
+*****************************************************/
 
 /*traducciones*/
-JaSper.funcs.extendTrads({
+_JaSper.funcs.extendTrads({
 "en":{
-	'formazo/valClave':'Check that you entered the same password in both boxes',
-	'formazo/valEmail':'Invalid e-mail',
-	'formazo/valFechas':'Incorrect date.\nRecommended format for your dates: ',
-	'formazo/valFichero':'File type not allowed.',
-	'formazo/valNif1':'NIE wrong.',
-	'formazo/valNif2':'NIF wrong.',
-	'formazo/valNumeros1':'Range between ',
-	'formazo/valNumeros2':' and ',
-	'formazo/valObligatorio':' can not be empty.',
-	'formazo/valObligatorioRadio':' should have checked some option.',
-	'formazo/valUrl':'Invalid URL.\nRecommended format: "http://dominio.tld"'},
+	'valida/bic':'BIC/SWIFT bank number invalid',
+	'valida/clave':'Check that you entered the same password in both boxes',
+	'valida/email':'Invalid e-mail',
+	'valida/fechas':'Incorrect date.\nRecommended format for your dates: ',
+	'valida/fichero':'File type not allowed.',
+	'valida/iban':'IBAN bank number invalid',
+	'valida/nif1':'NIE wrong.',
+	'valida/nif2':'NIF wrong.',
+	'valida/numeros1':'Range between ',
+	'valida/numeros2':' and ',
+	'valida/obligatorio':' can not be empty.',
+	'valida/obligatorioRadio':' should have checked some option.',
+	'valida/url':'Invalid URL.\nRecommended format: "http://dominio.tld"'},
 "es":{
-	'formazo/valClave':'Compruebe que ha escrito la misma clave en ambas casillas',
-	'formazo/valEmail':'e-mail no v\u00E1lido',
-	'formazo/valFechas':'Fecha incorrecta.\nFormato recomendado para las fechas: ',
-	'formazo/valFichero':'Tipo de fichero no permitido.',
-	'formazo/valNif1':'NIE incorrecto',
-	'formazo/valNif2':'NIF incorrecto',
-	'formazo/valNumeros1':'Rango entre ',
-	'formazo/valNumeros2':' y ',
-	'formazo/valObligatorio':' no puede estar vac\u00EDo.',
-	'formazo/valObligatorioRadio':' debe tener marcada alguna opci\u00F3n.',
-	'formazo/valUrl':'URL no v\u00E1lida.\nFormato recomendado: "http://dominio.tld"'}
+	'valida/bic':'Código bancario BIC/SWIFT incorrecto',
+	'valida/clave':'Compruebe que ha escrito la misma clave en ambas casillas',
+	'valida/email':'e-mail no v\u00E1lido',
+	'valida/fechas':'Fecha incorrecta.\nFormato recomendado para las fechas: ',
+	'valida/fichero':'Tipo de fichero no permitido.',
+	'valida/iban':'Código bancario IBAN incorrecto',
+	'valida/nif1':'NIE incorrecto',
+	'valida/nif2':'NIF incorrecto',
+	'valida/numeros1':'Rango entre ',
+	'valida/numeros2':' y ',
+	'valida/obligatorio':' no puede estar vac\u00EDo.',
+	'valida/obligatorioRadio':' debe tener marcada alguna opci\u00F3n.',
+	'valida/url':'URL no v\u00E1lida.\nFormato recomendado: "http://dominio.tld"'}
 });
 
-JaSper.funcs.extend(JaSper.prototype, {
+_JaSper.funcs.extend(_JaSper.prototype, {
 
 	/**
-	 * Evita que se pierdan las opciones seleccionadas y permite que se seleccionen mas en un "select multiple" sin pulsar simultaneamente la tecla "control".
-	 * 
-	 * @return boolean
+	 * Valida formularios
+	 * @param object oProps Propiedades para las validaciones
+	 * return object JaSper
 	 */
-	/*multipleNoCtrl: function(){
-		this.noPropagarEvento();
-		this.each(function (){
-				//this.options[this.selectedIndex].selected = !this.options[this.selectedIndex].selected;
-				//return false;
+	validar: function(props){
+		var props = props || {}; //configuracion del metodo
+		props.classError = props.classError || 'frmError'; //configuracion del metodo
+		
 
-				var seleccionadas = new Array();
-				for(var i=0; i<this.options.length; i++){if(this.options[i].selected == true) seleccionadas.push(i);}
-				var actual = this.selectedIndex;
+		var filters = { //validaciones
+			frmObligatorio: function (el){return _JaSper.valida.obligatorio(el);},
+			clave: function (el){return _JaSper.valida.clave(el, document.getElementById('objId2'));},
+			frmEmail: function (el){return _JaSper.valida.email(el);},
+			entero: function (el){return _JaSper.valida.numeros(el);}, //numerico de tipo entero, no permite decimales ni separadores de miles, solo numeros
+			fichero: function (el){return _JaSper.valida.fichero(el);},
+			fecha: function (el){return _JaSper.valida.fechas(el);},
+			nif: function (el){return _JaSper.valida.nif(el);},
+			frmNumerico: function (el){return _JaSper.valida.numeros(el);}, //permite decimales, con "."
+			telefono: function (el){return _JaSper.valida.numeros(el);},
+			url: function (el){return _JaSper.valida.url(el);}
+		};
+		var filters_keys = {
+			entero: function (ev, el){return _JaSper.valida.teclasNumeros(el, ev, false);}, //numerico de tipo entero, no permite decimales ni separadores de miles, solo numeros
+			fecha: function (ev, el){return _JaSper.valida.teclasFechas(el, ev);},
+			frmNumerico: function(ev, el){return _JaSper.valida.teclasNumeros(el, ev, true);} //permite decimales, con "."
+		};
 
-				for (var i=0; i<seleccionadas.length; i++)
-				{
-					if (actual == seleccionadas[i])
-					{
-						seleccionadas.splice(i, 1);
-						break;
+		//bloqueos de teclas
+		this.each(function (){ //se busca en cada formulario los elementos bloqueables
+			JaSper('<input>,<textarea>', this).each(function(ev){
+				var el = this;
+				if(el.className != 'undefined'){
+					var csplit = el.className.split(" ");
+					for(var i = 0; i < csplit.length; i++){
+						if(_JaSper.funcs.isFunction(filters_keys[csplit[i]])){
+							var fun = csplit[i];
+							JaSper(el).eventAdd('keydown', function (ev){
+								if(filters_keys[fun](ev, el)){
+									_JaSper.event.preventDefault(ev);
+									_JaSper.event.stop(ev);
+									return false;
+								}
+								//alert(filters_keys[fun](e, el) + ' - ' + e.keyCode + ' - ' + this.id);
+							});
+						}
 					}
 				}
-
-				if (i >= seleccionadas.length) seleccionadas.push(actual);
-				for (var i=0; i<this.options.length; i++) this.options[i].selected = false;
-				for (var i=0; i<seleccionadas.length; i++) this.options[seleccionadas[i]].selected = true;
-			}
-		);
-	},*/
-
-	 /**
-	 * \~spanish Llena un select existente con los valores pasados.
-	 * Devuelve falso si errores.
-	 * \~english Fills select with "valores", "etiquetas".
-	 * false on errors.\~
-	 * 
-	 * @param array valores \~spanish Valores de los option\~english Options values\~
-	 * @param array etiquetas \~spanish Etiquetas de los option, en el mismo orden que el anterior\~english Labels for options, order corresponence with previous\~
-	 * @param string valor \~spanish Valor seleccionado\~english Selected value\~
-	 * @return boolean
-	 */
-	llena_select: function (valores, etiquetas, valor){
-		if(!valores) return(false); //TODO crear el select si no existe.
-
-		if(!etiquetas){ //no se ha pasado array de etiquetas
-			var etiquetas = new Array();
-			etiquetas = valores;
-		}
-		if(!valor) var valor = null;
-
-		this.each(function (vls, eti, val){
-			//if(this.type != 'select-one') return(false); //solo con select no multiple
-			this.innerHTML = ''; //elemento.length = 0; //limpiando el select; length = 0 no limpia optgroup
-			for(i=0;i < vls.length;i++){
-				var optNew = document.createElement('option');
-				optNew.text = eti[i];
-				optNew.value = vls[i];
-				if(vls[i] == val) optNew.selected = true;
-				try{
-					this.add(optNew, this.options[this.length]); // standards compliant; doesn't work in IE
-				}
-				catch(ex){
-					this.add(optNew, this.length); // IE only
-				}
-			}
-		}, new Array(valores, etiquetas, valor));
-
-		return(this);
-	},
-
-	//limpiar los elementos del formulario
-	limpiaForm: function (){
-		this.each(function (){
-			var oForm = (this.tagName.toLowerCase() == 'form') ? this.elements : (this.form) ? this.form.elements : false;
-			if(oForm === false) return(false); //no es un formulario ni elemento de formulario
-
-			for(i=0;i<oForm.length;i++){
-				switch(oForm[i].type){
-					case 'text':
-					case 'password':
-					case 'textarea':
-						oForm[i].value = '';
-						break;
-					case 'select-one':
-						oForm[i].selectedIndex = 0;
-						break;
-					case 'checkbox':
-						oForm[i].checked = false;
-						break;
-					default:
-						//alert(oForm[i].type);
-						return(false);
-				}
-			}
+			});
 		});
-		return(this);
-	}
 
+		//validacion al envio
+		this.eventAdd('submit', function(ev){
+			window.errMens = [];
+
+			if(typeof filters == 'undefined') return;
+			JaSper('<input>,<textarea>,<select>', this).each(function(x){
+				var el = this;
+				if(el.className != 'undefined'){
+					var csplit = el.className.split(" ");
+					var aErrTemp = [];
+					for(var i = 0; i < csplit.length; i++){
+						if(_JaSper.funcs.isFunction(filters[csplit[i]])){
+							var errTemp = filters[csplit[i]](el);
+							if(errTemp !== false)
+								aErrTemp[aErrTemp.length] = filters[csplit[i]](el);
+						}
+					}
+
+					if(aErrTemp.length){
+						JaSper(el).addClass(props.classError);
+						window.errMens[window.errMens.length] = aErrTemp.join("\n");
+					}
+					else
+						JaSper(el).removeClass(props.classError);
+				}
+			});
+
+			if(JaSper('.' + props.classError, this).length > 0){
+				_JaSper.event.preventDefault(ev);
+				_JaSper.event.stop(ev);
+
+				/*JaSper('.' + props.classError).each( //marcar los errores
+							function(){alert(this.name + ' error');}
+						);*/
+				alert("Se han producido los siguientes errores:\n\n" + window.errMens.join("\n"));
+				return false;
+			}
+
+			return true;
+		});
+
+		return this;
+	}
 });
 
+_JaSper.valida = {};
+
 //validaciones
-JaSper.funcs.extend(JaSper.prototype, {
+_JaSper.funcs.extend(_JaSper.valida, {
 
 	/**
-	 * \~spanish Validacion de campos password
-	 * no permite encadenado de metodos
-	 * \~english Password validation\~
-	 * 
-	 * @return string
+	 * validador BIC (Business Identifier Codes) o SWIFT
+	 *
+	 * @param object sBic Objeto con codigo BIC a validar
+	 * @return boolean
 	 */
-	valClave: function (objId2){
-		if(!objId2) return false; //no se comprueba el campo de clave desde el de confirmacion
+	bic: function(oBic){
 		var bRet = true;
 
-		if(typeof objId2 == "string") objId2 = document.getElementById(objId2);
+		oBic.value = oBic.value.toString().trim() || '';
+		if(!oBic.value) //no se hacen mas comprobaciones, vacio no es BIC
+			bRet = false;
 
-		for(var i=0;i<this.nodes.length;i++){
-			if(this.nodes[i].value != '' && objId2.value != '' && this.nodes[i].value != objId2.value) bRet = false;
+		if(! /^[a-z]{6}[0-9a-z]{2}([0-9a-z]{3})?$/i.test(oBic.value)){
+			bRet = false;
 		}
 
 		if(bRet) return false; //pass valida
-		else return(JaSper.funcs._t('formazo/valClave')); //pass no valida
+		else return(_JaSper.funcs._t('valida/bic')); //pass no valida
 	},
 
 	/**
-	 * \~spanish Validacion de campos e-mail
-	 * Devuelve booleano; no permite encadenado de metodos
-	 * \~english E-mail validation\~
+	 * Validacion de campos password
 	 * 
+	 * @param object oClave Campo de clave original
+	 * @param object objId2 Id del campo de clave repetido
+	 * @return string
+	 */
+	clave: function (oClave, oClave2){
+		if(!oClave2)
+			return false; //no se comprueba el campo de clave desde el de confirmacion
+
+		var bRet = true;
+
+
+		if(!oClave && oClave2.value != '' && oClave != oClave2.value)
+			bRet = false;
+
+		if(bRet) return false; //pass valida
+		else return(_JaSper.funcs._t('valida/clave')); //pass no valida
+	},
+
+	/**
+	 * Validacion de campos e-mail
+	 *
+	 * @param object oEmail Email a validar
 	 * @return boolean
 	 */
-	valEmail: function (){
+	email: function (oEmail){
 		var bRet = true, filtro = /^([a-zA-Z0-9_\.\-])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/;
+		oEmail.value = oEmail.value.toString().trim() || '';
 
-		for(var i=0;i<this.nodes.length;i++){
-			if(this.nodes[i].value != ''){
-				if(filtro.test(this.nodes[i].value)) bRet = bRet & true; //e-mail valido
-				else bRet = bRet & false; //e-mail no valido
-			}
-			else bRet = bRet & true;
+		if(oEmail.value != ''){
+			if(filtro.test(oEmail.value))
+				bRet = true; //e-mail valido
+			else
+				bRet = false; //e-mail no valido
 		}
 
 		if(bRet) return false;
-		else return(JaSper.funcs._t('formazo/valEmail')); //e-mail no valido
+		else return(_JaSper.funcs._t('valida/email')); //e-mail no valido
 	},
 
 	/**
-	 * \~spanish Validacion de campos de fechas
+	 * Validacion de campos de fechas
 	 * Comprueba que una fecha introducida es valida y la convierte al formato aaaa-mm-dd hh:mm:ss; no distingue formato europeo de americano, puede dar errores en esa confusion
-	 * o permite encadenado de metodos
-	 * \~english Date validation
-	 * Convert date to format aaaa-mm-dd hh:mm:ss; could make mistakes with european format and american format\~
 	 * 
-	 * @param string formato \~spanish Formato de la fecha\~english Date format\~
+	 * @param object oFecha Fecha a validar
+	 * @param string formato Formato de la fecha
 	 * @return boolean
 	 */
-	valFechas: function (formato){
-		if(!formato) formato = 'aaaa-mm-dd hh:mm:ss';
+	fechas: function (oFecha, formato){
+		if(!formato)
+			formato = 'aaaa-mm-dd hh:mm:ss';
+
+		var bRet = false; //fecha incorrecta
+		oFecha.value = oFecha.value.toString().trim() || '';
+
+		if(oFecha.value != ''){
+			var fechaInt = Date.parse(oFecha.value.replace(/-/g, '/'));
+			if(!isNaN(fechaInt)){
+				var fecha = new Date();
+				fecha.setTime(fechaInt);
+				if(fecha != 'Invalid Date'){
+					bRet = true; //fecha correcta
+				}
+			}
+		}
+
+		if(bRet) return false;
+		else return(_JaSper.funcs._t('valida/fechas') + formato); //fecha incorrecta
+	},
+
+	/**
+	 * Validacion de campos fichero, comprueba la extension del archivo entre las permitidas
+	 * 
+	 * @param object oFichero Fichero a validar
+	 * @param string extensiones Extensiones permitidas
+	 * @return boolean
+	 */
+	fichero: function (oFichero, extensiones){
 		var bRet = true;
 
-		for(var i=0;i<this.nodes.length;i++){
-			var bRetInt = false; //fecha incorrecta
-			if(this.nodes[i].value != ''){
-				var dFecha = this.nodes[i].value.replace(/-/g, '/');
-				var fechaInt = Date.parse(dFecha);
-				if(!isNaN(fechaInt)){
-					var fecha = new Date();
-					fecha.setTime(fechaInt);
-					if(fecha != 'Invalid Date'){
-						bRetInt = true; //fecha correcta
-					}
+		oFichero.value = oFichero.value.toString().trim() || '';
+		if(oFichero.value != ''){
+			var aTemp = new Array();
+			aTemp = oFichero.value.split('.');
+
+			if(extensiones.indexOf(aTemp[aTemp.length - 1].toLowerCase()) >= 0)
+				bRet = true; //tipo de fichero correcto
+			else
+				bRet = false; //tipo de fichero no permitido
+		}
+
+		if(bRet) return false;
+		else return(_JaSper.funcs._t('valida/fichero')); //tipo de fichero no permitido
+	},
+
+	/**
+	 * validador IBAN (International Bank Account Number)
+	 * incluido el formato de cuenta especifico de cada pais
+	 *
+	 * @see https://github.com/jzaefferer/jquery-validation/blob/master/src/additional/iban.js
+	 * @param object oIban Codigo IBAN a validar
+	 * @return boolean
+	 */
+	iban: function(oIban){
+		var bRet = true;
+
+		oIban.value = oIban.value.toString().trim() || '';
+		if(oIban.value != ''){
+			// remove spaces and to upper case
+			var iban = oIban.value.replace(/[^a-zA-Z0-9]/img, "").toUpperCase(),
+				ibancheckdigits = "",
+				leadingZeroes = true,
+				cRest = "",
+				cOperator = "",
+				ibancheck, charAt, cChar, ibanregexp, i, p;
+
+			// check the country code and find the country specific format
+			var countrycode = iban.substring(0, 2);
+			var bbancountrypatterns = {
+				"AD": "\\d{8}[\\dA-Z]{12}", "AE": "\\d{3}\\d{16}", "AL": "\\d{8}[\\dA-Z]{16}", "AT": "\\d{16}", "AZ": "[\\dA-Z]{4}\\d{20}",
+				"BA": "\\d{16}", "BE": "\\d{12}", "BG": "[A-Z]{4}\\d{6}[\\dA-Z]{8}", "BH": "[A-Z]{4}[\\dA-Z]{14}", "BR": "\\d{23}[A-Z][\\dA-Z]",
+				"CH": "\\d{5}[\\dA-Z]{12}", "CR": "\\d{17}", "CY": "\\d{8}[\\dA-Z]{16}", "CZ": "\\d{20}",
+				"DE": "\\d{18}", "DK": "\\d{14}", "DO": "[A-Z]{4}\\d{20}",
+				"EE": "\\d{16}", "ES": "\\d{20}",
+				"FI": "\\d{14}", "FO": "\\d{14}", "FR": "\\d{10}[\\dA-Z]{11}\\d{2}",
+				"GB": "[A-Z]{4}\\d{14}", "GE": "[\\dA-Z]{2}\\d{16}", "GI": "[A-Z]{4}[\\dA-Z]{15}", "GL": "\\d{14}", "GR": "\\d{7}[\\dA-Z]{16}", "GT": "[\\dA-Z]{4}[\\dA-Z]{20}",
+				"HR": "\\d{17}", "HU": "\\d{24}",
+				"IE": "[\\dA-Z]{4}\\d{14}", "IL": "\\d{19}", "IS": "\\d{22}", "IT": "[A-Z]\\d{10}[\\dA-Z]{12}",
+				"KW": "[A-Z]{4}[\\dA-Z]{22}", "KZ": "\\d{3}[\\dA-Z]{13}",
+				"LB": "\\d{4}[\\dA-Z]{20}", "LI": "\\d{5}[\\dA-Z]{12}", "LT": "\\d{16}", "LU": "\\d{3}[\\dA-Z]{13}", "LV": "[A-Z]{4}[\\dA-Z]{13}",
+				"MC": "\\d{10}[\\dA-Z]{11}\\d{2}", "MD": "[\\dA-Z]{2}\\d{18}", "ME": "\\d{18}", "MK": "\\d{3}[\\dA-Z]{10}\\d{2}", "MR": "\\d{23}", "MT": "[A-Z]{4}\\d{5}[\\dA-Z]{18}", "MU": "[A-Z]{4}\\d{19}[A-Z]{3}",
+				"NL": "[A-Z]{4}\\d{10}", "NO": "\\d{11}",
+				"PK": "[\\dA-Z]{4}\\d{16}", "PL": "\\d{24}", "PS": "[\\dA-Z]{4}\\d{21}", "PT": "\\d{21}",
+				"RO": "[A-Z]{4}[\\dA-Z]{16}", "RS": "\\d{18}",
+				"SA": "\\d{2}[\\dA-Z]{18}", "SE": "\\d{20}", "SI": "\\d{15}", "SK": "\\d{20}", "SM": "[A-Z]\\d{10}[\\dA-Z]{12}",
+				"TN": "\\d{20}", "TR": "\\d{5}[\\dA-Z]{17}",
+				"VG": "[\\dA-Z]{4}\\d{16}"
+			};
+
+			var bbanpattern = bbancountrypatterns[countrycode];
+
+			if(typeof bbanpattern === "undefined") //pais desconocido
+				bRet = false;
+
+			ibanregexp = new RegExp("^[A-Z]{2}\\d{2}" + bbanpattern + "$", "");
+			if(!(ibanregexp.test(iban))){
+				bRet = false; // invalid country specific format
+			}
+
+			// now check the checksum, first convert to digits
+			ibancheck = iban.substring(4, iban.length) + iban.substring(0, 4);
+			for(i = 0; i < ibancheck.length; i++){
+				charAt = ibancheck.charAt(i);
+				if(charAt !== "0"){
+					leadingZeroes = false;
+				}
+				if(!leadingZeroes){
+					ibancheckdigits += "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ".indexOf(charAt);
 				}
 			}
 
-			bRet = bRet & bRetInt;
-		}
-
-		if(bRet) return false;
-		else return(JaSper.funcs._t('formazo/valFechas') + formato); //fecha incorrecta
-	},
-
-	/**
-	 * \~spanish Validacion de campos fichero, comprueba la extension del archivo entre las permitidas
-	 * no permite encadenado de metodos
-	 * \~english File fields validation; verify file extension\~
-	 * 
-	 * @param string extensiones \~spanish Extensiones permitidas\~english Allowed extensions\~
-	 * @return boolean
-	 */
-	valFichero: function (extensiones){
-		var bRet = true;
-
-		for(var i=0;i<this.nodes.length;i++){
-			if(this.nodes[i].value != ''){
-				var aTemp = new Array();
-				aTemp = this.nodes[i].value.split('.');
-	
-				if(extensiones.indexOf(aTemp[aTemp.length - 1].toLowerCase()) >= 0) bRet = bRet & true; //tipo de fichero correcto
-				else bRet = bRet & false; //tipo de fichero no permitido
+			// calculate the result of: ibancheckdigits % 97
+			for(p = 0; p < ibancheckdigits.length; p++){
+				cChar = ibancheckdigits.charAt(p);
+				cOperator = "" + cRest + "" + cChar;
+				cRest = cOperator % 97;
 			}
-			else bRet = bRet & true;
+			bRet = (cRest === 1);
 		}
 
 		if(bRet) return false;
-		else return(JaSper.funcs._t('formazo/valFichero')); //tipo de fichero no permitido
+		else return(_JaSper.funcs._t('valida/iban'));
 	},
 
 	/**
-	 * \~spanish Validacion de campos NIF/NIE
+	 * Validacion de campos NIF/NIE
 	 * NIF sin espacios, 10 caracteres (NIE) maximo
-	 * no permite encadenado de metodos
-	 * \~english NIF/NIE validation
-	 * NIF without spaces, 10 characters (NIE) maximun\~
-	 * 
+	 *
+	 * @param object oNif NIF a validar
 	 * @return boolean
 	 */
-	valNif: function (){
+	nif: function (oNif){
 		var bRet = true, mensaje = '';
 
-		for(var i=0;i<this.nodes.length;i++){
-			if(this.nodes[i].value != ''){
-				this.nodes[i].value = this.nodes[i].value.toUpperCase();
+		oNif.value = (oNif.value.toString().trim() || '').toUpperCase();
+		if(oNif.value != ''){
+			dni = oNif.value.substr(0, oNif.value.length-1); //NIF
+			if(oNif.value.charAt(0) == 'X')
+				dni = dni.substr(1); //NIE
 
-				dni = this.nodes[i].value.substr(0, this.nodes[i].value.length-1); //NIF
-				if(this.nodes[i].value.charAt(0) == 'X') dni = dni.substr(1); //NIE
+			letra = oNif.value.charAt(sNif.length-1);
 
-				letra = this.nodes[i].value.charAt(this.nodes[i].value.length-1);
+			if(dni.length == 8 && isNaN(letra)){
+				var control = 'TRWAGMYFPDXBNJZSQVHLCKE';
+				pos = dni % 23;
+				control = control.charAt(pos);
 
-				if(dni.length == 8 && isNaN(letra)){
-					var control = 'TRWAGMYFPDXBNJZSQVHLCKE';
-					pos = dni % 23;
-					control = control.charAt(pos);
-
-					if(control==letra) bRet = bRet & true; //nif correcto
-				}
-				else{
-					if(this.nodes[i].value.charAt(0) == 'X') mensaje += JaSper.funcs._t('formazo/valNif1'); //NIE
-					else mensaje += JaSper.funcs._t('formazo/valNif2'); //NIF
-					bRet = bRet & false; //nif incorrecto
-				}
+				if(control==letra)
+					bRet = true; //nif correcto
 			}
-			else bRet = bRet & true;
+			else{
+				if(oNif.value.charAt(0) == 'X')
+					mensaje += _JaSper.funcs._t('valida/nif1'); //NIE
+				else
+					mensaje += _JaSper.funcs._t('valida/nif2'); //NIF
+
+				bRet = false; //nif incorrecto
+			}
 		}
 
 		if(bRet) return false;
@@ -300,354 +394,165 @@ JaSper.funcs.extend(JaSper.prototype, {
 	},
 
 	/**
-	 * \~spanish Validacion de numericos, con rango entre "menor" y "mayor" (opcionales ambos)
-	 * no permite encadenado de metodos
-	 * \~english Number validation; minimun and maximun range optional\~
-	 * 
-	 * @param integer menor \~spanish Rango minimo\~english Minimun range\~
-	 * @param integer mayor \~spanish Rango máximo\~english Maximun range\~
+	 * Validacion de numericos, con rango entre "menor" y "mayor" (opcionales ambos)
+	 *
+	 * @param object oNumero Objeto a evaluar
+	 * @param integer menor Rango minimo
+	 * @param integer mayor Rango máximo
 	 * @return boolean
 	 */
-	valNumeros: function (menor, mayor){
+	numeros: function (oNumero, menor, mayor){
 		var bRet = true;
 
-		for(var i=0;i<this.nodes.length;i++){
-			if(this.nodes[i].value != ''){
-				if(typeof menor == 'undefined')
-					menor = 0;
-				if(typeof mayor == 'undefined')
-					mayor = Math.pow(10, this.nodes[i].maxLength);
+		oNumero.value = oNumero.value.toString().trim() || '';
+		if(oNumero.value != ''){
+			if(typeof menor == 'undefined')
+				menor = 0;
+			if(typeof mayor == 'undefined')
+				mayor = Math.pow(10, oNumero.maxLength);
 
-				num = parseInt(this.nodes[i].value);
+			var num = parseInt(oNumero.value);
 
-				if((num >= menor && num <= mayor) || this.value == '') bRet = bRet & true;
-				else bRet = bRet & false;
-			}
-			else bRet = bRet & true;
+			if((num >= menor && num <= mayor) || oNumero == '')
+				bRet = true;
+			else
+				bRet = false;
 		}
 
 		if(bRet) return false;
-		else return(JaSper.funcs._t('formazo/valNumeros1') + menor + JaSper.funcs._t('formazo/valNumeros2') + mayor); //numero incorrecto
+		else return(_JaSper.funcs._t('valida/numeros1') + menor + _JaSper.funcs._t('valida/numeros2') + mayor); //numero incorrecto
 	},
 
 	/**
-	 * \~spanish Campo de caracter obligatorio, no puede tener valor nulo
+	 * Campo de caracter obligatorio, no puede tener valor nulo
 	 * Se llama en el envio del formulario
-	 * no permite encadenado de metodos
-	 * \~english Required field, can't be null\~
-	 * 
+	 *
+	 * @param object oCampo Campo a validar
 	 * @return boolean
 	 */
-	valObligatorio: function (){
-		//cssValorObjeto('comunes.css', this);
-		var bRet = true, text = [];
+	obligatorio: function (oCampo){
+		var bRet = true, text = '';
 
-		for(var i=0;i<this.nodes.length;i++){
-			if(this.nodes[i].value != '') bRet = bRet & true;
-			else{
-				text[i] = $('label', this.nodes[i].parentNode).text(); //title for error container
-				bRet = bRet & false;
-			}
+		oCampo.value = oCampo.value.toString().trim() || '';
+		if(oCampo.value != '') bRet = true;
+		else{
+			text = JaSper('<label>', oCampo.parentNode).text(); //title for error container
+			bRet = false;
 		}
 
 		if(bRet) return false;
-		else return('"' + text.join('", "') + '"' + JaSper.funcs._t('formazo/valObligatorio'));
+		else return('"' + text + '"' + _JaSper.funcs._t('valida/obligatorio'));
 	},
 
 	/*version para radio buttons*/
-	valObligatorioRadio: function (text){
+	obligatorioRadio: function (oRadio){
 		var bRet = true;
 
-		for(var j=0;j<this.nodes.length;j++){
-			var cnt = -1, objName = this.nodes[j];
-			for(var i=objName.length-1; i > -1; i--){
-				if(objName[i].checked){cnt = i; i = -1;}
+		var cnt = -1, objName = oRadio;
+		for(var i=objName.length-1; i > -1; i--){
+			if(objName[i].checked){
+				cnt = i; i = -1;
 			}
+		}
 
-			if(cnt > -1) bRet = bRet & true;
-			else{
-				text[i] = $('label', this.nodes[i].parentNode).text(); //title for error container
-				bRet = bRet & false;
-			}
+		if(cnt > -1) bRet = true;
+		else{
+			text = JaSper('<label>', oRadio.parentNode).text(); //title for error container
+			bRet = false;
 		}
 
 		if(bRet) return false;
-		else return('"' + text.join('", "') + '"' + JaSper.funcs._t('formazo/valObligatorioRadio'));
+		else return('"' + text + '"' + _JaSper.funcs._t('valida/obligatorioRadio'));
 	},
 
 	/**
-	 * \~spanish Fuerza la entrada de solo numeros barra (/) y guion (-)
-	 * Llamar con: onkeypress="return $(this).valTeclasFechas(event);"
-	 * o '$('#objId').eventAdd("keypress", function (e){this.valTeclasFechas(e);});'
-	 * no permite encadenado de metodos
-	 * \~english Filter keyboard enter, allow only numbers, "/" and "-"
-	 * $('#objId').eventAdd("keypress", function (e){this.valTeclasFechas(e);});\~
+	 * Fuerza la entrada de solo numeros barra (/) y guion (-)
+	 * Llamar con: onkeypress="return JaSper(this).valTeclasFechas(event);"
+	 * o 'JaSper('#objId').addEvent("keypress", function (e){this.valTeclasFechas(e);});'
 	 * 
-	 * @param event e Event
+	 * @param object oCampo Campo a limitar
+	 * @param event ev Event
 	 * @return boolean
 	 */
-	valTeclasFechas: function (e){
+	teclasFechas: function (oCampo, ev){
 		var bRet = true;
-		var e = e || window.event;
+		var ev = ev || window.event;
 
-		var char_code = JaSper.funcs.key_code(e);
-		for(var i=0;i<this.nodes.length;i++){
-			//permite la entrada de numeros, espacio, dos puntos, barra y guion
-			if(charCode > 31 && (charCode < 48 || charCode > 58) && charCode != 32 && charCode != 47 && charCode != 45){
-				bRet = bRet & false; //alert("No son caracteres de fecha");
-				_JaSper(this.nodes[i]).noPropagarEvento(e); //evita la pulsacion
-			}
-			else{
-				bRet = bRet & true;
-				if(this.nodes[i].value.indexOf(' ') != -1 && charCode == 32) bRet = bRet & false;
-			}
+		var char_code = JaSper.event.keyCode(ev);
+		//permite la entrada de numeros, espacio, dos puntos, barra y guion
+		if(charCode > 31 && (charCode < 48 || charCode > 58) && charCode != 32 && charCode != 47 && charCode != 45){
+			bRet = false; //alert("No son caracteres de fecha");
+			_JaSper.event.preventDefault(ev); //evita la pulsacion
+		}
+		else{
+			bRet = true;
+			if(oCampo.value.indexOf(' ') != -1 && charCode == 32)
+				bRet = false;
 		}
 
 		return(!bRet);
 	},
 
 	/**
-	 * \~spanish Fuerza la entrada de solo numeros y coma decimal
+	 * Fuerza la entrada de solo numeros y coma decimal
 	 * Llamar con: onkeypress="return valTeclasNumeros(event);"
-	 * o '$('#objId').eventAdd("keypress", function (e){this.valTeclasNumeros(e);});'
-	 * no permite encadenado de metodos
-	 * \~english Filter keyboard enter, allow only numbers and "."
-	 * $('#objId').eventAdd("keypress", function (e){this.valTeclasNumeros(e);});\~
+	 * o 'JaSper('#objId').addEvent("keypress", function (e){this.valTeclasNumeros(e);});'
 	 * 
-	 * @param event e \~spanish Evento\~english Event\~
+	 * @param object oCampo Campo a limitar
+	 * @param event ev Evento
 	 * @param boolean decimal true\~spanish permite punto decimal\~english allow decimal point\~
 	 * @return boolean
 	 */
-	valTeclasNumeros: function (e, decimal){
+	teclasNumeros: function (oCampo, ev, decimal){
 		var bRet = true;
-		var e = e || window.event;
+		var ev = ev || window.event;
 		var decimal = typeof(decimal) != 'undefined' ? decimal : true;
 
-		var char_code = JaSper.funcs.key_code(e);
-		for(var i=0;i<this.nodes.length;i++){
-			if(decimal){ //permite la entrada de numeros y punto decimal
-				if(char_code > 31 && (char_code < 48 || char_code > 57) && char_code != 46) bRet = bRet & false; //alert("no es un numero")
-				else{
-					bRet = bRet & true;
-					if(this.nodes[i].value.indexOf('.') != -1 && char_code == 46) bRet = bRet & false;
-				}
+		var char_code = _JaSper.event.keyCode(ev);
+		if(decimal){ //permite la entrada de numeros y punto decimal
+			if(char_code > 31 && (char_code < 48 || char_code > 57) && char_code != 46){
+				bRet = false; //alert("no es un numero")
+				_JaSper.event.preventDefault(ev); //evita la pulsacion
 			}
-			else{ //permite la entrada de numeros sin punto decimal
-				if(char_code > 31 && (char_code < 48 || char_code > 57)) bRet = bRet & false; //alert("no es un numero")
-				else bRet = bRet & true;
+			else{
+				bRet = true;
+				if(oCampo.value.indexOf('.') != -1 && char_code == 46) bRet = false;
 			}
+		}
+		else{ //permite la entrada de numeros sin punto decimal
+			if(char_code > 31 && (char_code < 48 || char_code > 57)){
+				bRet = false; //alert("no es un numero")
+				_JaSper.event.preventDefault(ev); //evita la pulsacion
+			}
+			else
+				bRet = true;
 		}
 
 		return(!bRet);
 	},
-	/*function containsNonLatinCodepoints(s) {
-		return /[^\u0000-\u00ff]/.test(s);
-	}*/
 
 	/**
 	 * \~spanish validacion de campos URL
 	 * \~english URL validation\~
+	 * 
+	 * @param object oUrl Objeto a validar
+	 * @return boolean
 	 */
-	valUrl: function (){
+	url: function (oUrl){
 		var bRet = true;
 		var filtro = /(((ht|f)tp(s?):\/\/)|(www\.[^ [\]()\n\r\t]+)|(([012]?[0-9]{1,2}\.){3}[012]?[0-9]{1,2})\/)([^ [\](),;"'<>\n\r\t]+)([^. [\](),;"'<>\n\r\t])|(([012]?[0-9]{1,2}\.){3}[012]?[0-9]{1,2})/;
 		//var filtro = /((ht|f)tp(s?):\/\/)([^ [\](),;"'<>\n\r\t]+)([^. [\](),;"'<>\n\r\t])/; //fuerza a que haya "http://" (o lo que corresponda) al principio
 
-		for(var i=0;i<this.nodes.length;i++){
-			if(this.nodes[i].value != ''){
-				if(filtro.test(this.nodes[i].value)) bRet = bRet & true; //url valida
-				else bRet = bRet & false; //url no valida
-			}
-			else bRet = bRet & true;
+		oUrl.value = oUrl.value.toString().trim() || '';
+		if(oUrl.value != ''){
+			if(filtro.test(this.nodes[i].value))
+				bRet = true; //url valida
+			else
+				bRet = false; //url no valida
 		}
 
 		if(bRet) return false;
-		else return(JaSper.funcs._t('formazo/valUrl'));
+		else return(_JaSper.funcs._t('valida/url'));
 	}
 
 });
-
-/*
- * Validacion, sobre una idea de Andrés Nieto
- * http://www.anieto2k.com/2008/06/25/validar-formularios-con-jquery/
- */
-
-//validaciones
-var filters = {
-	frmOblig: function (el){return ($(el).valObligatorio(el.id));},
-	clave: function (el){return ($(el).valClave(document.getElementById('objId2')));},
-	email: function (el){return ($(el).valEmail());},
-	entero: function (el){return ($(el).valNumeros());}, //numerico de tipo entero, no permite decimales ni separadores de miles, solo numeros
-	fichero: function (el){return ($(el).valFichero(el.id));},
-	fecha: function (el){return ($(el).valFechas());},
-	nif: function (el){return ($(el).valNif());},
-	numerico: function (el){return ($(el).valNumeros());}, //permite decimales, con "."
-	telefono: function (el){return ($(el).valNumeros());},
-	url: function (el){return ($(el).valUrl());}
-};
-var filters_keys = {
-	entero: function (e, el){return ($(el).valTeclasNumeros(e, false));}, //numerico de tipo entero, no permite decimales ni separadores de miles, solo numeros
-	fecha: function (e, el){return ($(el).valTeclasFechas(e));},
-	numerico: function(e, el){return ($(el).valTeclasNumeros(e, true));} //permite decimales, con "."
-};
-
-$(document).ready(function(){
-	$("<form>").each(function(ev){
-		var var_depende = false;
-		var var_ligado = false;
-		var el = this;
-
-		try{var_depende = eval(el.id.replace('frm', 'depende_'));}
-		catch(e){/*return*/;}
-		try{var_ligado = eval(el.id.replace('frm', 'ligado_'));}
-		catch(e){/*return*/;}
-
-		//dependencias
-		if(var_depende !== false){
-			for(dep in var_depende){
-				$(dep).eventAdd("change", function (){
-					for(var i = 0;i < var_depende[dep].length;i++){
-						if(this.value == var_depende[dep][i][1]) $('#' + var_depende[dep][i][0]).setStyle('display', '');
-						else $('#' + var_depende[dep][i][0]).setStyle('display', 'none');
-					}
-				});
-			}
-		}
-		//ligaduras
-		if(var_ligado !== false){
-			for(lig in var_ligado){
-				var val_ligado = null;
-				var eti_ligado = null;
-
-				try{
-					val_ligado = eval('valores_' + lig);
-					eti_ligado = eval('etiquetas_' + lig);
-				}
-				catch(e){}
-
-				$('#' + lig).llena_select(val_ligado[document.getElementById(var_ligado[lig]).selectedIndex], eti_ligado[document.getElementById(var_ligado[lig]).selectedIndex], document.getElementById(var_ligado[lig]).value);
-				$('#' + var_ligado[lig]).eventAdd('change', function(e){
-					$('#' + lig).llena_select(val_ligado[document.getElementById(var_ligado[lig]).selectedIndex], eti_ligado[document.getElementById(var_ligado[lig]).selectedIndex], document.getElementById(var_ligado[lig]).value);
-				});
-			}
-		}
-
-		//bloqueos de teclas
-		if(typeof filters_keys != 'undefined'){
-			$('<input>,<textarea>', this).each(function(e){
-				var el = this;
-				if(el.className != 'undefined'){
-					var csplit = el.className.split(" ");
-					for(klass in csplit){
-						if(JaSper.funcs.isFunction(filters_keys[csplit[klass]])){
-							var fun = csplit[klass];
-							$(el).eventAdd('keydown', function (e){
-								if(filters_keys[fun](e, el))
-									{JaSper.funcs.eventStop(e || window.event);return(false);};
-								//alert(filters_keys[fun](e, el) + ' - ' + e.keyCode + ' - ' + this.id);
-							});
-						}
-					}
-				}
-			});
-		}
-
-		//secciones repetidas
-		/*$('.frmRepeat', this).each(function(e, el){
-			//boton de clonar
-			jQuery('<span/>', {
-				id: el.id + 'Clone',
-				title: 'Clone this',
-				text: 'Clone',
-				class: 'tools',
-				css: {cursor:'pointer'}
-			}).appendTo(el.firstChild).bind('click', function (){
-				//alert(this.parentNode.parentNode.id);
-				//$(this.parentNode.parentNode).clone().insertAfter(this.parentNode.parentNode).removeAttr("id").find("*").removeAttr("id").remove(this.parentNode.firstChild);
-				$('#repeat_' + el.id).clone(false).append(
-					//boton de borrado
-					jQuery('<span/>', {
-						id: el.id + 'Remove',
-						title: 'Remove this',
-						text: 'Remove',
-						class: 'tools',
-						css: {cursor:'pointer'}
-					}).bind('click', function (){$(this.parentNode).remove();})
-				).appendTo(this.parentNode.parentNode).find('*').removeAttr("id").find('input').val('').end();
-			});
-		});*/
-
-	});
-
-	//validacion al envio
-	$('<form>').eventAdd('submit', function(e){
-		window.errMens = [];
-
-		if(typeof filters == 'undefined') return;
-		$('<input>,<textarea>,<select>', this).each(function(x){
-			var el = this;
-			if(el.className != 'undefined'){
-				var csplit = el.className.split(" ");
-				for(klass in csplit) if(JaSper.funcs.isFunction(filters[csplit[klass]])) var errTemp = filters[csplit[klass]](el);
-				if(errTemp){
-					$(el).addClass("frmError");
-					window.errMens[window.errMens.length] = errTemp;
-				}
-				else $(el).removeClass("frmError");
-			}
-		});
-
-		if($('.frmError', this).length > 0){
-			JaSper.funcs.eventStop(e || window.event);
-
-			/*$('.frmError').each( //marcar los errores
-						function(){alert(this.name + ' error');}
-					);*/
-			alert("Se han producido los siguientes errores:\n\n" + window.errMens.join("\n"));
-			return false;
-		}
-
-		return true;
-	});
-});
-
-/*$aJavascript['validaciones'] = array('-' => array('', ''),
-		'clave' => array('$(\'#objId\').eventAdd("change", function (){$(this).valClave(document.getElementById(\'objId2\'));});'."\n".'$(\'#objId2\').addEvent("change", function (){$(this).valClave(document.getElementById(\'objId\'));});'."\n", '$(\'#objId\').valClave(document.getElementById(\'objId2\'))'),
-		'email' => array('$(\'#objId\').eventAdd("change", function (){$(this).valEmail();});'."\n", '$(\'#%s\').valEmail() '),
-		'entero' => array('$(\'#objId\').eventAdd("keypress", function (e){if(!$(this).valTeclasNumeros(e, false)) if(e.preventDefault){e.preventDefault();} else{event.returnValue = false;} });'."\n".'$(\'#objId\').addEvent("change", function (){$(this).valNumeros();});'."\n", '$(\'#%s\').valNumeros() '), //numerico de tipo entero, no permite decimales ni separadores de miles, solo numeros
-		'fichero' => array('$(\'#objId\').eventAdd("change", function (){$(this).valFichero(\'valores\');});'."\n", '$(\'#%s\').valFichero(\'%s\') '),
-		'fecha' => array('$(\'#objId\').eventAdd("keypress", function (e){if(!$(this).valTeclasFechas(e)) if(e.preventDefault){e.preventDefault();} else{event.returnValue = false;} });'."\n".'$(\'#objId\').addEvent("change", function (){$(this).valFechas();});'."\n", '$(\'#%s\').valFechas() '),
-		'nif' => array('$(\'#objId\').eventAdd("change", function (){$(this).valNif();});'."\n", '$(\'#%s\').valNif() '),
-		'numerico' => array('$(\'#objId\').eventAdd("keypress", function (e){if(!$(this).valTeclasNumeros(e, true)) if(e.preventDefault){e.preventDefault();} else{event.returnValue = false;} });'."\n".'$(\'#objId\').addEvent("change", function (){$(this).valNumeros();});'."\n", '$(\'#%s\').valNumeros() '), //permite decimales, con "."
-		'telefono' => array('$(\'#objId\').eventAdd("keypress", function (e){if(!$(this).valTeclasNumeros(e, false)) if(e.preventDefault){e.preventDefault();} else{event.returnValue = false;} });'."\n".'$(\'#objId\').addEvent("change", function (){$(this).valNumeros();});'."\n", '$(\'#%s\').valNumeros() '),
-		'url' => array('$(\'#objId\').eventAdd("change", function (){$(this).valUrl();});'."\n", '$(\'#%s\').valUrl() '),
-		'obligatorio' => array("\n", '$(\'#%s\').valObligatorio(\'%s\') ') //validacion de campos obligatorios
-	);
-
-	$aJavascript['frmBtnSubmitDel'] = '$(\'#frmButtonUpdDel%s\').addEvent(\'click\', function (){
-		if(confirm(\'%s\')){
-			document.getElementById(\'frmAccion%s\').value = \'del\';
-			window.bSinsalvar = false;
-			document.getElementById(\'frm%s\').submit();
-		}
-		else return(false);
-	});'."\n";
-	$aJavascript['frmBtnSubmitDel2'] = '$(\'#frmBtnSubmit%s\').eventAdd(\'click\', function (){document.getElementById(\'frmAccion%s\').value = \'upd\';});'."\n";
-	$aJavascript['frmBtnLimpia'] = '$(\'#frmBtnLimpia%s\').eventAdd(\'click\', function(){$(this).limpiaForm();});'."\n";
-	$aJavascript['frmBtnCancelar'] = '$(\'#frmButtonCancelar%s\').eventAdd(\'click\', function (){history.back(1);});'."\n";
-	$aJavascript['validacionIL'] = '$(\'#frm%s\').eventAdd(\'submit\', function (e){if(!val_%s()){if(e.preventDefault){e.preventDefault();}else{event.returnValue = false;}}else{window.bSinsalvar = false;}});'."\n";
-	$aJavascript['sTempJs1'] = 'window.bSinsalvar = false;'."\n".'$(this).eventAdd(\'beforeunload\', function (e){if(!window.bSinsalvar) return true;var e = e || window.event;if(e){e.returnValue = "%s";}return "%s";});'."\n";
-	$aJavascript['sTempJs2'] = '$(\'#%s\').eventAdd(\'click\', function (){window.bSinsalvar = true;});'."\n";
-	$aJavascript['frmValidar'] = '<script type="text/javaScript"><!--
-	%s
-	$(document).ready(function (){
-		$("#frm'.$a.'").validate(
-			rules: {'.$a.'}
-		);
-	%s
-	});
-	--></script>'."\n";
-	$aJavascript['fDepende_radio'] = '$("@%s").eventAdd("change", function (){if(this.checked && this.value == "%s") $(\'#%s\').setStyle(\'display\', \'\');else $(\'#%s\').setStyle(\'display\', \'none\');});';
-	$aJavascript['fDepende'] = '$("#%s").eventAdd("change", function (){if(this.value == "%s") $(\'#%s\').setStyle(\'display\', \'\');else $(\'#%s\').setStyle(\'display\', \'none\');});';
-	//$oForm->setJavascript($aJavascript);
-*/

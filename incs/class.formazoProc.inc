@@ -16,9 +16,6 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 # http://www.gnu.org/copyleft/gpl.html
 
-//include_once("class.sqlazo.inc");
-//include("class.thumbnail.inc");
-
 /**
  * Clase procesadora de formularios HTML
  * Tanto GET como POST
@@ -54,7 +51,6 @@ else{
 }
  * \endcode
  *
- * @todo variable en la que se recoja la id que se ha insertado/actualizado/borrado y tabla
  * @author José M. Carnero
  * @version 4
  * @license http://www.gnu.org/copyleft/gpl.html
@@ -333,12 +329,16 @@ class FormazoProc {
 		if($clave === false){ //reinicio de mensajes
 			$this->aErrorMensajes = array(
 				'FormazoProc::valida_2' => '<em>%s</em> tiene caracter obligatorio',
-				'FormazoProc::valida_3' => '</em>%s</em> debe ser una dirección de email correcta',
-				'FormazoProc::valida_4' => '<em>%s</em> debe ser entero (númerico)',
-				'FormazoProc::valida_5' => '</em>%s</em> debe ser una fecha correcta con el formato </em>%s</em>',
-				'FormazoProc::valida_6' => '</em>%s</em> debe ser un documento válido',
-				'FormazoProc::valida_7' => '<em>%s</em> debe ser numérico',
-				'FormazoProc::valida_8' => '</em>%s</em> debe ser una URL correcta'
+				'FormazoProc::valida_bic' => '</em>%s</em> debe ser un código BIC/SWIFT',
+				//'FormazoProc::valida_clave' => '</em>%s</em> debe ser una clave correcta',
+				'FormazoProc::valida_email' => '</em>%s</em> debe ser una dirección de email correcta',
+				'FormazoProc::valida_entero' => '<em>%s</em> debe ser entero (númerico)',
+				'FormazoProc::valida_fecha' => '</em>%s</em> debe ser una fecha correcta con el formato </em>%s</em>',
+				'FormazoProc::valida_iban' => '</em>%s</em> debe ser un código IBAN',
+				'FormazoProc::valida_nif' => '</em>%s</em> debe ser un documento válido',
+				'FormazoProc::valida_numerico' => '<em>%s</em> debe ser numérico',
+				//'FormazoProc::valida_telefono' => '<em>%s</em> debe ser un número de teléfono correcto',
+				'FormazoProc::valida_url' => '</em>%s</em> debe ser una URL correcta'
 			);
 			return true;
 		}
@@ -474,36 +474,48 @@ class FormazoProc {
 			$sTempPost = $this->aVariablesRequest[$campo];
 
 			switch($validacion){
+				case 'bic': //codigo bancario BIC/SWIFT
+					if(!$this->validaBicSwift($sTempPost)){
+						$this->setError(__METHOD__ . '_' . $validacion, $campo);
+						$bRet = false;
+					}
+					break;
 				case 'clave':
 					break;
 				case 'email':
 					if(!$this->validaEmail($sTempPost)){
-						$this->setError(__METHOD__.'_3', $campo);
+						$this->setError(__METHOD__ . '_' . $validacion, $campo);
 						$bRet = false;
 					}
 					break;
 				case 'entero':
-					if(!is_numeric($sTempPost)){
-						$this->setError(__METHOD__.'_4', $campo);
+					if($this->validaNumero($sTempPost, 'int')){
+						$this->setError(__METHOD__ . '_' . $validacion, $campo);
 						$bRet = false;
 					}
 					break;
 				case 'fecha':
 					$formato = 'yyyy-mm-dd';
 					if(!$this->validaFecha($sTempPost, $formato)){
-						$this->setError(__METHOD__.'_5', $campo, $formato);
+						$this->setError(__METHOD__ . '_' . $validacion, $campo, $formato);
+						$bRet = false;
+					}
+					break;
+				case 'iban': //codigo bancario IBAN
+					if(!$this->validaIban($sTempPost)){
+						$this->setError(__METHOD__ . '_' . $validacion, $campo);
 						$bRet = false;
 					}
 					break;
 				case 'nif':
 					if($this->validaNif($sTempPost) <= 0){
-						$this->setError(__METHOD__.'_6', $campo);
+						$this->setError(__METHOD__ . '_' . $validacion, $campo);
 						$bRet = false;
 					}
 					break;
 				case 'numerico':
-					if(!is_numeric($sTempPost)){
-						$this->setError(__METHOD__.'_7', $campo);
+					if($this->validaNumero($sTempPost)){
+						$this->setError(__METHOD__ . '_' . $validacion, $campo);
 						$bRet = false;
 					}
 					break;
@@ -511,7 +523,7 @@ class FormazoProc {
 					break;
 				case 'url':
 					if(!$this->validaUrl($sTempPost)){
-						$this->setError(__METHOD__.'_8', $campo);
+						$this->setError(__METHOD__ . '_' . $validacion, $campo);
 						$bRet = false;
 					}
 					break;
@@ -526,6 +538,27 @@ class FormazoProc {
 	}
 
 	/**
+	 * Comprobar la validez de codigos de banco tipo BIC/SWIFT
+	 * Structure:
+The latest edition is ISO 9362:2009 (dated 2009-10-01). The SWIFT code is 8 or 11 characters, made up of:
+4 letters: Institution Code or bank code.
+2 letters: ISO 3166-1 alpha-2 country code
+2 letters or digits: location code
+if the second character is "0", then it is typically a test BIC as opposed to a BIC used on the live network. if the second character is "1", then it denotes a passive participant in the SWIFT network if the second character is "2", then it typically indicates a reverse billing BIC, where the recipient pays for the message as opposed to the more usual mode whereby the sender pays for the message. 3 letters or digits: branch code, optional ('XXX' for primary office)
+	 *
+	 * @since 2015-05-31
+	 * @param string $value Valor a evaluar
+	 * @return boolean
+	 */
+	public function validaBicSwift($value){
+		$bRet = true;
+
+		$bRet = preg_match('/^[a-z]{6}[0-9a-z]{2}([0-9a-z]{3})?$/i', trim($value));
+
+		return $bRet;
+	}
+
+	/**
 	 * Comprobar la validez de direcciones Email
 	 *
 	 * @param string $value Valor a evaluar
@@ -534,7 +567,10 @@ class FormazoProc {
 	private function validaEmail($value){
 		$bRet = true;
 
-		$bRet = preg_match('/\A([-a-zA-Z0-9_.])+\@(([-a-zA-Z0-9])+\.)+([a-zA-Z0-9]{2,4})+\Z/i', $value);
+		if(function_exists('filter_var')) //filtrado PHP (>= 5.2.0) nativo
+			$bRet = filter_var($value, FILTER_VALIDATE_EMAIL);
+		else
+			$bRet = preg_match('/\A([-a-zA-Z0-9_.])+\@(([-a-zA-Z0-9])+\.)+([a-zA-Z0-9]{2,4})+\Z/i', $value);
 
 		return $bRet;
 	}
@@ -551,11 +587,15 @@ class FormazoProc {
 	 * </code>
 	 *
 	 * @todo cambiar el formato del dato si no es el que acepta la base de datos
+	 * @todo incluir la validacion de HH:mm:ss
 	 * @param string $value The variable being evaluated.
 	 * @param string $format Format of the date. Any combination of mm, dd, yyyy with single character separator between.
 	 * @return boolean
 	 */
 	private function validaFecha($value, $format = 'yyyy-mm-dd'){
+		/*$iFecha = (int) @strtotime($sFecha);
+		if($iFecha < 1){*/
+
 		if(strlen($value) == 10 && strlen($format) == 10){
 
 			//find separator. Remove all other characters from $format
@@ -579,7 +619,86 @@ class FormazoProc {
 				}
 			}
 		}
+
 		return false;
+	}
+
+	/**
+	 * Comprobar la validez de codigos de banco tipo IBAN
+	 *
+	 * @since 2015-05-31
+	 * @param string $sIban Valor a evaluar
+	 * @return boolean
+	 */
+	private function validaIban($sIban){
+		$sIban = trim($sIban);
+		$bRet = true;
+
+		if(!empty($sIban)){
+			// remove spaces and to upper case
+			$sIban = strtoupper(preg_replace('/([^[:alnum:]_])/', '', $sIban));
+			$leadingZeroes = true;
+			$ibancheckdigits = '';
+
+			// check the country code and find the country specific format
+			$countrycode = substr($sIban, 0, 2);
+			$bbancountrypatterns = array(
+					'AD' => '\d{8}[\dA-Z]{12}', 'AE' => '\d{3}\d{16}', 'AL' => '\d{8}[\dA-Z]{16}', 'AT' => '\d{16}', 'AZ' => '[\dA-Z]{4}\d{20}',
+					'BA' => '\d{16}', 'BE' => '\d{12}', 'BG' => '[A-Z]{4}\d{6}[\dA-Z]{8}', 'BH' => '[A-Z]{4}[\dA-Z]{14}', 'BR' => '\d{23}[A-Z][\dA-Z]',
+					'CH' => '\d{5}[\dA-Z]{12}', 'CR' => '\d{17}', 'CY' => '\d{8}[\dA-Z]{16}', 'CZ' => '\d{20}',
+					'DE' => '\d{18}', 'DK' => '\d{14}', 'DO' => '[A-Z]{4}\d{20}',
+					'EE' => '\d{16}', 'ES' => '\d{20}',
+					'FI' => '\d{14}', 'FO' => '\d{14}', 'FR' => '\d{10}[\dA-Z]{11}\d{2}',
+					'GB' => '[A-Z]{4}\d{14}', 'GE' => '[\dA-Z]{2}\d{16}', 'GI' => '[A-Z]{4}[\dA-Z]{15}', 'GL' => '\d{14}', 'GR' => '\d{7}[\dA-Z]{16}', 'GT' => '[\dA-Z]{4}[\dA-Z]{20}',
+					'HR' => '\d{17}', 'HU' => '\d{24}',
+					'IE' => '[\dA-Z]{4}\d{14}', 'IL' => '\d{19}', 'IS' => '\d{22}', 'IT' => '[A-Z]\d{10}[\dA-Z]{12}',
+					'KW' => '[A-Z]{4}[\dA-Z]{22}', 'KZ' => '\d{3}[\dA-Z]{13}',
+					'LB' => '\d{4}[\dA-Z]{20}', 'LI' => '\d{5}[\dA-Z]{12}', 'LT' => '\d{16}', 'LU' => '\d{3}[\dA-Z]{13}', 'LV' => '[A-Z]{4}[\dA-Z]{13}',
+					'MC' => '\d{10}[\dA-Z]{11}\d{2}', 'MD' => '[\dA-Z]{2}\d{18}', 'ME' => '\d{18}', 'MK' => '\d{3}[\dA-Z]{10}\d{2}', 'MR' => '\d{23}', 'MT' => '[A-Z]{4}\d{5}[\dA-Z]{18}', 'MU' => '[A-Z]{4}\d{19}[A-Z]{3}',
+					'NL' => '[A-Z]{4}\d{10}', 'NO' => '\d{11}',
+					'PK' => '[\dA-Z]{4}\d{16}', 'PL' => '\d{24}', 'PS' => '[\dA-Z]{4}\d{21}', 'PT' => '\d{21}',
+					'RO' => '[A-Z]{4}[\dA-Z]{16}', 'RS' => '\d{18}',
+					'SA' => '\d{2}[\dA-Z]{18}', 'SE' => '\d{20}', 'SI' => '\d{15}', 'SK' => '\d{20}', 'SM' => '[A-Z]\d{10}[\dA-Z]{12}',
+					'TN' => '\d{20}', 'TR' => '\d{5}[\dA-Z]{17}',
+					'VG' => '[\dA-Z]{4}\d{16}'
+			);
+
+			$bbanpattern = empty($bbancountrypatterns[$countrycode]) ? null : $bbancountrypatterns[$countrycode];
+
+			if(empty($bbanpattern)){ //pais desconocido
+				$bRet = false;
+			}
+			else{
+				if(preg_match('/^[A-Z]{2}\d{2}' . $bbanpattern . '$/', $sIban)){
+					// now check the checksum, first convert to digits
+					$ibancheck = mb_substr($sIban, 4, mb_strlen($sIban)) . mb_substr($sIban, 0, 4);
+					$charAt = -1;
+					for($i = 0; $i < mb_strlen($ibancheck); $i++){
+						$charAt = mb_substr($ibancheck, $i, 1);
+						if($charAt !== '0'){
+							$leadingZeroes = false;
+						}
+						if(!$leadingZeroes){
+							$ibancheckdigits .= strpos('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ', $charAt);
+						}
+					}
+
+					$cRest = '';
+					//calculate the result of: $ibancheckdigits % 97
+					for($p = 0; $p < mb_strlen($ibancheckdigits); $p++){
+						$cChar = mb_substr($ibancheckdigits, $p, 1);
+						$cOperator = $cRest . $cChar;
+						$cRest = $cOperator % 97;
+					}
+					$bRet = ($cRest === 1);
+				}
+				else {
+					$bRet = false; // invalid country specific format
+				}
+			}
+		}
+
+		return $bRet;
 	}
 
 	/**
@@ -647,6 +766,24 @@ class FormazoProc {
 	}
 
 	/**
+	 * Comprobar la validez de numeros
+	 *
+	 * @param string $value Valor a evaluar
+	 * @param string $value Tipo de valor numerico: bool, float, int, [null - cualquier numero]
+	 * @return boolean
+	 */
+	private function validaNumero($value, $tipo = null){
+		$bRet = true;
+
+		/*if(function_exists('filter_var')) //filtrado PHP (>= 5.2.0) nativo
+			$bRet = filter_var($value, FILTER_VALIDATE_INT); //FILTER_VALIDATE_BOOLEAN, FILTER_VALIDATE_FLOAT, FILTER_VALIDATE_INT
+		else*/
+			$bRet = is_numeric($value);
+
+		return $bRet;
+	}
+
+	/**
 	 * Comprobar la validez de URL's
 	 *
 	 * @param string $value Valor a evaluar
@@ -655,7 +792,10 @@ class FormazoProc {
 	private function validaUrl($value){
 		$bRet = true;
 
-		$bRet = preg_match('~\A(?:(?#
+		if(function_exists('filter_var')) //filtrado PHP (>= 5.2.0) nativo
+			$bRet = filter_var($value, FILTER_VALIDATE_URL);
+		else
+			$bRet = preg_match('~\A(?:(?#
 protocolo)(https?\:\/\/|ftps?\:\/\/)?(?#
 dominio)([\w\.\-]{1,}\.\w{2,6})?(?#
 puerto)(\:\d{1,5})?(?#

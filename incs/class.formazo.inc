@@ -477,7 +477,7 @@ class Formazo {
 				'disabled' => 'Disabled', //elementos desabilitados ("disabled")
 				'label' => 'Label', 'impar' => 'Impar', 'par' => 'Par', 'primera' => 'Primera', 'ultima' => 'Ultima', //pintado de formularios
 				'button' => 'Button', 'checkbox' => 'Checkbox', 'file' => 'File', 'multiple' => 'Multiple', 'password' => 'Passwd', 'radio' => 'Radio', 'select' => 'Select', 'text' => 'Text', 'textarea' => 'Textarea', //elementos del formulario
-				'email' => 'Email', 'entero' => 'Entero', 'fecha' => 'Fecha', 'nif' => 'Nif', 'numerico' => 'Numerico', 'obligatorio' => 'Obligatorio', 'telefono' => 'Telefono', 'url' => 'Url' //validaciones
+				'bic' => 'BicSwift', 'clave' => 'Clave', 'email' => 'Email', 'entero' => 'Entero', 'fecha' => 'Fecha', 'iban' => 'Iban', 'nif' => 'Nif', 'numerico' => 'Numerico', 'obligatorio' => 'Obligatorio', 'telefono' => 'Telefono', 'url' => 'Url' //validaciones
 			);
 		}
 		else{
