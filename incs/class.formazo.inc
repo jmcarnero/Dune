@@ -381,17 +381,21 @@ class Formazo {
 				if(!empty($css)) $css = ' class="'.implode(' ', $css).'"';
 
 				//guardando en una variable para su posterior dibujado
-				$aEcho[$clave] = '<p id="' . $clave . $this->sFormNombre . '"' . $css . '>'.(isset($valor['texto']) ? $valor['texto'] : '') . $valor['campo'] . '</p>';
-				$i++;
+				$aEcho[$clave] = '<p' . $css . '>'.(isset($valor['texto']) ? $valor['texto'] : '') . $valor['campo'] . '</p>';
 
 				//guardando en una variable para su posterior dibujado
 				if($this->aCampos[$clave]['tipo'] != 'group'){
-					$sApertura = '<p id="' . $clave . $this->sFormNombre . '"' . $css . '>' . (isset($valor['texto']) ? $valor['texto'] : '') . $valor['campo'];
+					$sApertura = '<p' . $css . '>' . (isset($valor['texto']) ? $valor['texto'] : '') . $valor['campo'];
 					$sCierre = '</p>';
 				}
 				else{
 					$sApertura = $valor['texto'];
 					$sCierre = $valor['campo'];
+				}
+
+				if(!empty($valor['file'])){
+					$aEcho[$clave] .= $valor['file'];
+					$sCierre .= $valor['file'];
 				}
 
 				$i++;
@@ -788,24 +792,23 @@ class FormazoFile extends FormazoElementos {
 			$iMaxUpload = min($iMaxUpload, $this->aDatos['longitud']);
 		}
 		$this->aFormulario['elementos'][$this->sClave]['campo'] = '<input type="hidden" name="MAX_FILE_SIZE" value="' . $iMaxUpload . '" />';
-		$aElemento['campo'] = '<input id="' . $this->sClave . $this->sFormNombre . '" name="' . $this->sClave . '" type="file" ' . $this->getTabIndex() . $this->getCss() . ' />';
+		$aElemento['campo'] = '<input id="' . $this->sClave . $this->sFormNombre . '" name="' . $this->sClave . '" type="file" data-previewId="img_' . $this->sClave . $this->sFormNombre . '" ' . $this->getTabIndex() . $this->getCss() . ' />'; //data-previewId se usa en javascript para crear una vista previa cuando se cambia de fichero
 		$aElemento['campo'] .= '<br />Tama&ntilde;o m&aacute;ximo: ' . $iMaxUpload . ' bytes';
 
 		//muestra la imagen (si lo es), o el nombre del fichero actual
-		if(isset($this->aDatos['valor']) && $this->aDatos['valor'] != ''){
-			$aElemento['file'] = '<br /><div id="div_' . $this->sClave . $this->sFormNombre . '">';
-			switch(strtolower(substr($this->aDatos['valor'], strrpos($this->aDatos['valor'], '.') +1 ))){
-				case 'jpg':
-				case 'jpeg':
-				case 'gif':
-				case 'png':
-					$aElemento['file'] .= '<img src="' . $this->aDatos['rutaFichero'] . rawurldecode($this->aDatos['valor']) . '" alt="Imagen actual" title="Imagen actual" />';
-					break;
-				default:
-					$aElemento['file'] .= 'Fichero actual: <a href="' . $this->aDatos['rutaFichero'] . rawurldecode($this->aDatos['valor']) . '" target="_blank">' . $this->aDatos['valor'] . '</a>';
-			}
-			$aElemento['file'] .= '</div>';
+		$aElemento['file'] = '<br /><div id="pre_' . $this->sClave . $this->sFormNombre . '"><a href="' . $this->aDatos['rutaFichero'] . rawurldecode($this->aDatos['valor']) . '" target="_blank">';
+		$sExtension = empty($this->aDatos['valor']) ? null : strtolower(substr($this->aDatos['valor'], strrpos($this->aDatos['valor'], '.') + 1));
+		switch($sExtension){
+			case 'jpg':
+			case 'jpeg':
+			case 'gif':
+			case 'png':
+				$aElemento['file'] .= '<img id="img_' . $this->sClave . $this->sFormNombre . '" src="' . $this->aDatos['rutaFichero'] . rawurldecode($this->aDatos['valor']) . '" alt="Imagen actual" />';
+				break;
+			default:
+				$aElemento['file'] .= '<img id="img_' . $this->sClave . $this->sFormNombre . '" src="Imagen preview" alt="' . $this->aDatos['valor'] . '" />'; //TODO esta es la mejor manera de mostrar el valor actual?, usando una imagen inexistente como "placeholder" para la futura preview por javascript?
 		}
+		$aElemento['file'] .= '</a></div>';
 
 		return($aElemento);
 	}

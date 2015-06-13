@@ -57,34 +57,52 @@ _JaSper.funcs.extend(_JaSper.prototype, {
 
 	/**
 	 * Valida formularios
-	 * @param object oProps Propiedades para las validaciones
-	 * return object JaSper
+	 * @param {Object} oProps Propiedades para las validaciones
+	 * @return {Object} JaSper
 	 */
 	validar: function(props){
-		var props = props || {}; //configuracion del metodo
-		props.classError = props.classError || 'frmError'; //configuracion del metodo
-		
 
-		var filters = { //validaciones
-			frmObligatorio: function (el){return _JaSper.valida.obligatorio(el);},
-			clave: function (el){return _JaSper.valida.clave(el, document.getElementById('objId2'));},
-			frmEmail: function (el){return _JaSper.valida.email(el);},
-			entero: function (el){return _JaSper.valida.numeros(el);}, //numerico de tipo entero, no permite decimales ni separadores de miles, solo numeros
-			fichero: function (el){return _JaSper.valida.fichero(el);},
-			fecha: function (el){return _JaSper.valida.fechas(el);},
-			nif: function (el){return _JaSper.valida.nif(el);},
-			frmNumerico: function (el){return _JaSper.valida.numeros(el);}, //permite decimales, con "."
-			telefono: function (el){return _JaSper.valida.numeros(el);},
-			url: function (el){return _JaSper.valida.url(el);}
-		};
-		var filters_keys = {
-			entero: function (ev, el){return _JaSper.valida.teclasNumeros(el, ev, false);}, //numerico de tipo entero, no permite decimales ni separadores de miles, solo numeros
-			fecha: function (ev, el){return _JaSper.valida.teclasFechas(el, ev);},
-			frmNumerico: function(ev, el){return _JaSper.valida.teclasNumeros(el, ev, true);} //permite decimales, con "."
+		props = props || {};
+		props.clases = props.clases || {};
+
+		props = { //opciones de configuracion del metodo
+			alert: props.alert === undefined ? true : props.alert, //se muestra un alert con los mensajes de error (true)
+			preview: props.preview === undefined ? false : props.preview, //muestra una prevista de imagenes cuando se preparan para subir en un input file; el input file ha de llevar un data-previewId="id_donde_mostrar_preview"
+
+			clases: { //clases css e identificadores de filtros
+				error: props.clases.error || 'frmError', //clase de errores
+				obligatorio: props.clases.obligatorio || 'frmObligatorio',
+				clave: props.clases.clave || 'clave',
+				email: props.clases.email || 'frmEmail',
+				entero: props.clases.entero || 'entero',
+				fichero: props.clases.fichero || 'fichero',
+				fecha: props.clases.fecha || 'fecha',
+				nif: props.clases.nif || 'nif',
+				numerico: props.clases.numerico || 'frmNumerico',
+				telefono: props.clases.telefono || 'telefono',
+				url: props.clases.url || 'url'
+			}
 		};
 
-		//bloqueos de teclas
-		this.each(function (){ //se busca en cada formulario los elementos bloqueables
+		var filters = {}; //validaciones
+		filters[props.clases.obligatorio] = function (el){return _JaSper.valida.obligatorio(el);};
+		filters[props.clases.clave] = function (el){return _JaSper.valida.clave(el, document.getElementById('objId2'));};
+		filters[props.clases.email] = function (el){return _JaSper.valida.email(el);};
+		filters[props.clases.entero] = function (el){return _JaSper.valida.numeros(el);}; //numerico de tipo entero, no permite decimales ni separadores de miles, solo numeros
+		filters[props.clases.fichero] = function (el){return _JaSper.valida.fichero(el);};
+		filters[props.clases.fecha] = function (el){return _JaSper.valida.fechas(el);};
+		filters[props.clases.nif] = function (el){return _JaSper.valida.nif(el);};
+		filters[props.clases.numerico] = function (el){return _JaSper.valida.numeros(el);}; //permite decimales, con "."
+		filters[props.clases.telefono] = function (el){return _JaSper.valida.numeros(el);};
+		filters[props.clases.url] = function (el){return _JaSper.valida.url(el);};
+
+		var filters_keys = {};
+		filters_keys[props.clases.entero] = function (ev, el){return _JaSper.valida.teclasNumeros(el, ev, false);}; //numerico de tipo entero, no permite decimales ni separadores de miles, solo numeros
+		filters_keys[props.clases.fecha] = function (ev, el){return _JaSper.valida.teclasFechas(el, ev);};
+		filters_keys[props.clases.numerico] = function(ev, el){return _JaSper.valida.teclasNumeros(el, ev, true);}; //permite decimales, con "."
+
+		this.each(function (){
+			//bloqueos de teclas, se busca en cada formulario los elementos bloqueables
 			JaSper('<input>,<textarea>', this).each(function(ev){
 				var el = this;
 				if(el.className != 'undefined'){
@@ -104,6 +122,60 @@ _JaSper.funcs.extend(_JaSper.prototype, {
 					}
 				}
 			});
+
+			//muestra vista previa de la imagen cargada en un input file
+			if(props.preview){
+				JaSper('input[type="file"]', this).each(function (){
+					var sPreviewId = (this.dataset.previewId || this.getAttribute('data-previewId')) || null;
+					if(!sPreviewId) //no hay id en la que hacer preview
+						return false;
+					else
+						sPreviewId = '#' + sPreviewId;
+
+					$(this).eventAdd('change', function (){
+						if(typeof FileReader !== "function"){ //No para navegadores antiguos
+							_JaSper.funcs.log('Vista previa no disponible', 0);
+							return false;
+						}
+
+						var obtenerTipoMIME = function obtenerTipoMIME(cabecera){ //lee el tipo MIME de la cabecera de la imagen
+							return cabecera.replace(/data:([^;]+).*/, '\$1');
+						};
+
+						var oElement = this;
+						var oArchivo = oElement.files;
+
+						if(oArchivo.length > 0){
+							var oLector = new FileReader();
+							oLector.onloadend = function(ev){
+								//Envia la imagen a la pantalla
+								var origen = ev.target; //objeto FileReader
+
+								var tipo = obtenerTipoMIME(origen.result.substring(0, 30)); //Prepara la informacion sobre la imagen
+
+								//Si el tipo de archivo es valido lo muestra, sino muestra un mensaje
+								if(tipo !== 'image/jpeg' && tipo !== 'image/png' && tipo !== 'image/gif'){
+									JaSper(sPreviewId).attrib('src', '');
+									oElement.value = '';
+									_JaSper.funcs.log('No se puede mostrar preview del fichero seleccionado', 1);
+								}
+								else{
+									JaSper(sPreviewId).attrib('src', origen.result);
+								}
+							};
+
+							oLector.onerror = function(ev){
+								_JaSper.funcs.log(ev, 2);
+							};
+
+							oLector.readAsDataURL(oArchivo[0]);
+						}
+						else{
+							JaSper(sPreviewId).attrib('src', '');
+						}
+					});
+				});
+			}
 		});
 
 		//validacion al envio
@@ -125,22 +197,24 @@ _JaSper.funcs.extend(_JaSper.prototype, {
 					}
 
 					if(aErrTemp.length){
-						JaSper(el).addClass(props.classError);
+						JaSper(el).addClass(props.clases.error);
 						window.errMens[window.errMens.length] = aErrTemp.join("\n");
 					}
 					else
-						JaSper(el).removeClass(props.classError);
+						JaSper(el).removeClass(props.clases.error);
 				}
 			});
 
-			if(JaSper('.' + props.classError, this).length > 0){
+			if(JaSper('.' + props.clases.error, this).length > 0){
 				_JaSper.event.preventDefault(ev);
 				_JaSper.event.stop(ev);
 
-				/*JaSper('.' + props.classError).each( //marcar los errores
+				/*JaSper('.' + props.clases.error).each( //marcar los errores
 							function(){alert(this.name + ' error');}
 						);*/
-				alert("Se han producido los siguientes errores:\n\n" + window.errMens.join("\n"));
+				if(props.alert)
+					alert("Se han producido los siguientes errores:\n\n" + window.errMens.join("\n"));
+
 				return false;
 			}
 
@@ -159,8 +233,8 @@ _JaSper.funcs.extend(_JaSper.valida, {
 	/**
 	 * validador BIC (Business Identifier Codes) o SWIFT
 	 *
-	 * @param object sBic Objeto con codigo BIC a validar
-	 * @return boolean
+	 * @param {Object} sBic Objeto con codigo BIC a validar
+	 * @return {boolean}
 	 */
 	bic: function(oBic){
 		var bRet = true;
@@ -174,15 +248,15 @@ _JaSper.funcs.extend(_JaSper.valida, {
 		}
 
 		if(bRet) return false; //pass valida
-		else return(_JaSper.funcs._t('valida/bic')); //pass no valida
+		else return _JaSper.funcs._t('valida/bic'); //pass no valida
 	},
 
 	/**
 	 * Validacion de campos password
 	 * 
-	 * @param object oClave Campo de clave original
-	 * @param object objId2 Id del campo de clave repetido
-	 * @return string
+	 * @param {Object} oClave Campo de clave original
+	 * @param {Object} objId2 Id del campo de clave repetido
+	 * @return {string}
 	 */
 	clave: function (oClave, oClave2){
 		if(!oClave2)
@@ -195,14 +269,14 @@ _JaSper.funcs.extend(_JaSper.valida, {
 			bRet = false;
 
 		if(bRet) return false; //pass valida
-		else return(_JaSper.funcs._t('valida/clave')); //pass no valida
+		else return _JaSper.funcs._t('valida/clave'); //pass no valida
 	},
 
 	/**
 	 * Validacion de campos e-mail
 	 *
-	 * @param object oEmail Email a validar
-	 * @return boolean
+	 * @param {Object} oEmail Email a validar
+	 * @return {boolean}
 	 */
 	email: function (oEmail){
 		var bRet = true, filtro = /^([a-zA-Z0-9_\.\-])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/;
@@ -216,16 +290,16 @@ _JaSper.funcs.extend(_JaSper.valida, {
 		}
 
 		if(bRet) return false;
-		else return(_JaSper.funcs._t('valida/email')); //e-mail no valido
+		else return _JaSper.funcs._t('valida/email'); //e-mail no valido
 	},
 
 	/**
 	 * Validacion de campos de fechas
 	 * Comprueba que una fecha introducida es valida y la convierte al formato aaaa-mm-dd hh:mm:ss; no distingue formato europeo de americano, puede dar errores en esa confusion
 	 * 
-	 * @param object oFecha Fecha a validar
-	 * @param string formato Formato de la fecha
-	 * @return boolean
+	 * @param {Object} oFecha Fecha a validar
+	 * @param {string} formato Formato de la fecha
+	 * @return {boolean}
 	 */
 	fechas: function (oFecha, formato){
 		if(!formato)
@@ -246,15 +320,15 @@ _JaSper.funcs.extend(_JaSper.valida, {
 		}
 
 		if(bRet) return false;
-		else return(_JaSper.funcs._t('valida/fechas') + formato); //fecha incorrecta
+		else return (_JaSper.funcs._t('valida/fechas') + formato); //fecha incorrecta
 	},
 
 	/**
 	 * Validacion de campos fichero, comprueba la extension del archivo entre las permitidas
 	 * 
-	 * @param object oFichero Fichero a validar
-	 * @param string extensiones Extensiones permitidas
-	 * @return boolean
+	 * @param {Object} oFichero Fichero a validar
+	 * @param {string} extensiones Extensiones permitidas
+	 * @return {boolean}
 	 */
 	fichero: function (oFichero, extensiones){
 		var bRet = true;
@@ -271,7 +345,7 @@ _JaSper.funcs.extend(_JaSper.valida, {
 		}
 
 		if(bRet) return false;
-		else return(_JaSper.funcs._t('valida/fichero')); //tipo de fichero no permitido
+		else return _JaSper.funcs._t('valida/fichero'); //tipo de fichero no permitido
 	},
 
 	/**
@@ -279,8 +353,8 @@ _JaSper.funcs.extend(_JaSper.valida, {
 	 * incluido el formato de cuenta especifico de cada pais
 	 *
 	 * @see https://github.com/jzaefferer/jquery-validation/blob/master/src/additional/iban.js
-	 * @param object oIban Codigo IBAN a validar
-	 * @return boolean
+	 * @param {Object} oIban Codigo IBAN a validar
+	 * @return {boolean}
 	 */
 	iban: function(oIban){
 		var bRet = true;
@@ -350,15 +424,15 @@ _JaSper.funcs.extend(_JaSper.valida, {
 		}
 
 		if(bRet) return false;
-		else return(_JaSper.funcs._t('valida/iban'));
+		else return _JaSper.funcs._t('valida/iban');
 	},
 
 	/**
 	 * Validacion de campos NIF/NIE
 	 * NIF sin espacios, 10 caracteres (NIE) maximo
 	 *
-	 * @param object oNif NIF a validar
-	 * @return boolean
+	 * @param {Object} oNif NIF a validar
+	 * @return {boolean}
 	 */
 	nif: function (oNif){
 		var bRet = true, mensaje = '';
@@ -396,10 +470,10 @@ _JaSper.funcs.extend(_JaSper.valida, {
 	/**
 	 * Validacion de numericos, con rango entre "menor" y "mayor" (opcionales ambos)
 	 *
-	 * @param object oNumero Objeto a evaluar
-	 * @param integer menor Rango minimo
-	 * @param integer mayor Rango máximo
-	 * @return boolean
+	 * @param {Object} oNumero Objeto a evaluar
+	 * @param {number} menor Rango minimo
+	 * @param {number} mayor Rango máximo
+	 * @return {boolean}
 	 */
 	numeros: function (oNumero, menor, mayor){
 		var bRet = true;
@@ -420,15 +494,15 @@ _JaSper.funcs.extend(_JaSper.valida, {
 		}
 
 		if(bRet) return false;
-		else return(_JaSper.funcs._t('valida/numeros1') + menor + _JaSper.funcs._t('valida/numeros2') + mayor); //numero incorrecto
+		else return (_JaSper.funcs._t('valida/numeros1') + menor + _JaSper.funcs._t('valida/numeros2') + mayor); //numero incorrecto
 	},
 
 	/**
 	 * Campo de caracter obligatorio, no puede tener valor nulo
 	 * Se llama en el envio del formulario
 	 *
-	 * @param object oCampo Campo a validar
-	 * @return boolean
+	 * @param {Object} oCampo Campo a validar
+	 * @return {boolean}
 	 */
 	obligatorio: function (oCampo){
 		var bRet = true, text = '';
@@ -441,7 +515,7 @@ _JaSper.funcs.extend(_JaSper.valida, {
 		}
 
 		if(bRet) return false;
-		else return('"' + text + '"' + _JaSper.funcs._t('valida/obligatorio'));
+		else return ('"' + text + '"' + _JaSper.funcs._t('valida/obligatorio'));
 	},
 
 	/*version para radio buttons*/
@@ -462,7 +536,7 @@ _JaSper.funcs.extend(_JaSper.valida, {
 		}
 
 		if(bRet) return false;
-		else return('"' + text + '"' + _JaSper.funcs._t('valida/obligatorioRadio'));
+		else return ('"' + text + '"' + _JaSper.funcs._t('valida/obligatorioRadio'));
 	},
 
 	/**
@@ -470,27 +544,27 @@ _JaSper.funcs.extend(_JaSper.valida, {
 	 * Llamar con: onkeypress="return JaSper(this).valTeclasFechas(event);"
 	 * o 'JaSper('#objId').addEvent("keypress", function (e){this.valTeclasFechas(e);});'
 	 * 
-	 * @param object oCampo Campo a limitar
-	 * @param event ev Event
-	 * @return boolean
+	 * @param {Object} oCampo Campo a limitar
+	 * @param {event} ev Event
+	 * @return {boolean}
 	 */
 	teclasFechas: function (oCampo, ev){
-		var bRet = true;
-		var ev = ev || window.event;
+		var bRet = false;
+		ev = ev || window.event;
 
-		var char_code = JaSper.event.keyCode(ev);
+		var charCode = JaSper.event.keyCode(ev);
 		//permite la entrada de numeros, espacio, dos puntos, barra y guion
 		if(charCode > 31 && (charCode < 48 || charCode > 58) && charCode != 32 && charCode != 47 && charCode != 45){
-			bRet = false; //alert("No son caracteres de fecha");
+			bRet = true; //alert("No son caracteres de fecha");
 			_JaSper.event.preventDefault(ev); //evita la pulsacion
 		}
 		else{
-			bRet = true;
+			bRet = false;
 			if(oCampo.value.indexOf(' ') != -1 && charCode == 32)
-				bRet = false;
+				bRet = true;
 		}
 
-		return(!bRet);
+		return bRet;
 	},
 
 	/**
@@ -498,25 +572,26 @@ _JaSper.funcs.extend(_JaSper.valida, {
 	 * Llamar con: onkeypress="return valTeclasNumeros(event);"
 	 * o 'JaSper('#objId').addEvent("keypress", function (e){this.valTeclasNumeros(e);});'
 	 * 
-	 * @param object oCampo Campo a limitar
-	 * @param event ev Evento
-	 * @param boolean decimal true\~spanish permite punto decimal\~english allow decimal point\~
-	 * @return boolean
+	 * @param {bject} oCampo Campo a limitar
+	 * @param {event} ev Evento
+	 * @param {boolean} decimal true\~spanish permite punto decimal\~english allow decimal point\~
+	 * @return {boolean}
 	 */
 	teclasNumeros: function (oCampo, ev, decimal){
-		var bRet = true;
-		var ev = ev || window.event;
-		var decimal = typeof(decimal) != 'undefined' ? decimal : true;
+		var bRet = false;
+		ev = ev || window.event;
+		decimal = typeof(decimal) != 'undefined' ? decimal : true;
 
 		var char_code = _JaSper.event.keyCode(ev);
 		if(decimal){ //permite la entrada de numeros y punto decimal
 			if(char_code > 31 && (char_code < 48 || char_code > 57) && char_code != 46){
-				bRet = false; //alert("no es un numero")
+				bRet = true; //alert("no es un numero")
 				_JaSper.event.preventDefault(ev); //evita la pulsacion
 			}
 			else{
-				bRet = true;
-				if(oCampo.value.indexOf('.') != -1 && char_code == 46) bRet = false;
+				bRet = false;
+				if(oCampo.value.indexOf('.') != -1 && char_code == 46)
+					bRet = true;
 			}
 		}
 		else{ //permite la entrada de numeros sin punto decimal
@@ -525,18 +600,17 @@ _JaSper.funcs.extend(_JaSper.valida, {
 				_JaSper.event.preventDefault(ev); //evita la pulsacion
 			}
 			else
-				bRet = true;
+				bRet = false;
 		}
 
-		return(!bRet);
+		return bRet;
 	},
 
 	/**
-	 * \~spanish validacion de campos URL
-	 * \~english URL validation\~
+	 * Validacion de campos URL
 	 * 
-	 * @param object oUrl Objeto a validar
-	 * @return boolean
+	 * @param {object} oUrl Objeto a validar
+	 * @return {boolean}
 	 */
 	url: function (oUrl){
 		var bRet = true;
@@ -552,7 +626,7 @@ _JaSper.funcs.extend(_JaSper.valida, {
 		}
 
 		if(bRet) return false;
-		else return(_JaSper.funcs._t('valida/url'));
+		else return _JaSper.funcs._t('valida/url');
 	}
 
 });
