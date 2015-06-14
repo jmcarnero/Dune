@@ -782,6 +782,7 @@ class FormazoFile extends FormazoElementos {
 
 	protected function elemento(){
 		$aElemento = array();
+		$this->aDatos['rutaFichero'] = empty($this->aDatos['rutaFichero']) ? '.' : $this->aDatos['rutaFichero']; //TODO evita problemas si no se ha puesto ruta en el fichero, pero no comprueba si esta es valida, deberia ser /tmp por defecto?
 
 		$aElemento['texto'] = $this->getLabel();
 

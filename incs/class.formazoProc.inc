@@ -191,9 +191,9 @@ class FormazoProc {
 		if(!$this->procesarValores()){
 			return false; //errores en la recuperacion de valores del formulario
 		}
-		if(!$this->setRedatazo()){
+		/*if(!$this->setRedatazo()){
 			return false; //errores en la construccion de la SQL
-		}
+		}*/
 
 		return true;
 	}
