@@ -27,12 +27,13 @@
  */
 class SMTPazo {
 
+	//private $bDebug = true;
+
 	private $aAttachment = array();
 	private $sBcc = null;
 	private $sCc = null;
 	private $sFrom = 'info@sargazos.net';
 	private $sHeaders = '';
-	private $aMessage = array(); //fragmentos del mensaje ya compuestos
 	private $sMessage = '';
 	private $sMessageHTML = '';
 	private $sReply = 'no-reply@sargazos.net';
@@ -91,8 +92,9 @@ class SMTPazo {
 	 * @param string $bcc Direccion o direcciones separadas por comas
 	 */
 	function bcc($bcc){
+		//$bcc_name = "=?UTF-8?B?".base64_encode($bcc_name)."?= <bcc_mail@email.mail>";
+
 		$this->sBcc = strip_tags($bcc);
-		$headers .= 'Bcc: birthdaycheck@example.com' . "\r\n";
 	}
 
 	/**
@@ -103,8 +105,9 @@ class SMTPazo {
 	 * @param string $cc Direccion o direcciones separadas por comas
 	 */
 	function cc($cc){
+		//$cc_name = "=?UTF-8?B?".base64_encode($cc_name)."?= <cc_mail@email.mail>";
+
 		$this->sCc = strip_tags($cc);
-		$headers .= 'Cc: birthdayarchive@example.com' . "\r\n";
 	}
 
 	/**
@@ -114,100 +117,64 @@ class SMTPazo {
 		$sLimite = md5(microtime());
 		$sLimiteContenido = md5(microtime());
 
-		$aHeaders[] = 'Mime-Version: 1.0';
-		$aHeaders[] = 'Content-Type: multipart/related;boundary=' . $sLimite;
-		$aHeaders[] = 'Content-Transfer-Encoding: 7bit';
-		$aHeaders[] = 'Date: ' . date('r', $_SERVER['REQUEST_TIME']);
-		$aHeaders[] = 'Message-ID: <' . $_SERVER['REQUEST_TIME'] . md5($_SERVER['REQUEST_TIME']) . '@' . $_SERVER['SERVER_NAME'] . '>';
-		$aHeaders[] = 'From: ' . $this->sFrom;
-		$aHeaders[] = 'Reply-To: ' . $this->sReply;
-		$aHeaders[] = 'Return-Path: ' . $this->sFrom;
-		$aHeaders[] = 'X-Mailer: SMTPazo v' . $this->sVersion; //phpversion();
-		$aHeaders[] = 'X-Originating-IP: ' . $_SERVER['SERVER_ADDR'];
-
-		if($this->sBcc){
-			$aHeaders[] = 'Cc: ' . $this->sBcc;
-		}
-		if($this->sCc){
-			$aHeaders[] = 'Bcc: ' . $cc;
-		}
-
-		$this->sHeaders = implode($this->sRetornoCarro, $aHeaders) . $this->sRetornoCarro . $this->sRetornoCarro;
-
-		//cuerpo del mensaje
-		$this->aMessage = array($this->sRetornoCarro . '--' . $sLimite . $this->sRetornoCarro);
-		$this->aMessage[] = 'Content-Type: multipart/alternative;' . $this->sRetornoCarro;
-		$this->aMessage[] = ' boundary="' . $sLimiteContenido . '"' . $this->sRetornoCarro;
-
-		//mensaje texto
-		$this->aMessage[] = $this->sRetornoCarro . '--' . $sLimiteContenido . $this->sRetornoCarro;
-		$this->aMessage[] = 'Content-Type: text/plain; charset=utf-8' . $this->sRetornoCarro;
-		$this->aMessage[] = $this->sMessage . $this->sRetornoCarro;
-
-		//mensaje HTML
-		$this->aMessage[] = $this->sRetornoCarro . "--" . $sLimiteContenido . $this->sRetornoCarro;
-		$this->aMessage[] = 'Content-Type: text/html; charset=utf-8' . $this->sRetornoCarro;
-		$this->aMessage[] = 'Content-Transfer-Encoding: quoted-printable' . $this->sRetornoCarro;
-		$this->aMessage[] = $this->sRetornoCarro . $this->sMessageHTML . $this->sRetornoCarro;
-
-		$this->aMessage[] = $this->sRetornoCarro . '--' . $sLimiteContenido . '--' . $this->sRetornoCarro;
-
-		//attachements
-		foreach($this->aAttachment as $sAttach){
-			if($sAttach){
-				$this->aMessage[] = $this->sRetornoCarro . '--' . $sLimite . $this->sRetornoCarro;
-				$this->aMessage[] = $sAttach;
-			}
-		}
-
-		$this->aMessage[] = $this->sRetornoCarro . '--' . $sLimite . '--' . $this->sRetornoCarro;
-
 /*
 $headers .= "Sensitivity: Personal\n";
 Possible Options:
 Sensitivity: Normal, Personal, Private and Company-Confidential
 These will be recognised and handled in Outlook, Thunderbird and others.
 
-==========================
-
-$headers = 'From: webmaster@example.com' . "\r\n" .
-		'Reply-To: webmaster@example.com' . "\r\n" .
-		'X-Mailer: PHP/' . phpversion();
-
-$headers   = array();
-$headers[] = "MIME-Version: 1.0";
-$headers[] = "Content-type: text/plain; charset=utf-8";
 $headers[] = "From: Sender Name <sender@domain.com>";
-$headers[] = "Bcc: JJ Chong <bcc@domain2.com>";
 $headers[] = "Reply-To: Recipient Name <receiver@domain3.com>";
 $headers[] = "Subject: {$subject}";
-$headers[] = "X-Mailer: PHP/".phpversion();
-implode("\r\n", $headers);
-
-$from_user = "=?UTF-8?B?".base64_encode($from_user)."?=";
-$subject = "=?UTF-8?B?".base64_encode($subject)."?=";
-
-$headers = "From: $from_user <$from_email>\r\n".
-		"MIME-Version: 1.0" . "\r\n" .
-		"Content-type: text/html; charset=UTF-8" . "\r\n";
-
-
-$headers    = array
-(
-		'MIME-Version: 1.0',
-		'Content-Type: text/html; charset="UTF-8";',
-		'Content-Transfer-Encoding: 7bit',
-		'Date: ' . date('r', $_SERVER['REQUEST_TIME']),
-		'Message-ID: <' . $_SERVER['REQUEST_TIME'] . md5($_SERVER['REQUEST_TIME']) . '@' . $_SERVER['SERVER_NAME'] . '>',
-		'From: ' . $from,
-		'Reply-To: ' . $from,
-		'Return-Path: ' . $from,
-		'X-Mailer: PHP v' . phpversion(),
-		'X-Originating-IP: ' . $_SERVER['SERVER_ADDR'],
-);
-
-mail($to, '=?UTF-8?B?' . base64_encode($arr['subject']) . '?=', $arr['message'], implode("\n", $headers));
 */
+
+		$aHeaders[] = 'Message-ID: <' . $_SERVER['REQUEST_TIME'] . md5($_SERVER['REQUEST_TIME']) . '@' . $_SERVER['SERVER_NAME'] . '>';
+		$aHeaders[] = 'From: ' . $this->sFrom;
+		if($this->sBcc) $aHeaders[] = 'Bcc: ' . $this->sBcc;
+		if($this->sCc) $aHeaders[] = 'Cc: ' . $this->sCc;
+		$aHeaders[] = 'Date: ' . date('r', $_SERVER['REQUEST_TIME']);
+		$aHeaders[] = 'Reply-To: ' . $this->sReply;
+		$aHeaders[] = 'Content-Type: multipart/related;boundary=' . $sLimite;
+		$aHeaders[] = 'X-Mailer: SMTPazo v' . $this->sVersion; //phpversion();
+		$aHeaders[] = 'Mime-Version: 1.0';
+		//$aHeaders[] = 'Content-Transfer-Encoding: 7bit';
+		$aHeaders[] = 'Return-Path: ' . $this->sFrom;
+		$aHeaders[] = 'X-Originating-IP: ' . $_SERVER['SERVER_ADDR'];
+
+
+		$this->sHeaders = implode($this->sRetornoCarro, $aHeaders) . $this->sRetornoCarro . $this->sRetornoCarro;
+
+		//cuerpo del mensaje
+		$aMessage = array($this->sRetornoCarro . '--' . $sLimite . $this->sRetornoCarro);
+		$aMessage[] = 'Content-Type: multipart/alternative;' . $this->sRetornoCarro;
+		$aMessage[] = ' boundary="' . $sLimiteContenido . '"' . $this->sRetornoCarro;
+
+		//mensaje texto
+		$aMessage[] = $this->sRetornoCarro . '--' . $sLimiteContenido . $this->sRetornoCarro;
+		$aMessage[] = 'Content-Type: text/plain; charset=utf-8' . $this->sRetornoCarro;
+		$aMessage[] = 'Content-Transfer-Encoding: quoted-printable' . $this->sRetornoCarro;
+		$aMessage[] = $this->sMessage . $this->sRetornoCarro;
+
+		//mensaje HTML
+		if($this->sMessageHTML){
+			$aMessage[] = $this->sRetornoCarro . "--" . $sLimiteContenido . $this->sRetornoCarro;
+			$aMessage[] = 'Content-Type: text/html; charset=utf-8' . $this->sRetornoCarro;
+			$aMessage[] = 'Content-Transfer-Encoding: quoted-printable' . $this->sRetornoCarro;
+			$aMessage[] = $this->sRetornoCarro . $this->sMessageHTML . $this->sRetornoCarro;
+		}
+
+		$aMessage[] = $this->sRetornoCarro . '--' . $sLimiteContenido . '--' . $this->sRetornoCarro;
+
+		//attachements
+		foreach($this->aAttachment as $sAttach){
+			if($sAttach){
+				$aMessage[] = $this->sRetornoCarro . '--' . $sLimite . $this->sRetornoCarro;
+				$aMessage[] = $sAttach;
+			}
+		}
+
+		$aMessage[] = $this->sRetornoCarro . '--' . $sLimite . '--' . $this->sRetornoCarro;
+		$this->sMensaje = implode('', $aMessage);
 	}
 
 	/**
@@ -233,6 +200,8 @@ mail($to, '=?UTF-8?B?' . base64_encode($arr['subject']) . '?=', $arr['message'],
 	 * @param string $from Direccion o direcciones separadas por comas
 	 */
 	function from($from){
+		//$from_name = "=?UTF-8?B?".base64_encode($from_name)."?= <from_mail@email.mail>";
+
 		$this->sFrom = strip_tags($from);
 	}
 
@@ -245,15 +214,21 @@ mail($to, '=?UTF-8?B?' . base64_encode($arr['subject']) . '?=', $arr['message'],
 	 * Caution (Windows only) When PHP is talking to a SMTP server directly, if a full stop is found on the start of a line, it is removed. To counter-act this, replace these occurrences with a double dot.
 	 * $text = str_replace("\n.", "\n..", $text);
 	 *
+	 * @todo //TODO limpiar XSS
 	 * @param string $message Texto del correo
 	 * @param boolean $isHTML Texto HTML del correo
 	 */
 	function message($message, $isHTML = false){
-		if($isHTML){
-			$this->sMessageHTML = nl2br(str_replace("=", "=3D", $message));
+		$message = str_replace("=", "=3D", $message);
+		$message = wordwrap($message, 70, $this->sRetornoCarro);
+
+		if(!$isHTML){
+			//In case any of our lines are larger than 70 characters, we should use wordwrap()
+			$message = strip_tags($message); //TODO decidir que etiquetas se permiten y limpiar XSS
+			$this->sMessageHTML = $message;
 		}
 		else{
-			$this->sMessage = nl2br(str_replace("=", "=3D", strip_tags($message)));
+			$this->sMessage = $message;
 		}
 	}
 
@@ -263,6 +238,8 @@ mail($to, '=?UTF-8?B?' . base64_encode($arr['subject']) . '?=', $arr['message'],
 	 * @param string $reply Direccion
 	 */
 	function reply($reply){
+		//$reply_name = "=?UTF-8?B?".base64_encode($reply_name)."?= <reply_mail@email.mail>";
+
 		$this->sReply = strip_tags($reply);
 	}
 
@@ -276,7 +253,20 @@ mail($to, '=?UTF-8?B?' . base64_encode($arr['subject']) . '?=', $arr['message'],
 	function send(){
 		$this->componer();
 
-		return mail($this->sTo, $this->sSubject, implode('', $this->aMessage), $this->sHeaders);
+		$bMail = mail($this->sTo, $this->sSubject, $this->sMensaje, $this->sHeaders);
+
+		/*if($this->bDebug){
+			var_dump(array(
+				'sTo' => $this->sTo,
+				'sSubject' => $this->sSubject,
+				'sMessage' => $this->sMensaje,
+				'sHeaders' => $this->sHeaders,
+				'mail' => $bMail
+			));
+			die('debug');
+		}*/
+
+		return $bMail;
 	}
 
 	/**
@@ -285,7 +275,10 @@ mail($to, '=?UTF-8?B?' . base64_encode($arr['subject']) . '?=', $arr['message'],
 	 * @param string $subject Subject
 	 */
 	function subject($subject){
-		$this->sSubject = strip_tags($subject);
+		$subject = strip_tags($subject);
+		//$subject = "=?UTF-8?B?".base64_encode($subject)."?=";
+
+		$this->sSubject = $subject;
 	}
 
 	/**
@@ -305,6 +298,7 @@ mail($to, '=?UTF-8?B?' . base64_encode($arr['subject']) . '?=', $arr['message'],
 	 * @param string $to Direccion o direcciones separadas por comas
 	 */
 	function to($to){
+		//$to_name = "=?UTF-8?B?".base64_encode($to_name)."?= <to_mail@email.mail>";
 		$this->sTo = strip_tags($to);
 	}
 

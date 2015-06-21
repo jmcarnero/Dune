@@ -204,7 +204,7 @@ class Dune {
 			header('Content-Type: text/html; charset=UTF-8');
 		}
 		elseif(D_DEBUG){
-			echo 'Headers ya enviados en ['.$file.'] en linea ['.$line;
+			echo 'Headers ya enviados en ['.$file.'] en linea ['.$line . ']';
 		}
 
 		/*construye pagina*/

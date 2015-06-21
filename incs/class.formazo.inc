@@ -55,6 +55,7 @@ class Formazo {
 	/**
 	 * Accion del formulario (url que recoge y procesa los datos).
 	 *
+	 * @see Formazo::setAction($action)
 	 * @var string
 	 */
 	private $sAction;
@@ -241,9 +242,10 @@ class Formazo {
 					break;
 				case 'file':
 					//poner "enctype"
-					if(strpos($this->aFormulario['inicio']['campo'], 'enctype') === false)
+					if(strpos($this->aFormulario['inicio']['campo'], 'enctype') === false){
 						//header('Content-Disposition: form-data; name="frm'.$this->sFormNombre.'"');
 						$this->aFormulario['inicio']['campo'] = '<form enctype="multipart/form-data"'.substr($this->aFormulario['inicio']['campo'], 5);
+					}
 					$oElemento = new FormazoFile($clave, $valor);
 					break;
 				case 'group':
@@ -318,9 +320,10 @@ class Formazo {
 	 */
 	private function generaToken($session = true){
 		//formulario y procesado deben estar en la misma maquina
-		$sSesion = $sUserAgent = '';
-		if($session){
-			@session_start(); //en PHP 4.3.3 o superior puede dar un E_NOTICE si se llama por segunda vez
+		$sSesion = session_id();
+		$sUserAgent = '';
+		if($session && empty($sSesion)){
+			session_start(); //en PHP 4.3.3 o superior puede dar un E_NOTICE si se llama por segunda vez
 			$sSesion = session_id();
 			$sUserAgent = empty($_SERVER['HTTP_USER_AGENT'])?'':$_SERVER['HTTP_USER_AGENT'];
 		}
