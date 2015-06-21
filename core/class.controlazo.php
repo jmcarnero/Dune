@@ -92,32 +92,33 @@ class Controlazo {
 	/**
 	 * Carga la libreria que se pida
 	 * si $lib = 'nombre_clase'
-	 * el fichero debe ser "class.nombre_clase.php"
+	 * el fichero debe ser "class.nombre_clase.inc"
 	 * y la clase debe llamarse 'nombre_clase'
 	 *
 	 * @todo no permitir la carga de redatazo (ya lo hace el modelo)
-	 * @param string $lib Nombre de la libreria a cargar; corresponde a nombres de clases en el directorio de librerias
-	 * @param array $parametros Array de parametros a pasar al nuevo constructor
-	 * @param string $nombre Nombre con que se instanciara la clase para ser usada en siguientes llamadas, por defecto el mismo que $lib
+	 * @todo restringir nombres en uso de Dune para valores de $sLib
+	 * @param string $sLib Nombre de la libreria a cargar; corresponde a nombres de clases en el directorio de librerias
+	 * @param array $aParametros Array de parametros a pasar al nuevo constructor
+	 * @param string $sNombre Nombre con que se instanciara la clase para ser usada en siguientes llamadas, por defecto el mismo que $lib
 	 * @return boolean True si se ha cargado correctamente, false si no
 	 */
-	protected function carga($lib = false, $parametros = array(), $nombre = null){
-		if(empty($lib)){
+	protected function carga($sLib = null, $aParametros = array(), $sNombre = null){
+		if(empty($sLib)){
 			return false; //no se ha pedido nada para cargar
 		}
-		if(empty($nombre))
-			$nombre = $lib;
+		if(empty($sNombre))
+			$sNombre = $sLib;
 
-		if(is_readable(D_BASE_DIR . D_DIR_LIBS . 'class.' . $lib . '.inc')){
-			include_once (D_BASE_DIR . D_DIR_LIBS . 'class.' . $lib . '.inc');
+		if(is_readable(D_BASE_DIR . D_DIR_LIBS . 'class.' . $sLib . '.inc')){
+			include_once(D_BASE_DIR . D_DIR_LIBS . 'class.' . $sLib . '.inc');
 		}
 
 		//carga la clase si existe
-		if(class_exists($lib) && !isset($this->$lib)){
-			if(empty($parametros))
-				$this->$nombre = new $lib();
+		if(class_exists($sLib) && !isset($this->$sLib)){
+			if(empty($aParametros))
+				$this->$sNombre = new $sLib();
 			else
-				$this->$nombre = new $lib($parametros); //TODO de momento solo acepta un array de parametros o nada
+				$this->$sNombre = new $sLib($aParametros); //TODO de momento solo acepta un array de parametros o nada
 
 			return true;
 		}
@@ -125,19 +126,41 @@ class Controlazo {
 		return false;
 	}
 
-	//intenta instanciar el modelo de datos
-	protected function cargaModelo(){
+	/**
+	 * Carga la modelo de datos
+	 * , por defecto el de la propia pagina, que se asignara a $this->oModelo
+	 *
+	 * si $sModelo = 'nombre_modelo'
+	 * el fichero debe ser "nombre_modelo.php"
+	 * y la clase debe llamarse 'nombre_modelo'
+	 *
+	 * @todo restringir nombres en uso de Dune para valores de $sModelo
+	 * @param string $sFichero Nombre del modelo a cargar; corresponde a nombres de ficheros (sin extension) en el directorio de modelos
+	 * @param string $sNombre Nombre con que se instanciara el modelo para ser usado en siguientes llamadas, por defecto el mismo que $sModelo
+	 * @return boolean True si se ha cargado correctamente, false si no
+	 */
+	protected function cargaModelo($sFichero = null, $sNombre = null){
+		if(empty($sFichero)){
+			$sFichero = $this->sModulo;
+
+			if(empty($sNombre))
+				$sNombre = 'oModelo';
+		}
+		elseif(empty($sNombre)){
+			$sNombre = $sFichero;
+		}
+
 		//ruta/nombre del fichero de modelo
-		$sModelo = ucfirst($this->sModulo) . D_SUFIJO_MODELO;
-		$sRuta = strtolower($this->sModulo) . '.php';
+		$sModelo = ucfirst($sFichero) . D_SUFIJO_MODELO;
+		$sRuta = strtolower($sFichero) . '.php';
 
 		//intenta cargar el modelo
-		if(empty($this->oModelo) && is_readable(D_BASE_DIR . D_DIR_MODEL . $sRuta)){
-			include (D_BASE_DIR . D_DIR_MODEL.$sRuta);
+		if(is_readable(D_BASE_DIR . D_DIR_MODEL . $sRuta)){
+			include_once(D_BASE_DIR . D_DIR_MODEL . $sRuta);
 		}
 
 		if(class_exists($sModelo)){
-			$this->oModelo = new $sModelo();
+			$this->$sNombre = new $sModelo();
 			return true;
 		}
 
