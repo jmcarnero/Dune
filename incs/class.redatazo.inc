@@ -68,6 +68,7 @@ class Redatazo implements iRedatazo {
 					throw new Exception('Fichero de Motor [redatazo_csv] no disponible');
 				break;
 			case 'mysql':
+			case 'oracle':
 				if(is_readable(CLASSES_DIR . '/class.redatazo_ddbb.inc')){
 					include_once (CLASSES_DIR . '/class.redatazo_ddbb.inc');
 					$this->oRedatazo = new Redatazo_ddbb($this->aParametros);
