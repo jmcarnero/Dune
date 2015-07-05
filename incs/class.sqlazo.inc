@@ -854,20 +854,20 @@ class sqlazo{
 					else{
 						if(isset($pars[$clave])) $query .= $pars[$clave].substr($valor, 1);
 						else{
-							//$this->setError(__METHOD__.'1', $clave);
-							return(false);
+							trigger_error('No corresponde el parametro pasado con su clave', E_USER_WARNING);
+							return false;
 						}
 					}
 					break;
 				default:
 					$this->setError(__METHOD__.'1', substr($valor, 0, 1));
-					return(false);
+					return false;
 			}
 		}
 		if(isset($valor) && substr($valor, 0, 1) != "%") $aParams[] = substr($valor, 0, 1);
 
 		$query = str_replace("\x0b", '%', $query); //recupera los comodines
-		return($query);
+		return $query;
 	}
 
 }

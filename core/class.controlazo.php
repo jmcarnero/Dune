@@ -194,7 +194,7 @@ class Controlazo {
 	}
 
 	/**
-	 * Devuelve, si existe, la clave $clave en los super globales GET o POST
+	 * Devuelve, si existe, la clave $clave en los super globales GET, POST o REQUEST
 	 *
 	 * @since 2015-02-28
 	 * @param string $clave Clave a buscar
@@ -205,7 +205,7 @@ class Controlazo {
 		$sRet = null;
 		$sglobal = empty($sglobal) ? null : '_' . strtoupper($sglobal);
 
-		$aSGlobal = array('_POST', '_GET'); //lista de super globales en los que buscar $clave, devuelve el primero que corresponda (en el orden de este array), a no ser que se pida $sglobal
+		$aSGlobal = array('_POST', '_GET', '_REQUEST'); //lista de super globales en los que buscar $clave, devuelve el primero que corresponda (en el orden de este array), a no ser que se pida $sglobal
 
 		if(in_array($sglobal, $aSGlobal)){
 			if(!empty($sglobal) && isset($GLOBALS["$global"][$clave]))

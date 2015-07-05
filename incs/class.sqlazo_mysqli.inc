@@ -753,16 +753,16 @@ class sqlazo_mysqli extends sqlazo_trazabilidad {
 		$this->sQuery = $this->valoresEnQuery($this->sQuery, $pars);
 		if($this->sQuery === false){
 			$this->setError(__METHOD__);
-			return(false);
+			return false;
 		}
 
 		//suma a la consulta "SQL_CALC_FOUND_ROWS", permite tener el total de filas en consultas limitadas con "SELECT FOUND_ROWS()", sin volver a lanzar la consulta
 		if($cantidad){
-				$iSelectPos = strpos(strtoupper($this->sQuery), 'SELECT ');
-				if($iSelectPos !== false && strpos($this->sQuery, 'SQL_CALC_FOUND_ROWS') === false) $this->sQuery = substr($this->sQuery, 0, $iSelectPos + 7).'SQL_CALC_FOUND_ROWS '.substr($this->sQuery, $iSelectPos + 7);
-				//si "$inicial=0" devuelve "$cantidad" de registros desde el primero
-				//si se quieren devolver todos los que haya desde un "$inicial=x", dar como "$cantidad" un valor mayor al total de registros que pueda devolver la consulta (un numero al azar suficientemente grande, por ejemplo 123456789123456789123456789)
-				$this->sQuery .= ' LIMIT '.$inicial.','.$cantidad;
+			$iSelectPos = strpos(strtoupper($this->sQuery), 'SELECT ');
+			if($iSelectPos !== false && strpos($this->sQuery, 'SQL_CALC_FOUND_ROWS') === false) $this->sQuery = substr($this->sQuery, 0, $iSelectPos + 7).'SQL_CALC_FOUND_ROWS '.substr($this->sQuery, $iSelectPos + 7);
+			//si "$inicial=0" devuelve "$cantidad" de registros desde el primero
+			//si se quieren devolver todos los que haya desde un "$inicial=x", dar como "$cantidad" un valor mayor al total de registros que pueda devolver la consulta (un numero al azar suficientemente grande, por ejemplo 123456789123456789123456789)
+			$this->sQuery .= ' LIMIT '.$inicial.','.$cantidad;
 		}
 	}
 

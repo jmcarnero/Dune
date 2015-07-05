@@ -103,8 +103,6 @@ class Redatazo_csv implements iRedatazo {
 
 		$this->iTotalFilas = 0;
 
-		$this->sError = false;
-
 		$this->aCampos = array();
 
 		$this->conectar();
@@ -145,8 +143,8 @@ class Redatazo_csv implements iRedatazo {
 	 */
 	public function consulta($consulta = null, $parametros = array(), $numFilas = null, $numPagina = null){
 		if(empty($this->aCampos) || empty($this->sFichero)){
-			$this->sError .= sprintf($this->aErrorMensajes['recupera_datos_csv::consulta1']);
-			return false; //si no hay fichero ni campos a importar se corta el proceso
+			trigger_error('No hay fichero ni campos a recuperar', E_USER_ERROR);
+			return false; //se corta el proceso
 		}
 
 		$this->oCsv->aCampos = $this->aCampos;
@@ -157,7 +155,7 @@ class Redatazo_csv implements iRedatazo {
 		}
 		$this->oCsv->sFichero = $this->sFichero;
 		if(!$this->oCsv->leeCsv()){
-			$this->sError .= sprintf($this->aErrorMensajes['recupera_datos_csv::consulta2'], $this->oCsv->sError);
+			trigger_error('Error: ' . $this->oCsv->sError, E_USER_ERROR);
 			return false; //no se ha podido leer el fichero en la clase importarCsv o algun otro error
 		}
 

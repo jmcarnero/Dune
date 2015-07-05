@@ -214,7 +214,12 @@ class Redatazo implements iRedatazo {
 	 * @return boolean
 	 */
 	public function setParametros($parametros = array()){
-		$this->aParametros['motor'] = $parametros['motor']; //TODO error si vacio
+		if(empty($parametros['motor'])){
+			trigger_error('Motor de datos obligatorio', E_USER_ERROR);
+			return false;
+		}
+
+		$this->aParametros['motor'] = $parametros['motor'];
 
 		//sql
 		$this->aParametros['server'] = empty($parametros['server']) ? 'localhost' : $parametros['server'];

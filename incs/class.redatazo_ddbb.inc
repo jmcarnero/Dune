@@ -160,8 +160,8 @@ class Redatazo_ddbb implements iRedatazo {
 		//TODO control de errores
 		$this->oDDBB = sqlazo_sel($this->sDDBBTipo);
 		if(!$this->oDDBB->conectar($this->sDDBBServidor, $this->sDDBBUsuario, $this->sDDBBPassword, $this->sDDBB)){
-			//$this->sError .= sprintf($this->aErrorMensajes['conectar'], $this->sDDBBServidor, $this->oDDBB->sError)."\n";
-			return(false);
+			trigger_error('No se puede conectar al servidor: ' . $this->sDDBBServidor, E_USER_ERROR);
+			return false;
 		}
 		$this->oDDBB->sPrefijo = $this->sPrefijo;
 		if(!empty($this->sTrazabilidad)){
@@ -193,6 +193,7 @@ class Redatazo_ddbb implements iRedatazo {
 			$this->sSql = $this->oDDBB->sQuery; //consulta lanzada
 		}
 		else{
+			trigger_error('No se puede ejecutar la consulta: [' . $this->sSql . ']', E_USER_WARNING);
 			return false; //error
 		}
 
@@ -225,12 +226,15 @@ class Redatazo_ddbb implements iRedatazo {
 				$this->where($clave, $valor);
 			}
 		}
-		if(!empty($this->aConsulta['where'])){ //TODO avisar que no se puede hacer un borrado sin condicion
+		if(!empty($this->aConsulta['where'])){
 			$this->sSql .= 'WHERE ' . implode(' AND ', $this->aConsulta['where']) . "\n";
 			$this->aSql += $this->aConsulta['where_p'];
 
 			if($this->consulta())
 				return true;
+		}
+		else{
+			trigger_error('No se pueden hacer borrados sin WHERE', E_USER_WARNING);
 		}
 
 		return false;
@@ -394,7 +398,9 @@ class Redatazo_ddbb implements iRedatazo {
 			if(!empty($this->aConsulta['join'])) $this->sSql .= implode("\n", $this->aConsulta['join']) . "\n";
 			if(!empty($this->aConsulta['where'])){
 				$this->sSql .= 'WHERE ' . implode(' AND ', $this->aConsulta['where']) . "\n";
-				$this->aSql += $this->aConsulta['where_p'];
+				if(!empty($this->aConsulta['where_p'])){
+					$this->aSql += $this->aConsulta['where_p'];
+				}
 			}
 			if(!empty($this->aConsulta['order_by'])) $this->sSql .= 'ORDER BY ' . implode(', ', $this->aConsulta['order_by']) . "\n";
 		}
@@ -471,6 +477,9 @@ class Redatazo_ddbb implements iRedatazo {
 		if(!empty($this->aConsulta['where'])){
 			$this->sSql .= 'WHERE ' . implode(' AND ', $this->aConsulta['where']) . "\n";
 			$this->aSql += $this->aConsulta['where_p'];
+		}
+		else{
+			trigger_error('Consulta UPDATE sin WHERE', E_USER_NOTICE);
 		}
 
 		if($this->consulta())

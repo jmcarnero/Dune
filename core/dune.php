@@ -151,6 +151,8 @@ class Dune {
 	/**
 	 * Carga el controlador relacionado con el modulo,
 	 * deja una instancia del controlador en $this->oControlazo
+	 *
+	 * Si el valor del parametro modulo es un metodo intenta cargarse y ejecutarse
 	 */
 	private function cargaControlador(){
 		//clases base de controlador y modelo
@@ -166,7 +168,15 @@ class Dune {
 		$aux = ucfirst(strtolower($this->sModulo));
 		if(class_exists($aux)){
 			$this->oControlazo = new $aux();
-			//TODO llamar a un metodo pedido en la URL?
+
+			//si se ha pedido un metodo concreto (valor del parametro modulo) se cargar y se le pasan el resto de parametros
+			//TODO eliminar nombres de metodo no permitidos? (construct, destruct, ...)
+			$sMethod = $_GET[$this->sModulo];
+			if(method_exists($this->oControlazo, $sMethod)){
+				$aParametros = $_GET;
+				array_shift($aParametros); //quita el primer parametro, que es el controlador y el metodo
+				call_user_func_array(array($this->oControlazo, $sMethod), $aParametros); //TODO hacer algo con el return?
+			}
 		}
 		else{
 			//intenta cargar la vista con el mismo nombre
