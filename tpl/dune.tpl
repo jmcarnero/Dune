@@ -37,7 +37,7 @@ if(!defined('DUNE')) die('...');
 	<link href="<?php echo D_BASE_URL; ?>css/screen.css" rel="stylesheet" type="text/css" />
 	<link href="<?php echo D_BASE_URL; ?>css/print.css" rel="stylesheet" media="print" type="text/css" />
 <?php echo($sCss); ?>
-	<script type="text/javascript" src="<?php echo D_BASE_URL; ?>scripts/JaSper.js"></script>
+	<script type="text/javascript" src="<?php echo D_BASE_URL; ?>scripts/JaSper_min.js"></script>
 <?php echo $sJs; ?>
 </head>
 <body>
