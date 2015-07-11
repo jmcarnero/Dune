@@ -168,6 +168,47 @@ class Controlazo {
 	}
 
 	/**
+	 * Devuelve, si existe, la clave $clave en los super globales GET, POST, REQUEST o SESSION
+	 *
+	 * @since 2015-02-28
+	 * @param string $sClave Clave a buscar
+	 * @param string $sGlobal SuperGlobal en la que buscar ('get', 'post', 'request', 'session')
+	 * @return string Valor encontrado, null si no encontrado
+	 */
+	protected function dato($sClave, $sGlobal = null){
+		$sRet = null;
+		$sGlobal = empty($sGlobal) ? null : '_' . strtoupper($sGlobal);
+
+		$aSGlobal = array('_POST', '_GET', '_SESSION', '_REQUEST'); //lista de super globales en los que buscar $clave, devuelve el primero que corresponda (en el orden de este array), a no ser que se pida $sglobal
+
+		if(in_array($sGlobal, $aSGlobal)){
+			if(!empty($sGlobal) && isset($GLOBALS["$sGlobal"][$sClave]))
+				$sRet = $GLOBALS["$sGlobal"][$sClave];
+		}
+		else{
+			foreach($aSGlobal as $global){
+				if(isset($GLOBALS["$global"][$sClave])){
+					$sRet = $GLOBALS["$global"][$sClave];
+					break;
+				}
+			}
+		}
+
+		return $sRet;
+	}
+
+	/**
+	 * Devuelve, si existe, la clave $clave en el super globales GET
+	 *
+	 * @see Controlazo::dato($sClave, $sGlobal)
+	 * @param string $sClave Clave a buscar
+	 * @return string Valor encontrado, null si no encontrado
+	 */
+	protected function get($sClave){
+		return $this->dato($sClave, 'get');
+	}
+
+	/**
 	 * Compone la pagina y la envia al navegador
 	 * Si no se quiere plantilla (como cuando se ha de cargar la pagina por AJAX) sobreescribir este metodo en el controlador heredado sin parametro plantilla (o como sea necesario)
 	 *
@@ -202,36 +243,20 @@ class Controlazo {
 				require $sRutaPlantilla;
 			}
 		}
+		elseif(!empty($sVista)){ //si hay vista pero no plantilla se pinta //TODO debiera no pintarse nada si no se pasa plantilla?
+			echo $this->sContenidos;
+		}
 	}
 
 	/**
-	 * Devuelve, si existe, la clave $clave en los super globales GET, POST o REQUEST
+	 * Devuelve, si existe, la clave $clave en el super globales POST
 	 *
-	 * @since 2015-02-28
-	 * @param string $clave Clave a buscar
-	 * @param string $sglobal SuperGlobal en la que buscar ('post', 'get')
+	 * @see Controlazo::dato($sClave, $sGlobal)
+	 * @param string $sClave Clave a buscar
 	 * @return string Valor encontrado, null si no encontrado
 	 */
-	protected function post($clave, $sglobal = null){
-		$sRet = null;
-		$sglobal = empty($sglobal) ? null : '_' . strtoupper($sglobal);
-
-		$aSGlobal = array('_POST', '_GET', '_REQUEST'); //lista de super globales en los que buscar $clave, devuelve el primero que corresponda (en el orden de este array), a no ser que se pida $sglobal
-
-		if(in_array($sglobal, $aSGlobal)){
-			if(!empty($sglobal) && isset($GLOBALS["$global"][$clave]))
-				$sRet = $GLOBALS["$global"][$clave];
-		}
-		else{
-			foreach($aSGlobal as $global){
-				if(isset($GLOBALS["$global"][$clave])){
-					$sRet = $GLOBALS["$global"][$clave];
-					break;
-				}
-			}
-		}
-
-		return $sRet;
+	protected function post($sClave){
+		return $this->dato($sClave, 'post');
 	}
 
 	//separa ruta y nombre del modulo a partir de la constante __FILE__

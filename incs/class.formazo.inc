@@ -891,12 +891,18 @@ class FormazoMultiple extends FormazoElementos {
 		//options
 		if(isset($this->aDatos['valores']) && count($this->aDatos['valores']) > 0){
 			$aTempVal = array();
-			if(isset($this->aDatos['valor']) && strpos($this->aDatos['valor'], $this->aDatos['separador']) !== false){ //valores seleccionados
-				$aTempVal = explode($this->aDatos['separador'], $this->aDatos['valor']);
-				$aTempVal = array_map('trim', $aTempVal);
-				$aTempVal = array_flip($aTempVal); //TODO posibilidad de que algun valor no se pueda usar como clave (por convenciones de nombrado)
+			if(isset($this->aDatos['valor']) && is_array($this->aDatos['valor'])){ //array de valores
+				$aTempVal = $this->aDatos['valor'];
 			}
-			elseif(isset($this->aDatos['valor']) && strpos($this->aDatos['valor'], $this->aDatos['separador']) === false) $aTempVal[trim($this->aDatos['valor'])] = 0;
+			elseif(isset($this->aDatos['valor']) && strpos($this->aDatos['valor'], $this->aDatos['separador']) !== false){ //valores seleccionados separados por $this->aDatos['separador']
+				$aTempVal = explode($this->aDatos['separador'], $this->aDatos['valor']);
+			}
+			elseif(isset($this->aDatos['valor']) && strpos($this->aDatos['valor'], $this->aDatos['separador']) === false){ //un solo valor
+				$aTempVal[] = $this->aDatos['valor'];
+			}
+
+			$aTempVal = array_map('trim', $aTempVal);
+			$aTempVal = array_flip($aTempVal); //TODO posibilidad de que algun valor no se pueda usar como clave (por convenciones de nombrado)
 
 			if(count($this->aDatos['valores']) > 0){
 				$iCheckCont = 0;

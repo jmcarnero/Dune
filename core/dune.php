@@ -209,6 +209,8 @@ class Dune {
 				$this->oControlazo = new Controlazo();
 				//TODO llamar a un metodo pedido en la URL?
 			}
+
+			$this->oControlazo->pinta($this->aFicheros['plantilla']); //pinta automaticamente vistas (sin controlador asociado) con la plantilla por defecto
 		}
 	}
 
@@ -242,8 +244,6 @@ class Dune {
 		/*construye pagina*/
 		$this->buscaModulo();
 		$this->cargaControlador();
-
-		$this->oControlazo->pinta($this->aFicheros['plantilla']);
 
 		/*if(D_DEBUG){
 			echo('uso de traducciones:');print_r(l10n_sel()->getTraduccionUso(-1));
