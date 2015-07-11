@@ -39,6 +39,8 @@ class Error extends Controlazo {
 		$this->aDatos['sTitle'] = $this->aDatos['aMod']['error']['title'];
 		$this->aDatos['sCss'] .= '';
 		$this->aDatos['sJs'] .= '';
+
+		$this->pinta('dune', 'error');
 	}
 
 }

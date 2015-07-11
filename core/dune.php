@@ -27,6 +27,10 @@ defined('D_DIR_MODEL') or define('D_DIR_MODEL', 'mods/modelos/'); //modulos, dir
 defined('D_DIR_TPL') or define('D_DIR_TPL', 'tpl/'); //plantillas, ficheros con extension ".tpl"
 defined('D_DIR_VISTA') or define('D_DIR_VISTA', 'mods/vistas/'); //modulos, directorio para los ficheros de vistas
 
+defined('D_MODULO_INICIO') or define('D_MODULO_INICIO', 'portada'); //modulo a cargar en inicio, ya sea nombre de vista o de controlador
+defined('D_METODO_INICIO') or define('D_METODO_INICIO', 'inicio'); //metodo a cargar por omision, si no se pasa ?modulo=metodo
+defined('D_MODULO_ERROR') or define('D_MODULO_ERROR', 'error'); //modulo a cargar en error
+
 /**
  * Inicializador
  *
@@ -61,21 +65,22 @@ class Dune {
 	 *
 	 * @var array
 	 */
-	protected $aFicheros = array('config' => 'config.php', 'plantilla' => 'dune.tpl', 'sesion' => 'sesion.php');
+	protected $aFicheros = array('config' => 'config.php', 'plantilla' => 'dune', 'sesion' => 'sesion.php');
 
 	private $sModulo = 'error'; //nombre del modulo a cargar
 
+	//TODO controlar la existencia y contenido de las constantes (D_BASE_DIR, ...)
 	function __construct(){
 		Dune::baseDir();
 
 		//includes comunes
-		require(D_BASE_DIR.D_DIR_LIBS.$this->aFicheros['config']); //parametros basicos de la aplicacion
+		require D_BASE_DIR . D_DIR_LIBS . $this->aFicheros['config']; //parametros basicos de la aplicacion
 		$this->setDebug();
-		require(D_BASE_DIR.D_DIR_LIBS.$this->aFicheros['sesion']); //variables e inicio de sesion
+		require D_BASE_DIR . D_DIR_LIBS . $this->aFicheros['sesion']; //variables e inicio de sesion
 
 		//gestion de errores
 		if(D_DEBUG){
-			include(D_BASE_DIR.D_DIR_CORE.'class.errorHandler.inc');
+			include D_BASE_DIR . D_DIR_CORE . 'class.errorHandler.inc';
 			//logFile('errors.err');
 		}
 
@@ -123,28 +128,22 @@ class Dune {
 	 * si tampoco existe avisa con un mensaje
 	 */
 	private function buscaModulo(){
-		$sId = ''; //valor de la id para la seccion solicitada
-
 		//seleccion de modulo, portada por defecto
-		$this->sModulo = empty($_GET)?'portada':key($_GET); //nombre del modulo
+		$this->sModulo = empty($_GET) ? D_MODULO_INICIO : key($_GET); //nombre del modulo
 
-		if(in_array($this->sModulo.'.php', array_map('basename', glob(D_BASE_DIR.D_DIR_VISTA.'*.php')))){ //TODO deben priorizarse vistas o controladores?, de momento vistas
-			if(isset($_GET[$this->sModulo])) $sId = (string)$_GET[$this->sModulo];
-		}
-		else{ //portada o seccion desconocida
+		//portada o seccion desconocida
+		if(!in_array($this->sModulo.'.php', array_map('basename', glob(D_BASE_DIR.D_DIR_VISTA.'*.php')))){ //TODO deben priorizarse vistas o controladores?, de momento vistas
 			if(empty($_SERVER['QUERY_STRING']) || isset($_GET['portada'])){
-				$this->sModulo = 'portada';
-			}
-			elseif(isset($_GET['logout'])){
-				$this->sModulo = 'login';
+				$this->sModulo = D_MODULO_INICIO;
 			}
 			else{
-				$this->sModulo = 'error'; //TODO enviar cabecera con codigo de error?
+				$this->sModulo = D_MODULO_ERROR; //TODO enviar cabecera con codigo de error?
 			}
 		}
 
-		if(!is_readable(D_BASE_DIR.D_DIR_VISTA.$this->sModulo.'.php')){
-			throw new ErrorException('Error fatal: No se puede cargar el m&oacute;dulo ['.$this->sModulo.']');
+		$sRutaCompleta = D_BASE_DIR.D_DIR_VISTA.$this->sModulo.'.php';
+		if(!is_readable($sRutaCompleta)){
+			throw new ErrorException('Error fatal: No se puede cargar el m&oacute;dulo ['.$this->sModulo.'] en [' . $sRutaCompleta . ']');
 		}
 	}
 
@@ -156,12 +155,14 @@ class Dune {
 	 */
 	private function cargaControlador(){
 		//clases base de controlador y modelo
-		require(D_BASE_DIR.D_DIR_CORE.'class.controlazo.php');
-		require(D_BASE_DIR.D_DIR_CORE.'class.modelazo.php');
+		require D_BASE_DIR . D_DIR_CORE . 'class.controlazo.php';
+		require D_BASE_DIR . D_DIR_CORE . 'class.modelazo.php';
+
+		$sRutaControlador = D_BASE_DIR . D_DIR_CONTROL . $this->sModulo . '.php';
 
 		//intenta cargar el controlador (puede contener tambien el modelo)
-		if(is_readable(D_BASE_DIR.D_DIR_CONTROL.$this->sModulo.'.php')){
-			include(D_BASE_DIR.D_DIR_CONTROL.$this->sModulo.'.php');
+		if(is_readable($sRutaControlador)){
+			include($sRutaControlador);
 		}
 
 		//carga el controlador si existe
@@ -169,19 +170,40 @@ class Dune {
 		if(class_exists($aux)){
 			$this->oControlazo = new $aux();
 
-			//si se ha pedido un metodo concreto (valor del parametro modulo) se cargar y se le pasan el resto de parametros
+			//si se ha pedido un metodo concreto (valor del parametro modulo) se carga y se le pasan el resto de parametros
 			//TODO eliminar nombres de metodo no permitidos? (construct, destruct, ...)
-			$sMethod = $_GET[$this->sModulo];
+			if(isset($_GET[$this->sModulo]) && $_GET[$this->sModulo] != ''){
+				$sMethod = $_GET[$this->sModulo];
+			}
+			else{ //se intenta cargar el metodo por defecto
+				$sMethod = D_METODO_INICIO;
+			}
+
 			if(method_exists($this->oControlazo, $sMethod)){
 				$aParametros = $_GET;
 				array_shift($aParametros); //quita el primer parametro, que es el controlador y el metodo
-				call_user_func_array(array($this->oControlazo, $sMethod), $aParametros); //TODO hacer algo con el return?
+				$mReturn = call_user_func_array(array($this->oControlazo, $sMethod), $aParametros); //TODO hacer algo con el return?
+			}
+			else{ //TODO no se ha encontrado el metodo (ni el metodo por defecto)
+				$this->sModulo = D_MODULO_ERROR;
+
+				$sRutaControlador = D_BASE_DIR . D_DIR_CONTROL . $this->sModulo . '.php';
+
+				if(is_readable($sRutaControlador)){
+					include($sRutaControlador);
+					unset($this->oControlazo);
+
+					$this->oControlazo = new $this->sModulo();
+				}
+				else{
+					throw new ErrorException('Error fatal: No se puede cargar el m&oacute;dulo ['.$this->sModulo.'] en [' . $sRutaControlador . ']');
+				}
 			}
 		}
 		else{
 			//intenta cargar la vista con el mismo nombre
-			if(is_readable(D_BASE_DIR.D_DIR_VISTA.$this->sModulo.'.php')){
-				$this->oControlazo = new Controlazo(D_BASE_DIR.D_DIR_VISTA.$this->sModulo.'.php');
+			if(is_readable(D_BASE_DIR . D_DIR_VISTA . $this->sModulo . '.php')){
+				$this->oControlazo = new Controlazo(D_BASE_DIR . D_DIR_VISTA . $this->sModulo . '.php');
 			}
 			elseif(class_exists('Controlazo')){ //si no existe el controlador del modulo pedido ni la vista se instancia el controlador base
 				$this->oControlazo = new Controlazo();
@@ -221,7 +243,7 @@ class Dune {
 		$this->buscaModulo();
 		$this->cargaControlador();
 
-		$this->oControlazo->pintaPagina(D_BASE_DIR.D_DIR_TPL.$this->aFicheros['plantilla']);
+		$this->oControlazo->pinta($this->aFicheros['plantilla']);
 
 		/*if(D_DEBUG){
 			echo('uso de traducciones:');print_r(l10n_sel()->getTraduccionUso(-1));

@@ -858,7 +858,7 @@ class FormazoHidden extends FormazoElementos {
 		$aElemento = array();
 
 		$aElemento['texto'] = '';
-		$aElemento['campo'] = '<input id="' . $this->sClave . $this->sFormNombre . '" name="' . $this->sClave . '" type="hidden"' . $this->getValor() . '" />';
+		$aElemento['campo'] = '<input id="' . $this->sClave . $this->sFormNombre . '" name="' . $this->sClave . '" type="hidden"' . $this->getValor() . ' />';
 
 		return($aElemento);
 	}

@@ -52,7 +52,7 @@ class Controlazo {
 	 * Contenidos del modulo a mostrar despues de ser procesados y listo para ser integrados en la plantilla o enviados al navegador
 	 *
 	 * @var string
-	 * @see Controlazo::pintaPagina($plantilla)
+	 * @see Controlazo::pinta($plantilla)
 	 */
 	protected $sContenidos = '';
 
@@ -171,25 +171,36 @@ class Controlazo {
 	 * Compone la pagina y la envia al navegador
 	 * Si no se quiere plantilla (como cuando se ha de cargar la pagina por AJAX) sobreescribir este metodo en el controlador heredado sin parametro plantilla (o como sea necesario)
 	 *
-	 * @param string $plantilla Ruta y nombre de la plantilla a cargar
+	 * @param string $sPlantilla nombre de la plantilla a cargar, en el directorio D_DIR_TPL, sin extension (extension .tpl)
+	 * @param string $sVista Vista a pintar, en el directorio D_DIR_VISTA, sin extension; por defecto se carga la que tenga el mismo nombre de controlador
 	 */
-	public function pintaPagina($plantilla = false){
+	public function pinta($sPlantilla = false, $sVista = false){
+		if(empty($sVista)){
+			$sVista = $this->sModulo;
+		}
+
 		if(!empty($this->aDatos)){
 			foreach($this->aDatos as $clave => $valor){
 				$$clave = $valor; //cada clave del array de datos se podra usar como una variable directa en la plantilla, igual que los contenidos obtenidos del modulo (abajo, $sContenidos)
 			}
 		}
 
+		$sRutaVista = D_BASE_DIR . D_DIR_VISTA . $sVista . '.php';
+
 		ob_start();
-		if(is_readable(D_BASE_DIR . D_DIR_VISTA . $this->sModulo . '.php')){
-			include (D_BASE_DIR . D_DIR_VISTA . $this->sModulo . '.php'); //carga del modulo, debe tener el mismo nombre de esta clase (en minusculas)
+		if(is_readable($sRutaVista)){
+			include $sRutaVista; //carga del modulo, debe tener el mismo nombre de esta clase (en minusculas)
 		}
 		$this->sContenidos = ob_get_contents(); //contenidos del modulo a mostrar procesados
 		ob_end_clean();
 
-		if($plantilla && is_readable($plantilla)){
-			$sContenidos = $this->sContenidos;
-			require $plantilla;
+		if(!empty($sPlantilla)){
+			$sRutaPlantilla = D_BASE_DIR . D_DIR_TPL . $sPlantilla . '.tpl';
+
+			if($sRutaPlantilla && is_readable($sRutaPlantilla)){
+				$sContenidos = $this->sContenidos;
+				require $sRutaPlantilla;
+			}
 		}
 	}
 

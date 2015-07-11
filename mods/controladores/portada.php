@@ -41,4 +41,8 @@ class Portada extends Controlazo {
 		$this->aDatos['sJs'] .= '';
 	}
 
+	public function inicio(){
+		$this->pinta('dune', 'portada');
+	}
+
 }
