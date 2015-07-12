@@ -680,7 +680,7 @@ class sqlazo_mysql extends sqlazo_trazabilidad{
 		parent::sqlazo_trazabilidad($servidor, $usuario, $password, $ddbb, $puerto);
 
 		$this->sMotor = 'mysql';
-		$this->sQueryTipoArray = 'dos';
+		$this->sQueryTipoArray = 'aso';
 
 		$this->sCharset = $this->codificacion('charset');
 		$this->sCollation = $this->codificacion('collation');

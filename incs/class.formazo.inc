@@ -298,8 +298,8 @@ class Formazo {
 
 		//concluye formulario
 		$this->aFormulario['final']['campo'] = $this->aFormulario['btnSubmit']['campo'];
-		$this->aFormulario['final']['campo'] .= '<input id="formName' . $this->sFormNombre . '" name="formName" type="hidden" value="'.$this->sFormNombre . "\" />\n"; //nombre del formulario se utiliza para enviar la query a la pagina de procesado, mediante variable de sesion
-		$this->aFormulario['final']['campo'] .= '<input id="tkn' . $this->sFormNombre . '" name="tkn' . $this->sFormNombre . '" type="hidden" value="' . $this->generaToken() . "\" />\n"; //token para verificar la integridad del envio
+		$this->aFormulario['final']['campo'] .= '<input id="formName' . $this->sFormNombre . '" name="formName" type="hidden" value="' . $this->sFormNombre . "\" />\n"; //nombre del formulario se puede utilizar para identificarlo al procesarlo
+		$this->aFormulario['final']['campo'] .= '<input id="tkn' . $this->sFormNombre . '" name="tkn' . $this->sFormNombre . '" type="hidden" value="' . self::token($this->sFormNombre) . "\" />\n"; //token para verificar la integridad del envio
 		$this->aFormulario['final']['campo'] .= "</form>\n";
 
 		$this->aFormulario['final']['texto'] = '';
@@ -308,34 +308,6 @@ class Formazo {
 		//TODO avisar que campos han cambiado? y solo avisar si realmente ha habido cambios (depende de tener guardado el valor de inicio)
 
 		return(true);
-	}
-
-	/**
-	 * Crea el token de seguridad que se enviara con el formulario
-	 *
-	 * @todo comprobar si ip, sesion y user_agent se establecen correctamente cuando se envia por ajax o se redirecciona el procesado
-	 * @since 2012-09-14
-	 * @param boolean $session Controla datos relacionados con sesion (true) o no
-	 * @return string
-	 */
-	private function generaToken($session = true){
-		//formulario y procesado deben estar en la misma maquina
-		$sSesion = session_id();
-		$sUserAgent = '';
-		if($session && empty($sSesion)){
-			session_start(); //en PHP 4.3.3 o superior puede dar un E_NOTICE si se llama por segunda vez
-			$sSesion = session_id();
-			$sUserAgent = empty($_SERVER['HTTP_USER_AGENT'])?'':$_SERVER['HTTP_USER_AGENT'];
-		}
-		$sServer = empty($_SERVER['SERVER_ADDR'])?'':$_SERVER['SERVER_ADDR'];
-		if(!empty($_SERVER['SERVER_PORT'])) $sServer .= $_SERVER['SERVER_PORT'];
-		if(!empty($_SERVER['SERVER_SOFTWARE'])) $sServer .= $_SERVER['SERVER_SOFTWARE'];
-		if(!empty($_SERVER['SERVER_NAME'])) $sServer .= $_SERVER['SERVER_NAME'];
-		$sIp = empty($_SERVER['HTTP_X_FORWARDED_FOR'])?(empty($_SERVER['REMOTE_ADDR'])?'999:999:999:999':$_SERVER['REMOTE_ADDR']):$_SERVER['HTTP_X_FORWARDED_FOR'];
-		$aCampos = /*empty($this->aCampos)?*/array()/*:array_keys($this->aCampos)*/;
-		$token = $this->sFormNombre.'/'.$sSesion.'/'.implode('', $aCampos).'/'.$sUserAgent.'/'.$sIp.'/'.$sServer;
-
-		return(md5($token));
 	}
 
 	/**
@@ -525,6 +497,35 @@ class Formazo {
 	public function setSubmit($submit){
 		$this->sSubmit = $submit;
 		return $this->sSubmit;
+	}
+
+	/**
+	 * Crea el token de seguridad que se enviara con el formulario
+	 *
+	 * @todo comprobar si ip, sesion y user_agent se establecen correctamente cuando se envia por ajax o se redirecciona el procesado
+	 * @since 2012-09-14
+	 * @param string $sFormNombre Nombre del formulario
+	 * @param boolean $session Controla datos relacionados con sesion (true) o no
+	 * @return string
+	 */
+	public static function token($sFormNombre, $session = true){
+		//formulario y procesado deben estar en la misma maquina
+		$sSesion = session_id();
+		if($session && empty($sSesion)){
+			session_start(); //en PHP 4.3.3 o superior puede dar un E_NOTICE si se llama por segunda vez
+			$sSesion = session_id();
+		}
+
+		$sUserAgent = empty($_SERVER['HTTP_USER_AGENT']) ? '' : $_SERVER['HTTP_USER_AGENT'];
+		$sServer = empty($_SERVER['SERVER_ADDR'])?'':$_SERVER['SERVER_ADDR'];
+		if(!empty($_SERVER['SERVER_PORT'])) $sServer .= $_SERVER['SERVER_PORT'];
+		if(!empty($_SERVER['SERVER_SOFTWARE'])) $sServer .= $_SERVER['SERVER_SOFTWARE'];
+		if(!empty($_SERVER['SERVER_NAME'])) $sServer .= $_SERVER['SERVER_NAME'];
+		$sIp = empty($_SERVER['HTTP_X_FORWARDED_FOR']) ? (empty($_SERVER['REMOTE_ADDR']) ? '999:999:999:999' : $_SERVER['REMOTE_ADDR']) : $_SERVER['HTTP_X_FORWARDED_FOR'];
+		$aCampos = /*empty($this->aCampos)?*/array()/*:array_keys($this->aCampos)*/;
+		$token = $sFormNombre . '/' . $sSesion . '/' . implode('', $aCampos) . '/' . $sUserAgent . '/' . $sIp . '/' . $sServer;
+
+		return(sha1($token));
 	}
 
 }

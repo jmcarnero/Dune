@@ -16,9 +16,14 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 # http://www.gnu.org/copyleft/gpl.html
 
+//Constante con el directorio donde se encuentran las clases derivadas y/o dependientes de esta
+if(!defined('CLASSES_DIR')) define('CLASSES_DIR', dirname(__FILE__));
+
 /**
  * Clase procesadora de formularios HTML
  * Tanto GET como POST
+ *
+ * depende de class.formazo.inc para la generacion del token de seguridad: Formazo::token($session)
  *
  * Ejemplo de uso:
  * \code{.php}
@@ -40,10 +45,10 @@ if(!empty($_POST['formName'])){
 	$aCampos['texto']['valor'] = $oProcFormulario->getValor('texto');
 
 	if($oProcFormulario->procesarFormulario($_POST['formName'])){ //no hay problemas, procesar la SQL
-		//var_dump('sql-> '.$oProcFormulario->getRedatazo);
+		//var_dump('sql-> ' . $oProcFormulario->getRedatazo);
 	}
 	else{ //errores
-		$this->aDatos['frmError'] = $this->formazoProc->getError(); //problemas de validacion, devolver a la pagina con estos mensajes
+		$this->aDatos['frmError'] = $oProcFormulario->getError(); //problemas de validacion, devolver a la pagina con estos mensajes
 	}
 }
 else{
@@ -183,7 +188,7 @@ class FormazoProc {
 		}
 
 		if(!$this->verificaToken()){ //no coincide el token enviado con el generado, posible ataque
-			trigger_error('El token generado y el recibido no coinciden, posible ataque', E_USER_WARNING);
+			trigger_error('El token generado y el recibido no coinciden', E_USER_WARNING);
 			return false;
 		}
 
@@ -288,12 +293,12 @@ class FormazoProc {
 				if(isset($valor['tipo']) &&  empty($aIgnorarTipos[$valor['tipo']])) $this->aCampos[$clave] = $valor; //evita procesar campos dedicados exclusivamente al pintado de listados y aquellos que son solo decorativos
 			}
 		}
-		else{ //vacio, origen desconocido o ya asignado en formazo::setCampos()
+		/*else{ //vacio, origen desconocido o ya asignado en formazo::setCampos()
 			if(empty($this->aCampos)){
 				trigger_error('No se puede crear un formulario sin campos', E_USER_ERROR);
 				return false;
 			}
-		}
+		}*/
 
 		return true;
 	}
@@ -810,31 +815,19 @@ ancla)(#[a-z_\.\-][a-z0-9+$_\.\-]*)?)\Z~i', $value);
 	/**
 	 * Verifica el token de seguridad enviado con el formulario
 	 *
-	 * @todo verificar funcionamiento
-	 * @todo comprobar si ip, sesion y user_agent se establecen correctamente cuando se envia por ajax o se redirecciona el procesado
-	 * @since 2012-09-14
+	 * @see Formazo::token($session)
 	 * @param boolean $session Controla datos relacionados con sesion (true) o no
 	 * @return boolean
 	 */
 	private function verificaToken($session = true){
-		$sToken = empty($this->aVariablesRequest['tkn' . $this->sFormNombre]) ? null : $this->aVariablesRequest['tkn' . $this->sFormNombre];
+		@include_once CLASSES_DIR . '/class.formazo.inc';
 
-		//formulario y procesado deben estar en la misma maquina
-		$sSesion = $sUserAgent = '';
-		if($session){
-			@session_start(); //en PHP 4.3.3 o superior puede dar un E_NOTICE si se llama por segunda vez
-			$sSesion = session_id();
-			$sUserAgent = empty($_SERVER['HTTP_USER_AGENT'])?'':$_SERVER['HTTP_USER_AGENT'];
+		$sToken = false;
+		if(class_exists('Formazo')){
+			$sToken = Formazo::token($this->sFormNombre, $session);
 		}
-		$sServer = empty($_SERVER['SERVER_ADDR'])?'':$_SERVER['SERVER_ADDR'];
-		if(!empty($_SERVER['SERVER_PORT'])) $sServer .= $_SERVER['SERVER_PORT'];
-		if(!empty($_SERVER['SERVER_SOFTWARE'])) $sServer .= $_SERVER['SERVER_SOFTWARE'];
-		if(!empty($_SERVER['SERVER_NAME'])) $sServer .= $_SERVER['SERVER_NAME'];
-		$sIp = empty($_SERVER['HTTP_X_FORWARDED_FOR'])?(empty($_SERVER['REMOTE_ADDR'])?'999:999:999:999':$_SERVER['REMOTE_ADDR']):$_SERVER['HTTP_X_FORWARDED_FOR'];
-		$aCampos = /*empty($this->aCampos)?*/array()/*:array_keys($this->aCampos)*/;
-		$token = $this->sFormNombre.'/'.$sSesion.'/'.implode('', $aCampos).'/'.$sUserAgent.'/'.$sIp.'/'.$sServer;
 
-		return !(empty($sToken) || md5($token) !== $sToken);
+		return $sToken;
 	}
 
 }

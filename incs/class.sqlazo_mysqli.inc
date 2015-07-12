@@ -118,7 +118,7 @@ class sqlazo_mysqli extends sqlazo_trazabilidad {
 		//$this->oResultados = & new mysqli_result(); //nueva instancia de la clase mysqli_result (propia de PHP)
 
 		$this->sMotor = 'mysqli';
-		$this->sQueryTipoArray = 'dos';
+		$this->sQueryTipoArray = 'aso';
 
 		$this->sCharset = $this->codificacion('charset');
 		$this->sCollation = $this->codificacion('collation');
