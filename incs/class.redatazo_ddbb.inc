@@ -45,7 +45,6 @@ class Redatazo_ddbb implements iRedatazo {
 	 * Objeto de base de datos (class.sqlazo)
 	 *
 	 * @var object
-	 * @access private
 	 */
 	private $oDDBB;
 
@@ -53,7 +52,6 @@ class Redatazo_ddbb implements iRedatazo {
 	 * Base de datos a usar para las consultas
 	 *
 	 * @var string
-	 * @access private
 	 */
 	private $sDDBB;
 
@@ -61,7 +59,6 @@ class Redatazo_ddbb implements iRedatazo {
 	 * Clave del usuario de la base de datos
 	 *
 	 * @var string
-	 * @access private
 	 */
 	private $sDDBBPassword;
 
@@ -69,7 +66,6 @@ class Redatazo_ddbb implements iRedatazo {
 	 * Servidor de base de datos
 	 *
 	 * @var string
-	 * @access private
 	 */
 	private $sDDBBServidor;
 
@@ -77,7 +73,6 @@ class Redatazo_ddbb implements iRedatazo {
 	 * Motor de base de datos (mysql, postgresql)
 	 *
 	 * @var string
-	 * @access private
 	 */
 	private $sDDBBTipo;
 
@@ -85,7 +80,6 @@ class Redatazo_ddbb implements iRedatazo {
 	 * Usuario con el que conectar a la base de datos
 	 *
 	 * @var string
-	 * @access private
 	 */
 	private $sDDBBUsuario;
 
@@ -102,7 +96,6 @@ class Redatazo_ddbb implements iRedatazo {
 	 * Prefijo de las tablas
 	 *
 	 * @var string
-	 * @access private
 	 */
 	private $sPrefijo;
 
@@ -110,7 +103,6 @@ class Redatazo_ddbb implements iRedatazo {
 	 * Usuario que lanza las consultas (id del usuario)
 	 *
 	 * @var string
-	 * @access private
 	 */
 	private $sTrazabilidad;
 
@@ -118,7 +110,6 @@ class Redatazo_ddbb implements iRedatazo {
 	 * Parametros para la SQL
 	 *
 	 * @var array
-	 * @access private
 	 */
 	private $aSql;
 
@@ -126,10 +117,16 @@ class Redatazo_ddbb implements iRedatazo {
 	 * SQL enviada por el usuario o compuesta desde los "fragmentos" enviados por el usuario con cada metodo
 	 *
 	 * @var string
-	 * @see rdatazo_ddbb::getConsulta()
-	 * @access private
 	 */
 	private $sSql;
+
+	/**
+	 * Ultima consulta lanzada; tal como la haya enviado el usuario o como se haya construido (sin parametros)
+	 *
+	 * @var string
+	 * @see rdatazo_ddbb::getConsulta()
+	 */
+	private $sUltimaSql = '';
 
 	/**
 	 * Constructor
@@ -152,7 +149,6 @@ class Redatazo_ddbb implements iRedatazo {
 	 * Conectar con la base de datos
 	 *
 	 * @todo eliminar esta conexion y hacer una nueva si cambian parametros, $this->setParametros
-	 * @access private
 	 * @return boolean
 	 */
 	private function conectar(){
@@ -176,7 +172,6 @@ class Redatazo_ddbb implements iRedatazo {
 	 * Ejecucion de consulta
 	 *
 	 * @todo pasar $numFilas y $numPagina a $this->limit; teniendo en cuenta no pisar si no se pasa nada
-	 * @access public
 	 * @param string $consulta Consulta a lanzar para recuperar datos; puede omitirse si se ha construido con select/from/...
 	 * @param array $parametros Parametros para la consulta, si no se pasa la consulta en el primer parametro, tal como los requiera el motor de datos concreto
 	 * @param integer $numFilas Numero de filas a devolver
@@ -206,6 +201,8 @@ class Redatazo_ddbb implements iRedatazo {
 			$aReturn = null; //error
 		}*/
 
+		$this->sUltimaSql = $this->sSql;
+
 		$this->limpiaConsulta(); //despues de lanzar una consulta debe limpiarse para empezar de cero la siguiente
 		return true;
 	}
@@ -213,13 +210,13 @@ class Redatazo_ddbb implements iRedatazo {
 	/**
 	 * Borra una o mas filas
 	 *
-	 * @access public
 	 * @param string $tabla Tabla en la que se hara el borrado
 	 * @param array $condicion Condicion de borrado, array asociativo ('campo' => valor)
 	 * @return boolean
 	 */
 	public function delete($tabla, $condicion = array()){
 		$this->sSql = 'DELETE FROM ' . $tabla;
+		$this->aSql = array();
 
 		if(!empty($condicion) && is_array($condicion)){
 			foreach($condicion as $clave => $valor){
@@ -227,10 +224,10 @@ class Redatazo_ddbb implements iRedatazo {
 			}
 		}
 		if(!empty($this->aConsulta['where'])){
-			$this->sSql .= 'WHERE ' . implode(' AND ', $this->aConsulta['where']) . "\n";
-			$this->aSql += $this->aConsulta['where_p'];
+			$this->sSql .= ' WHERE ' . implode(' AND ', $this->aConsulta['where']) . "\n";
+			$this->aSql = array_merge($this->aSql, $this->aConsulta['where_p']);
 
-			if($this->consulta())
+			if($this->consulta($this->sSql, $this->aSql))
 				return true;
 		}
 		else{
@@ -245,7 +242,6 @@ class Redatazo_ddbb implements iRedatazo {
 	 * "from" no se limpia, se interpreta como nombre de tabla (o parte de nombre) valido
 	 *
 	 * @todo poner nombre de tabla y alias entre ` (tildes graves)
-	 * @access public
 	 * @param string $tabla Tabla (seguida de alias -opcional-)
 	 * @return boolean
 	 */
@@ -261,14 +257,13 @@ class Redatazo_ddbb implements iRedatazo {
 	 * Devuelve la consulta lanzada
 	 * Completamente compuesta, tal como se haya enviado al motor de datos
 	 *
-	 * @access public
 	 * @param string $posicion Que consulta mostrar, por defecto la ultima lanzada
 	 * @return string
 	 */
 	public function getConsulta($posicion = 'ultima'){
 		$sConsulta = $this->oDDBB->sQuery;
 		if(empty($sConsulta))
-			$sConsulta = '[ERROR] ' . $this->sSql; //si hay algun tipo de error devuelve la consulta que se ha enviado al controlador de datos
+			$sConsulta = '[ERROR] ' . $this->sUltimaSql; //si hay algun tipo de error devuelve la consulta que se ha enviado al controlador de datos
 
 		return $sConsulta;
 	}
@@ -276,7 +271,6 @@ class Redatazo_ddbb implements iRedatazo {
 	/**
 	 * Devuelve las filas recuperadas en la consulta
 	 *
-	 * @access public
 	 * @return integer Id insertada
 	 */
 	public function getFilas(){
@@ -289,13 +283,13 @@ class Redatazo_ddbb implements iRedatazo {
 	/**
 	 * Inserta una fila
 	 *
-	 * @access public
 	 * @param string $tabla Tabla en la que se hara la insercion
 	 * @param array $datos Datos a insertar, array asociativo ('campo' => valor)
 	 * @return integer Id insertada o null (cuando error)
 	 */
 	public function insert($tabla, $datos){
 		$this->sSql = 'INSERT INTO ' . $tabla;
+		$this->aSql = array();
 
 		$aPreVal = $aPostVal = array();
 		foreach($datos as $clave => $valor){
@@ -306,7 +300,19 @@ class Redatazo_ddbb implements iRedatazo {
 
 		$this->sSql .= ' (' . implode(', ', $aPreVal) . ') VALUES (' . implode(', ', $aPostVal) . ')';
 
-		if($this->consulta())
+		if($this->consulta($this->sSql, $this->aSql))
+			return $this->oDDBB->sUltimaId;
+
+		return null;
+	}
+
+	/**
+	 * Devuelve la ultima id producida en una insercion (last_insert_id)
+	 *
+	 * @return integer Id insertada o null
+	 */
+	public function insert_id(){
+		if(!empty($this->oDDBB->sUltimaId))
 			return $this->oDDBB->sUltimaId;
 
 		return null;
@@ -316,7 +322,6 @@ class Redatazo_ddbb implements iRedatazo {
 	 * Tablas con las que hacer join de la principal
 	 *
 	 * @todo poner nombre de tabla y alias entre ` (tildes graves); decidir si el usuario puede enviar la palabra clave "join" y tipo de join en $tabla
-	 * @access public
 	 * @param string $tabla Tabla (seguida de alias -opcional-), y seguida de condicion (si no se pone en el segundo parametro)
 	 * @param string $condicion Condicion del join (-opcional-)
 	 * @param string $tipo Tipo de join: inner, left, right
@@ -324,11 +329,11 @@ class Redatazo_ddbb implements iRedatazo {
 	 */
 	public function join($tabla, $condicion = null, $tipo = 'inner'){
 		if(strtolower($tipo) == 'left')
-		 $tipo = 'LEFT JOIN ';
+		 $tipo = ' LEFT JOIN ';
 		elseif(strtolower($tipo) == 'right')
-		$tipo = 'RIGHT JOIN ';
+		$tipo = ' RIGHT JOIN ';
 		else
-			$tipo = 'INNER JOIN ';
+			$tipo = ' INNER JOIN ';
 
 		if(empty($condicion))
 			$this->aConsulta['join'][] = $tipo . $tabla;
@@ -339,7 +344,6 @@ class Redatazo_ddbb implements iRedatazo {
 	/**
 	 * Limita el numero de filas devuelto
 	 *
-	 * @access public
 	 * @param integer $cantidad Cantidad de filas a devolver
 	 * @param integer $offset Numero de fila desde la cual empezar a devolver
 	 * @return boolean
@@ -352,13 +356,14 @@ class Redatazo_ddbb implements iRedatazo {
 
 	private function limpiaConsulta(){
 		$this->aConsulta = array('select' => array(), 'from' => '', 'join' => array(), 'where' => array(), 'order_by' => array());
+		$this->sSql = '';
+		$this->aSql = array();
 	}
 
 	/**
 	 * Opciones de ordenacion
 	 *
 	 * @todo poner nombre de tabla y campos entre ` (tildes graves); decidir si el usuario puede enviar las palabras clave "order by"
-	 * @access public
 	 * @param string $campo Campo por el que se ordenaran los resultados; sin orden por defecto
 	 * @param string $sentido Sentido de la ordenacion: asc(endente) o desc(endente)
 	 * @return boolean
@@ -372,7 +377,6 @@ class Redatazo_ddbb implements iRedatazo {
 	 * Campos a devolver
 	 *
 	 * @todo poner nombre de campos entre ` (tildes graves); decidir si el usuario puede enviar la palabra clave "select"
-	 * @access public
 	 * @param string $campos Campos a devolver, separados por comas
 	 * @return boolean
 	 */
@@ -383,7 +387,6 @@ class Redatazo_ddbb implements iRedatazo {
 	/**
 	 * Construye la consulta
 	 *
-	 * @access private
 	 * @param string $consulta Consulta completa si no se envia fragmentada a cada metodo
 	 * @param array $parametros Parametros para la consulta, si no se pasa la consulta en el primer parametro, tal como los requiera el motor de datos concreto
 	 * @return array
@@ -394,15 +397,19 @@ class Redatazo_ddbb implements iRedatazo {
 
 		if(empty($consulta)){
 			if(!empty($this->aConsulta['select'])) $this->sSql .= 'SELECT ' . implode(', ', $this->aConsulta['select']) . "\n";
-			if(!empty($this->aConsulta['from'])) $this->sSql .= 'FROM ' . $this->aConsulta['from'] . "\n";
+
+			if(!empty($this->aConsulta['from'])) $this->sSql .= ' FROM ' . $this->aConsulta['from'] . "\n";
+
 			if(!empty($this->aConsulta['join'])) $this->sSql .= implode("\n", $this->aConsulta['join']) . "\n";
+
 			if(!empty($this->aConsulta['where'])){
-				$this->sSql .= 'WHERE ' . implode(' AND ', $this->aConsulta['where']) . "\n";
+				$this->sSql .= ' WHERE ' . implode(' AND ', $this->aConsulta['where']) . "\n";
 				if(!empty($this->aConsulta['where_p'])){
 					$this->aSql += $this->aConsulta['where_p'];
 				}
 			}
-			if(!empty($this->aConsulta['order_by'])) $this->sSql .= 'ORDER BY ' . implode(', ', $this->aConsulta['order_by']) . "\n";
+
+			if(!empty($this->aConsulta['order_by'])) $this->sSql .= ' ORDER BY ' . implode(', ', $this->aConsulta['order_by']) . "\n";
 		}
 		else{
 			$this->sSql = $consulta;
@@ -421,7 +428,6 @@ class Redatazo_ddbb implements iRedatazo {
 	 * 'prefijotablas' => prefijo que llevaran las tablas de la base de datos (ninguno por defecto)
 	 * 'trazabilidad' => usuario que lanza las consultas, si no esta vacio se trazaran las consultas con este usuario (vacio por defecto)
 	 *
-	 * @access public
 	 * @param array $aDatos Asociativo con los datos requeridos por la clase
 	 * @return boolean
 	 */
@@ -442,7 +448,6 @@ class Redatazo_ddbb implements iRedatazo {
 	/**
 	 * Devuelve el total de filas recuperadas, sin limit.
 	 *
-	 * @access public
 	 * @return integer
 	 */
 	public function totalFilas(){
@@ -453,7 +458,6 @@ class Redatazo_ddbb implements iRedatazo {
 	 * Actualiza una o mas filas
 	 *
 	 * @todo generar una advertencia si no hay where
-	 * @access public
 	 * @param string $tabla Tabla en la que se hara la actualizacion
 	 * @param array $datos Datos a insertar, array asociativo ('campo' => valor)
 	 * @param array $condicion Condicion de actualizacion, array asociativo ('campo' => valor); tambien se pueden asignar en el metodo where
@@ -461,6 +465,7 @@ class Redatazo_ddbb implements iRedatazo {
 	 */
 	public function update($tabla, $datos, $condicion = array()){
 		$this->sSql = 'UPDATE ' . $tabla . ' SET';
+		$this->aSql = array();
 
 		$aVals = array();
 		foreach($datos as $clave => $valor){
@@ -475,14 +480,14 @@ class Redatazo_ddbb implements iRedatazo {
 			}
 		}
 		if(!empty($this->aConsulta['where'])){
-			$this->sSql .= 'WHERE ' . implode(' AND ', $this->aConsulta['where']) . "\n";
-			$this->aSql += $this->aConsulta['where_p'];
+			$this->sSql .= ' WHERE ' . implode(' AND ', $this->aConsulta['where']) . "\n";
+			$this->aSql = array_merge($this->aSql, $this->aConsulta['where_p']);
 		}
 		else{
 			trigger_error('Consulta UPDATE sin WHERE', E_USER_NOTICE);
 		}
 
-		if($this->consulta())
+		if($this->consulta($this->sSql, $this->aSql))
 			return true;
 
 		return false;
@@ -493,20 +498,22 @@ class Redatazo_ddbb implements iRedatazo {
 	 * $campo puede ser un nombre de campo, o una condicion con indicaciones de los valores a comparar: "campo1 = %s AND campo2 IN (%u, %u)" (en cuyo caso $valor sera un array con los valores a sustituir)
 	 *
 	 * @todo poner nombre de campos entre ` (tildes graves); decidir si el usuario puede enviar la palabra clave "where"
-	 * @access public
 	 * @param string $campo Nombre del campo
-	 * @param string $valor Valor o valores (array) con el que comparar el campo
+	 * @param string $valor Valor con el que comparar el campo
 	 * @return boolean
 	 */
 	public function where($campo, $valor = null){
 		$sAux = '';
 		if(!empty($valor)){
 			if(is_null($valor)){
-				$sAux = " = null";
+				$this->aConsulta['where_p'] = array();
 			}
 			elseif(is_numeric($valor)){
 				$sAux = " = %u";
 				$this->aConsulta['where_p'][] = $valor;
+			}
+			elseif(strtolower($valor) == 'null'){
+				$sAux = " = null";
 			}
 			else{
 				$sAux = " = '%s'";

@@ -254,7 +254,7 @@ class Redatazo implements iRedatazo {
 	 * @return boolean
 	 */
 	public function update($almacen, $datos, $condicion = array()){
-		return $this->oRedatazo->update($tabla, $condicion);
+		return $this->oRedatazo->update($almacen, $datos, $condicion);
 	}
 
 	/**

@@ -771,7 +771,7 @@ class sqlazo{
 				break;
 			default:
 				$this->setError(__METHOD__.'1', $this->sTipoQuery);
-				return(false);
+				return false;
 		}
 
 		$this->sQuery = $query;

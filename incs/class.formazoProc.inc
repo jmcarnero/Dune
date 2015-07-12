@@ -44,16 +44,16 @@ if(!empty($_POST['formName'])){
 	$aCampos['titulo']['valor'] = $oProcFormulario->getValor('titulo');
 	$aCampos['texto']['valor'] = $oProcFormulario->getValor('texto');
 
-	if($oProcFormulario->procesarFormulario($_POST['formName'])){ //no hay problemas, procesar la SQL
+	if($oProcFormulario->procesarFormulario($_POST['formName'])){ //validacion correcta
 		//var_dump('sql-> ' . $oProcFormulario->getRedatazo);
 	}
 	else{ //errores
 		$this->aDatos['frmError'] = $oProcFormulario->getError(); //problemas de validacion, devolver a la pagina con estos mensajes
 	}
 }
-else{
-	echo('Ningún formulario a procesar.');
-}
+//else{
+//	echo('Ningún formulario a procesar.');
+//}
  * \endcode
  *
  * @author José M. Carnero
@@ -116,6 +116,24 @@ class FormazoProc {
 
 		$this->setFormNombre();
 		$this->setCampos($aCampos);
+	}
+
+	/**
+	 * Devuelve los campos, si se recuperan despues del procesado tendran los valores actualizados (como nombres de ficheros subidos)
+	 *
+	 * @param boolean $bRaw Si true devuelve $this->aCampos tal cual, si false devuelve solo clave => valor
+	 * @return array
+	 */
+	public function getCampos($bRaw = false){
+		$aRet = $this->aCampos;
+
+		if(!$bRaw){
+			foreach($this->aCampos as $clave => $valor){
+				$aRet[$clave] = $valor['valor'];
+			}
+		}
+
+		return $aRet;
 	}
 
 	/**
@@ -193,14 +211,7 @@ class FormazoProc {
 		}
 
 
-		if(!$this->procesarValores()){
-			return false; //errores en la recuperacion de valores del formulario
-		}
-		/*if(!$this->setRedatazo()){
-			return false; //errores en la construccion de la SQL
-		}*/
-
-		return true;
+		return $this->procesarValores(); //si false ha habido errores en la recuperacion de valores del formulario
 	}
 
 	/**
@@ -233,11 +244,25 @@ class FormazoProc {
 						$this->aCampos[$clave]['valor'] = 0;
 					break;
 				case 'file':
-					$this->subeArchivo($clave); //TODO una mala subida de archivo no corta el proceso, debe ser asi?
+					//aqui no se hacen subidas reales, solo se testea la validacion
+					if(!$this->subeArchivo($clave, true)){
+						$bRet = false; //problemas con la subida de ficheros
+					}
 					break;
 				default:
 					trigger_error('El tipo de campo [<em>' . $valor['tipo'] . '</em>] no se reconoce', E_USER_NOTICE);
 					$bRet = false;
+			}
+		}
+
+		//validacion correcta, se suben los ficheros a sus ubicaciones definitivas
+		if($bRet){
+			foreach($this->aCampos as $clave => $valor){
+				if($valor['tipo'] == 'file'){
+					if(!$this->subeArchivo($clave)){ //error con "move_uploaded_file"
+						$bRet = false; //problemas con la subida de ficheros
+					}
+				}
 			}
 		}
 
@@ -413,9 +438,12 @@ class FormazoProc {
 	 * Sube ficheros
 	 *
 	 * @param string $campo Clave del campo que contiene el fichero a subir
+	 * @param boolean $bTest Si true no sube el fichero realmente, solo comprueba que puede subirse; esto es util para verificar la validacion
 	 * @return boolean
 	 */
-	private function subeArchivo($campo){
+	private function subeArchivo($campo, $bTest = false){
+		$bTest = !empty($bTest);
+
 		if(isset($_FILES[$campo]) && is_uploaded_file($_FILES[$campo]['tmp_name'])){
 			$sRutaFicheros = $this->setRutaFicheros($this->aCampos[$campo]['rutaFichero']);
 			if(empty($sRutaFicheros)) //ruta de subida invalida
@@ -437,15 +465,21 @@ class FormazoProc {
 			//limpiando y preparando nombre
 			$sTempArchNombre = $_FILES[$campo]['name'];
 			$sTempArchNombre = $this->limpiarNombreFichero($sTempArchNombre);
-			$sTempArchNombre = $this->renombraArchivo($sTempArchNombre, $sRutaFicheros);
+
+			if(empty($this->aCampos[$campo]['pisar'])){ //si esta opcion esta a true se elimina el fichero anterior, si existe; "move_uploaded_file" lo hace
+				$sTempArchNombre = $this->renombraArchivo($sTempArchNombre, $sRutaFicheros);
+			}
+
+			if($bTest) //modo verificacion, no se hace subida real
+				return true;
 
 			//mover el archivo a su ubicacion definitiva
-			if(!(@move_uploaded_file($_FILES[$campo]['tmp_name'], $sRutaFicheros . $sTempArchNombre))){
+			if(@move_uploaded_file($_FILES[$campo]['tmp_name'], $sRutaFicheros . $sTempArchNombre)){
+				$this->aCampos[$campo]['valor'] = rawurlencode($sTempArchNombre); //guardado del nombre del fichero subido
+			}
+			else{
 				trigger_error('No se ha podido subir el fichero [' . $sTempArchNombre . '] a la ruta [' . $sRutaFicheros . ']', E_USER_WARNING);
 				return false;
-			}
-			else{ //guardado del nombre del fichero subido
-				$this->aCampos[$campo]['valor'] = rawurlencode($sTempArchNombre);
 			}
 		}
 
@@ -555,7 +589,7 @@ if the second character is "0", then it is typically a test BIC as opposed to a 
 	 * @param string $value Valor a evaluar
 	 * @return boolean
 	 */
-	public function validaBicSwift($value){
+	private function validaBicSwift($value){
 		$bRet = true;
 
 		$bRet = preg_match('/^[a-z]{6}[0-9a-z]{2}([0-9a-z]{3})?$/i', trim($value));
@@ -616,9 +650,9 @@ if the second character is "0", then it is typically a test BIC as opposed to a 
 
 				if($regexp != $value && preg_match('/'.$regexp.'/', $value)){
 					// check date
-					$day   = substr($value,strpos($format, 'd'),2);
+					$day = substr($value,strpos($format, 'd'),2);
 					$month = substr($value,strpos($format, 'm'),2);
-					$year  = substr($value,strpos($format, 'y'),4);
+					$year = substr($value,strpos($format, 'y'),4);
 
 					if(@checkdate($month, $day, $year)) return true;
 				}

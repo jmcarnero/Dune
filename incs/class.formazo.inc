@@ -74,7 +74,10 @@ class Formazo {
 	 *  'group' -> id del grupo al que pertenece; si vacio no pertenece a ningun grupo
 	 *  'separador' -> solo para campos "multiple", guarda el separador de la lista de valores
 	 *  'modo' => modo de representacion del elemento, para "select" puede ser [vacio|select] (select normal) o [radio] (las opciones del select se pintaran como radio buttons, para "multiple" puede ser [nada|multiple] (select multiple normal) o [checkbox] (las opciones del select multiple se pintaran como checkbox); para ficheros: si 'validacion' => 'fichero', 'modo' puede contener los tipos de ficheros permitidos como lista de extensiones separada por comas, ej: 'modo' => 'jpg,png,tiff'
-	 *  'rutaFichero' => ruta donde guardar el fichero (para campos file), o donde se encuentra para previsualizarlo
+	 *  'rutaFichero' => ruta fisica donde guardar el fichero (para campos file)
+	 *  'rutaUrl' => URL donde encontrar el fichero (para campos file) para previsualizarlo
+	 *  'pisar' => solo para ficheros, si true sobreescribe ficheros con el mismo nombre, si false crea un nuevo nombre en caso de existir un fichero con el nombre pasado
+	 *  //'formato' => solo para campos con validacion fecha, formato de la fecha a validar, ej.: yyyy-mm-dd (por defecto) //de momento no permite hora
 	 *
 	 * @var array
 	 * @see Formazo::setCampos($campos), Formazo::getCampos()
@@ -787,6 +790,7 @@ class FormazoFile extends FormazoElementos {
 	protected function elemento(){
 		$aElemento = array();
 		$this->aDatos['rutaFichero'] = empty($this->aDatos['rutaFichero']) ? '.' : $this->aDatos['rutaFichero']; //TODO evita problemas si no se ha puesto ruta en el fichero, pero no comprueba si esta es valida, deberia ser /tmp por defecto?
+		$this->aDatos['rutaUrl'] = empty($this->aDatos['rutaUrl']) ? $this->aDatos['rutaFichero'] : $this->aDatos['rutaUrl'];
 
 		$aElemento['texto'] = $this->getLabel();
 
@@ -801,14 +805,14 @@ class FormazoFile extends FormazoElementos {
 		$aElemento['campo'] .= '<br />Tama&ntilde;o m&aacute;ximo: ' . $iMaxUpload . ' bytes';
 
 		//muestra la imagen (si lo es), o el nombre del fichero actual
-		$aElemento['file'] = '<br /><div id="pre_' . $this->sClave . $this->sFormNombre . '"><a href="' . $this->aDatos['rutaFichero'] . rawurldecode($this->aDatos['valor']) . '" target="_blank">';
+		$aElemento['file'] = '<br /><div id="pre_' . $this->sClave . $this->sFormNombre . '"><a href="' . $this->aDatos['rutaUrl'] . rawurldecode($this->aDatos['valor']) . '" target="_blank">';
 		$sExtension = empty($this->aDatos['valor']) ? null : strtolower(substr($this->aDatos['valor'], strrpos($this->aDatos['valor'], '.') + 1));
 		switch($sExtension){
 			case 'jpg':
 			case 'jpeg':
 			case 'gif':
 			case 'png':
-				$aElemento['file'] .= '<img id="img_' . $this->sClave . $this->sFormNombre . '" src="' . $this->aDatos['rutaFichero'] . rawurldecode($this->aDatos['valor']) . '" alt="Imagen actual" />';
+				$aElemento['file'] .= '<img id="img_' . $this->sClave . $this->sFormNombre . '" src="' . $this->aDatos['rutaUrl'] . rawurldecode($this->aDatos['valor']) . '" alt="Imagen actual" />';
 				break;
 			default:
 				$aElemento['file'] .= '<img id="img_' . $this->sClave . $this->sFormNombre . '" src="Imagen preview" alt="' . $this->aDatos['valor'] . '" />'; //TODO esta es la mejor manera de mostrar el valor actual?, usando una imagen inexistente como "placeholder" para la futura preview por javascript?
