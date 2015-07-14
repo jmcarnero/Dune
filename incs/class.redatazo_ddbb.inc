@@ -184,11 +184,15 @@ class Redatazo_ddbb implements iRedatazo {
 		if(!empty($numFilas)) $this->iNumeroFilas = $numFilas;
 		if(!empty($numPagina)) $this->iOffsetFilas = ($numFilas * $numPagina);
 
-		if($this->oDDBB->consulta($this->sSql, $this->aSql, $this->iNumeroFilas, $this->iOffsetFilas)){
-			$this->sSql = $this->oDDBB->sQuery; //consulta lanzada
+		$aConsulta = array($this->sSql, $this->aSql, $this->iNumeroFilas, $this->iOffsetFilas);
+		$this->sUltimaSql = $this->sSql;
+		$this->limpiaConsulta(); //despues de lanzar una consulta debe limpiarse para empezar de cero la siguiente
+
+		if($this->oDDBB->consulta($aConsulta[0], $aConsulta[1], $aConsulta[2], $aConsulta[3])){
+			$this->sUltimaSql = $this->oDDBB->sQuery; //consulta lanzada
 		}
 		else{
-			trigger_error('No se puede ejecutar la consulta: [' . $this->sSql . ']', E_USER_WARNING);
+			trigger_error('No se puede ejecutar la consulta: [' . $this->sUltimaSql . ']', E_USER_WARNING);
 			return false; //error
 		}
 
@@ -201,9 +205,6 @@ class Redatazo_ddbb implements iRedatazo {
 			$aReturn = null; //error
 		}*/
 
-		$this->sUltimaSql = $this->sSql;
-
-		$this->limpiaConsulta(); //despues de lanzar una consulta debe limpiarse para empezar de cero la siguiente
 		return true;
 	}
 
@@ -216,7 +217,6 @@ class Redatazo_ddbb implements iRedatazo {
 	 */
 	public function delete($tabla, $condicion = array()){
 		$this->sSql = 'DELETE FROM ' . $tabla;
-		$this->aSql = array();
 
 		if(!empty($condicion) && is_array($condicion)){
 			foreach($condicion as $clave => $valor){
@@ -289,7 +289,6 @@ class Redatazo_ddbb implements iRedatazo {
 	 */
 	public function insert($tabla, $datos){
 		$this->sSql = 'INSERT INTO ' . $tabla;
-		$this->aSql = array();
 
 		$aPreVal = $aPostVal = array();
 		foreach($datos as $clave => $valor){
@@ -355,9 +354,13 @@ class Redatazo_ddbb implements iRedatazo {
 	}
 
 	private function limpiaConsulta(){
-		$this->aConsulta = array('select' => array(), 'from' => '', 'join' => array(), 'where' => array(), 'order_by' => array());
 		$this->sSql = '';
 		$this->aSql = array();
+
+		$this->iNumeroFilas = 0;
+		$this->iOffsetFilas = 0;
+
+		$this->aConsulta = array('select' => array(), 'from' => '', 'join' => array(), 'where' => array(), 'where_p' => array(), 'order_by' => array());
 	}
 
 	/**
@@ -465,7 +468,6 @@ class Redatazo_ddbb implements iRedatazo {
 	 */
 	public function update($tabla, $datos, $condicion = array()){
 		$this->sSql = 'UPDATE ' . $tabla . ' SET';
-		$this->aSql = array();
 
 		$aVals = array();
 		foreach($datos as $clave => $valor){
@@ -487,8 +489,9 @@ class Redatazo_ddbb implements iRedatazo {
 			trigger_error('Consulta UPDATE sin WHERE', E_USER_NOTICE);
 		}
 
-		if($this->consulta($this->sSql, $this->aSql))
+		if($this->consulta($this->sSql, $this->aSql)){
 			return true;
+		}
 
 		return false;
 	}
@@ -505,10 +508,7 @@ class Redatazo_ddbb implements iRedatazo {
 	public function where($campo, $valor = null){
 		$sAux = '';
 		if(!empty($valor)){
-			if(is_null($valor)){
-				$this->aConsulta['where_p'] = array();
-			}
-			elseif(is_numeric($valor)){
+			if(is_numeric($valor)){
 				$sAux = " = %u";
 				$this->aConsulta['where_p'][] = $valor;
 			}
