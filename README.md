@@ -1,4 +1,4 @@
-# Dune v3.0b [José M. Carnero](http://sargazos.net)
+# Dune v1.0 [José M. Carnero](http://sargazos.net)
 ===
 
 ## PHP framework.
@@ -6,9 +6,14 @@
 - Ligero.
 - MVC.
 - Desacoplado.
+- Traducción automática de textos.
+
+#Librerías incluidas:
+
+- Envío de correos.
 - Formularios.
+- Listados.
 - Sistema unificado de acceso a datos: SQL, CSV
-- Traducción de textos.
 
 ====
 **In English:**
@@ -18,6 +23,12 @@
 - Lightweight.
 - MVC.
 - Decoupled.
-- Forms.
-- Unified data access: SQL, CSV
 - Translations.
+
+#Included libraries:
+
+- Email sends.
+- Forms.
+- Lists.
+- Unified data access: SQL, CSV
+
