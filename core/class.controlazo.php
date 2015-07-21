@@ -23,7 +23,7 @@
  *
  * @author José M. Carnero
  * @since 2014-11-17
- * @version 1b
+ * @version 1
  * @license http://www.gnu.org/copyleft/gpl.html
  * @package Dune
  */
@@ -228,20 +228,25 @@ class Controlazo {
 
 		$sRutaVista = D_BASE_DIR . D_DIR_VISTA . $sVista . '.php';
 
-		ob_start();
-		if(is_readable($sRutaVista)){
-			include $sRutaVista; //carga del modulo, debe tener el mismo nombre de esta clase (en minusculas)
+		if(!is_readable($sRutaVista)){
+			throw new ErrorException('No se puede leer la vista [' . $sRutaVista . ']');
 		}
+
+		ob_start();
+		include $sRutaVista; //carga del modulo, debe tener el mismo nombre de esta clase (en minusculas)
+
 		$this->sContenidos = ob_get_contents(); //contenidos del modulo a mostrar procesados
 		ob_end_clean();
 
 		if(!empty($sPlantilla)){
 			$sRutaPlantilla = D_BASE_DIR . D_DIR_TPL . $sPlantilla . '.tpl';
 
-			if($sRutaPlantilla && is_readable($sRutaPlantilla)){
-				$sContenidos = $this->sContenidos;
-				require $sRutaPlantilla;
+			if(!is_readable($sRutaPlantilla)){
+				throw new ErrorException('No se puede leer la plantilla [' . $sRutaPlantilla . ']');
 			}
+
+			$sContenidos = $this->sContenidos;
+			require $sRutaPlantilla;
 		}
 		elseif(!empty($sVista)){ //si hay vista pero no plantilla se pinta //TODO debiera no pintarse nada si no se pasa plantilla?
 			echo $this->sContenidos;

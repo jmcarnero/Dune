@@ -42,17 +42,20 @@ defined('D_MODULO_ERROR') or define('D_MODULO_ERROR', 'error'); //modulo a carga
  * URL: http://dominio.tld/directorio/?modulo=metodo&parametro=valor[...]
  * - dominio.tld -> es el dominio donde corre la aplicacion
  * - directorio -> de momento no tiene mas uso que ser el directorio donde se encuentra Dune (en caso de que no este en el raiz)
- * - modulo -> el modulo a cargar; si se omite se cargara el modulo por defecto (portada), si no se encuentra se cargara el modulo de error (si no se encuentra se envia un mensaje de aviso)
- * - metodo -> metodo a cargar del modulo pedido; se puede omitir, si no existe se ignora
- * - parametro=valor -> cualquier numero de parametros con o sin valor, en el formato ordinario de una URL (separados por &); de momento se recogen por post, no se pasan como parametros al metodo llamado
+ * - modulo -> el modulo a cargar; si se omite se cargara el modulo por defecto (D_MODULO_INICIO), si no se encuentra se cargara el modulo D_MODULO_ERROR (si no se encuentra se envia un mensaje de aviso)
+ * - metodo -> metodo a cargar del modulo pedido; se puede omitir (se intentara cargar D_METODO_INICIO), si no existe se ignora
+ * - parametro=valor -> cualquier numero de parametros con o sin valor, en el formato ordinario de una URL (separados por &); pueden recogerse con $_GET, o como parametros del metodo llamado (han de estar declarados en la firma del metodo)
  *
  * @author José M. Carnero
  * @since 2014-11-23
- * @version 1b
+ * @version 1
  * @license http://www.gnu.org/copyleft/gpl.html
  * @package Dune
  */
 class Dune {
+
+	protected $bVista = false; //si true se esta cargando una vista
+	protected $bControlador = false; //si true se esta cargando un controlador
 
 	protected $sContenidos = false; //contenidos cargados de la vista/controlador/modelo
 	protected $oControlazo = false; //instancia de la clase controlador
@@ -103,7 +106,8 @@ class Dune {
 	public static function baseDir($ret = null){
 		if(!defined('D_BASE_DIR')) define('D_BASE_DIR', str_replace('\\', '/', realpath(dirname(__FILE__).'/..')).'/');
 		if(!defined('D_BASE_URL')){
-			$cadBase = array_pop(explode('/', trim(D_BASE_DIR, '/')));
+			$aBaseDir = explode('/', trim(D_BASE_DIR, '/'));
+			$cadBase = array_pop($aBaseDir);
 			$phpSelf = trim(dirname($_SERVER['PHP_SELF']), '/');
 			$cadBase = substr($phpSelf, strpos($phpSelf, $cadBase) + strlen($cadBase));
 			$cadBase = $cadBase === false?array():explode('/', trim($cadBase, '/'));
@@ -126,14 +130,20 @@ class Dune {
 	 * Verifica si existe el modulo indicado en la URL,
 	 * si no existe busca el modulo de error,
 	 * si tampoco existe avisa con un mensaje
+	 *
+	 * @todo verificar orden de busqueda y operaciones de lectura de disco, quizas pueda hacerse todo con el array_map de glob, comprobando antes que modulo se ha pedido (y quizas el de error tambien)
 	 */
 	private function buscaModulo(){
 		//seleccion de modulo, portada por defecto
 		$this->sModulo = empty($_GET) ? D_MODULO_INICIO : key($_GET); //nombre del modulo
 
+		//acepta modulo si encuentra el mismo nombre entre controladores o vistas
+		$this->bVista = in_array($this->sModulo . '.php', array_map('basename', glob(D_BASE_DIR . D_DIR_VISTA . '*.php'))); //se pide una vista
+		$this->bControlador = in_array($this->sModulo . '.php', array_map('basename', glob(D_BASE_DIR . D_DIR_CONTROL . '*.php'))); //se pide un controlador
+
 		//portada o seccion desconocida
-		if(!in_array($this->sModulo.'.php', array_map('basename', glob(D_BASE_DIR.D_DIR_VISTA.'*.php')))){ //TODO deben priorizarse vistas o controladores?, de momento vistas
-			if(empty($_SERVER['QUERY_STRING']) || isset($_GET['portada'])){
+		if(!$this->bVista && !$this->bControlador){
+			if(empty($_SERVER['QUERY_STRING']) || isset($_GET[D_MODULO_INICIO])){
 				$this->sModulo = D_MODULO_INICIO;
 			}
 			else{
@@ -141,9 +151,16 @@ class Dune {
 			}
 		}
 
-		$sRutaCompleta = D_BASE_DIR.D_DIR_VISTA.$this->sModulo.'.php';
-		if(!is_readable($sRutaCompleta)){
-			throw new ErrorException('Error fatal: No se puede cargar el m&oacute;dulo ['.$this->sModulo.'] en [' . $sRutaCompleta . ']');
+		//si existe el controlador se prioriza su carga
+		if(is_readable(D_BASE_DIR . D_DIR_CONTROL . $this->sModulo . '.php')){
+			$this->bControlador = true;
+		}
+		elseif(is_readable(D_BASE_DIR . D_DIR_VISTA . $this->sModulo . '.php')){ //si no se sabe lo que existe se intenta en el directorio de vistas
+			$this->bVista = true;
+		}
+		else{
+			$this->bVista = $this->bControlador = null;
+			throw new ErrorException('Error fatal: No se puede cargar el m&oacute;dulo [' . $this->sModulo . '] en [' . $sRutaCompleta . ']');
 		}
 	}
 
@@ -162,7 +179,7 @@ class Dune {
 
 		//intenta cargar el controlador (puede contener tambien el modelo)
 		if(is_readable($sRutaControlador)){
-			include($sRutaControlador);
+			include $sRutaControlador;
 		}
 
 		//carga el controlador si existe
@@ -190,8 +207,8 @@ class Dune {
 				$sRutaControlador = D_BASE_DIR . D_DIR_CONTROL . $this->sModulo . '.php';
 
 				if(is_readable($sRutaControlador)){
-					include($sRutaControlador);
 					unset($this->oControlazo);
+					include $sRutaControlador;
 
 					$this->oControlazo = new $this->sModulo();
 				}

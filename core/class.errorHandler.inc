@@ -21,7 +21,7 @@
  * Es recomendable incluirla antes de nada para que recoja todos los errores.
  *
  * @author José M. Carnero
- * @version 1b
+ * @version 1
  * @license http://www.gnu.org/copyleft/gpl.html
  * @package Dune
  */
