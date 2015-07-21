@@ -128,8 +128,11 @@ class FormazoProc {
 		$aRet = $this->aCampos;
 
 		if(!$bRaw){
+			$aRet = array();
+
 			foreach($this->aCampos as $clave => $valor){
-				$aRet[$clave] = $valor['valor'];
+				if(isset($valor['valor']))
+					$aRet[$clave] = $valor['valor'];
 			}
 		}
 

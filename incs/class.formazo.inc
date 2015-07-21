@@ -671,9 +671,10 @@ abstract class FormazoElementos {
 	 * Forma la parte "value" de los elementos
 	 *
 	 * @since 2015-05-15
+	 * @param mixed $valor Se usa en alguna subclase donde esta sobreescrito (vease FormazoRadio::getValor)
 	 * @return string
 	 */
-	protected function getValor(){
+	protected function getValor($valor = false){
 		$sRet = ' value="' . $this->aDatos['valor'] . '"';
 
 		return $sRet;
@@ -767,8 +768,8 @@ class FormazoCheckbox extends FormazoElementos {
 		return($aElemento);
 	}
 
-	protected function getValor(){
-		$sRet = parent::getValor();
+	protected function getValor($valor = false){
+		$sRet = parent::getValor($valor);
 		$sRet .= $this->aDatos['valor'] ? ' checked="checked"' : '';
 
 		return $sRet;
@@ -979,18 +980,27 @@ class FormazoRadio extends FormazoElementos {
 	protected function elemento(){
 		$aElemento = array();
 
-		$aElemento['texto'] = '<span>'.$this->aDatos['titulo'].'</span>';
+		$aElemento['texto'] = '<span>'.$this->aDatos['titulo'].'</span><br />';
 		$aElemento['campo'] = '';
 
 		//botones
 		if(count($this->aDatos['valores']) > 0){
 			foreach($this->aDatos['valores'] as $c => $v){
 				$aElemento['campo'] .= '<label for="r_' . $c . $this->sFormNombre . '">' . $v . '</label>&nbsp;';
-				$aElemento['campo'] .= '<input id="r_' . $c . $this->sFormNombre . '" name="' . $this->sClave . '" type="radio"' . $this->getTabIndex() . $this->getCss() . ' value="' . $c . '" />';
+				$aElemento['campo'] .= '<input id="r_' . $c . $this->sFormNombre . '" name="' . $this->sClave . '" type="radio"' . $this->getTabIndex() . $this->getCss() . $this->getValor($c) . ' value="' . $c . '" />';
 			}
 		}
 
 		return($aElemento);
+	}
+
+	protected function getValor($valor = false){
+		$sRet = '';
+		if($this->aDatos['valor'] == $valor){
+			$sRet = ' checked="checked"';
+		}
+
+		return $sRet;
 	}
 
 }
@@ -1089,7 +1099,7 @@ class FormazoTextarea extends FormazoElementos {
 		return($aElemento);
 	}
 
-	protected function getValor(){
+	protected function getValor($valor = false){
 		$sRet = $this->aDatos['valor'];
 
 		return $sRet;
