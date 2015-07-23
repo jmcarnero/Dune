@@ -16,19 +16,17 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 # http://www.gnu.org/copyleft/gpl.html
 
-/**
- * Capa de abstracción para recuperación de datos de distintas fuentes.
- *
- * @author José M. Carnero
- * @version 1
- * @license http://www.gnu.org/copyleft/gpl.html
- * @package RedAtazo
- */
+//Constante con el directorio donde se encuentran las clases derivadas y/o dependientes de esta
+defined('CLASSES_DIR') or define('CLASSES_DIR', dirname(__FILE__));
 
 /**
  * Interface para las clases de recuperacion de datos.
+ * Capa de abstracción para recuperación de datos de distintas fuentes.
  *
+ * @author José M. Carnero
  * @since 2015-03-04
+ * @license http://www.gnu.org/copyleft/gpl.html
+ * @package RedAtazo
  */
 interface iRedatazo {
 

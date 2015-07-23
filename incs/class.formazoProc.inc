@@ -17,7 +17,7 @@
 # http://www.gnu.org/copyleft/gpl.html
 
 //Constante con el directorio donde se encuentran las clases derivadas y/o dependientes de esta
-if(!defined('CLASSES_DIR')) define('CLASSES_DIR', dirname(__FILE__));
+defined('CLASSES_DIR') or define('CLASSES_DIR', dirname(__FILE__));
 
 /**
  * Clase procesadora de formularios HTML
@@ -59,7 +59,7 @@ if(!empty($_POST['formName'])){
  * @author José M. Carnero
  * @version 4
  * @license http://www.gnu.org/copyleft/gpl.html
- * @package formazo
+ * @package Formazo
  */
 class FormazoProc {
 
@@ -476,9 +476,27 @@ class FormazoProc {
 			if($bTest) //modo verificacion, no se hace subida real
 				return true;
 
+			if(!empty($this->aCampos[$campo]['thumbnail'])){ //si se ha solicitado thumbnail comprueba si se puede crear
+				$sClassThumbnails = 'class.thumbnazo.inc';
+
+				@include_once(CLASSES_DIR . '/' . $sClassThumbnails);
+				if(!class_exists('Thumbnazo')){
+					trigger_error('No se puede acceder a la clase de thumbnails [' . $sClassThumbnails . ']', E_USER_WARNING);
+					return false;
+				}
+			}
+
 			//mover el archivo a su ubicacion definitiva
 			if(@move_uploaded_file($_FILES[$campo]['tmp_name'], $sRutaFicheros . $sTempArchNombre)){
-				$this->aCampos[$campo]['valor'] = rawurlencode($sTempArchNombre); //guardado del nombre del fichero subido
+				$this->aCampos[$campo]['valor'] = $sTempArchNombre; //guardado del nombre del fichero subido
+
+				//TODO thumbnail debe tener como valor ancho y alto del thumbnail (100x120, ej)
+				if(!empty($this->aCampos[$campo]['thumbnail'])){ //se intenta crear thumbnail
+					$aDimensiones = explode('x', $this->aCampos[$campo]['thumbnail']);
+
+					$oThumbnail = new Thumbnazo($sRutaFicheros . $sTempArchNombre, $aDimensiones[0], $aDimensiones[1]);
+					$oThumbnail->crear();
+				}
 			}
 			else{
 				trigger_error('No se ha podido subir el fichero [' . $sTempArchNombre . '] a la ruta [' . $sRutaFicheros . ']', E_USER_WARNING);

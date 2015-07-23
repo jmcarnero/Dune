@@ -16,25 +16,22 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 # http://www.gnu.org/copyleft/gpl.html
 
-/**
- * Capa de abstracción para recuperación de datos de distintas fuentes con una única interfaz.
- *
- * @author José M. Carnero
- * @version 1
- * @license http://www.gnu.org/copyleft/gpl.html
- * @package REdAtazo
- */
-
 //Constante con el directorio donde se encuentran las clases derivadas y/o dependientes de esta
 defined('CLASSES_DIR') or define('CLASSES_DIR', dirname(__FILE__));
+
+//dependencias
 include_once (CLASSES_DIR . '/interface.redatazo.inc');
 include_once (CLASSES_DIR . '/class.sqlazo.inc');
 
 /**
- * Clase para recuperar datos de base de datos.
- * Depende de "class.sqlazo.inc".
+ * Capa de abstracción para recuperación de datos de distintas fuentes con una única interfaz.
+ * de bases de datos
  *
+ * @author José M. Carnero
+ * @version 1
  * @since 2015-03-01
+ * @license http://www.gnu.org/copyleft/gpl.html
+ * @package REdAtazo
  */
 class Redatazo_ddbb implements iRedatazo {
 
@@ -501,6 +498,7 @@ class Redatazo_ddbb implements iRedatazo {
 	 * $campo puede ser un nombre de campo, o una condicion con indicaciones de los valores a comparar: "campo1 = %s AND campo2 IN (%u, %u)" (en cuyo caso $valor sera un array con los valores a sustituir)
 	 *
 	 * @todo poner nombre de campos entre ` (tildes graves); decidir si el usuario puede enviar la palabra clave "where"
+	 * @todo condiciones like
 	 * @param string $campo Nombre del campo
 	 * @param string $valor Valor con el que comparar el campo
 	 * @return boolean

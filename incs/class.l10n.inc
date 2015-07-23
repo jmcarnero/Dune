@@ -16,22 +16,20 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 # http://www.gnu.org/copyleft/gpl.html
 
+//Constante con el directorio donde se encuentran las clases derivadas y/o dependientes de esta
+defined('CLASSES_DIR') or define('CLASSES_DIR', dirname(__FILE__));
+
 /**
  * Clase de traducción de mensajes
  *
  * @author José M. Carnero
  * @version 1
  * @license http://www.gnu.org/copyleft/gpl.html
- * @package l10n
+ * @package L10n
  */
-
-/*
- * \~spanish \~english \~ Constante con el directorio donde se encuentran las clases derivadas y/o dependientes de esta.
- */
-if(!defined('CLASSES_DIR')) define('CLASSES_DIR', dirname(__FILE__));
 
 /**
- * \~spanish \~english \~ Instanciador (singleton) de la clase de traducciones
+ * Instanciador (singleton) de la clase de traducciones
  *
  * @param string $lang Lengua en la que se recuperan las traducciones (false detecta el lenguaje del navegador)
  * @param string $class Clase que solicita traducciones
@@ -136,6 +134,7 @@ _locale();
 _trad('clave_a_traducir');
 //var_dump('uso de traducciones:', l10n_sel()->getTraduccionUso());
  * </code>
+ *
  * ejemplo de un fichero de traducciones (clave|traduccion)
  * <code>
 ## ejemplo de comentario
@@ -352,8 +351,7 @@ class L10n {
 	}
 
 	/**
-	 * \~spanish Devuelve los errores que se hayan producido.
-	 * \~english Returns errors that have occurred.\~
+	 * Devuelve los errores que se hayan producido.
 	 *
 	 * @access public
 	 * @return string
@@ -377,8 +375,7 @@ class L10n {
 	}
 
 	/**
-	 * \~spanish Devuelve el codigo de idioma usado actualmente
-	 * \~english \~
+	 * Devuelve el codigo de idioma usado actualmente
 	 *
 	 * @access public
 	 * @param boolean $codCorto Si true devuelve el formato corto (dos primeros caracteres)

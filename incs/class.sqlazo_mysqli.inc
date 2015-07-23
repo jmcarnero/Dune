@@ -16,15 +16,8 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 # http://www.gnu.org/copyleft/gpl.html
 
-/**
- * Capa de abstracción de conexión y consulta a bases de datos.
- * MYSQLi
- *
- * @author José M. Carnero
- * @version 2.5
- * @license http://www.gnu.org/copyleft/gpl.html
- * @package Dune
- */
+//Constante con el directorio donde se encuentran las clases derivadas y/o dependientes de esta
+defined('CLASSES_DIR') or define('CLASSES_DIR', dirname(__FILE__));
 
 /**
  * Clase para conexion y querys a bases de datos MySQL >= 4.1.3
@@ -52,6 +45,10 @@ $oTest->desconectar();
  * </code>
  *
  * @see class.sqlazo.inc,class.sqlazo_trazabilidad.inc
+ * @author José M. Carnero
+ * @version 2.5
+ * @license http://www.gnu.org/copyleft/gpl.html
+ * @package SQLazo
  */
 class sqlazo_mysqli extends sqlazo_trazabilidad {
 

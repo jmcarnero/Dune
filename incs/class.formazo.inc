@@ -17,7 +17,7 @@
 # http://www.gnu.org/copyleft/gpl.html
 
 //Constante con el directorio donde se encuentran las clases derivadas y/o dependientes de esta
-if(!defined('CLASSES_DIR')) define('CLASSES_DIR', dirname(__FILE__));
+defined('CLASSES_DIR') or define('CLASSES_DIR', dirname(__FILE__));
 
 /**
  * Generador de formularios
@@ -78,6 +78,7 @@ class Formazo {
 	 *  'rutaUrl' => URL donde encontrar el fichero (para campos file) para previsualizarlo
 	 *  'pisar' => solo para ficheros, si true sobreescribe ficheros con el mismo nombre, si false crea un nuevo nombre en caso de existir un fichero con el nombre pasado
 	 *  //'formato' => solo para campos con validacion fecha, formato de la fecha a validar, ej.: yyyy-mm-dd (por defecto) //de momento no permite hora
+	 *  'thumbnail' => debe tener como valor ancho y alto del thumbnail (100x120, ej), solo para imagenes
 	 *
 	 * @var array
 	 * @see Formazo::setCampos($campos), Formazo::getCampos()

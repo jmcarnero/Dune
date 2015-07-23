@@ -16,25 +16,22 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 # http://www.gnu.org/copyleft/gpl.html
 
+//Constante con el directorio donde se encuentran las clases derivadas y/o dependientes de esta
+defined('CLASSES_DIR') or define('CLASSES_DIR', dirname(__FILE__));
+
+//dependencias
+include_once CLASSES_DIR . '/interface.redatazo.inc';
+include_once CLASSES_DIR . '/class.importarCsv.inc';
+
 /**
  * Capa de abstracción para recuperación de datos de distintas fuentes con una única interfaz
+ * de archivos de texto, valores separados por coma (CSV)
  *
  * @author José M. Carnero
  * @version 1
+ * @since 2015-03-12
  * @license http://www.gnu.org/copyleft/gpl.html
  * @package REdAtazo
- */
-
-//Constante con el directorio donde se encuentran las clases derivadas y/o dependientes de esta.
-defined('CLASSES_DIR') or define('CLASSES_DIR',dirname(__FILE__));
-include_once (CLASSES_DIR . '/interface.redatazo.inc');
-include_once (CLASSES_DIR . '/class.importarCsv.inc');
-
-/**
- * Clase para recuperar datos de archivos de texto, valores separados por coma (CSV)
- * Depende de 'class.importarCsv.inc'
- *
- * @since 2015-03-12
  */
 class Redatazo_csv implements iRedatazo {
 	/**

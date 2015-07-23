@@ -16,15 +16,8 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 # http://www.gnu.org/copyleft/gpl.html
 
-/**
- * Capa de abstracción de conexión y consulta a bases de datos.
- * Oracle
- *
- * @author José M. Carnero
- * @version 1b
- * @license http://www.gnu.org/copyleft/gpl.html
- * @package Dune
- */
+//Constante con el directorio donde se encuentran las clases derivadas y/o dependientes de esta
+defined('CLASSES_DIR') or define('CLASSES_DIR', dirname(__FILE__));
 
 /**
  * Clase para conexion y querys a bases de datos Oracle
@@ -33,6 +26,10 @@
  * (es preferible usar el metodo descrito en "class.sqlazo.inc")
  *
  * @see class.sqlazo.inc
+ * @author José M. Carnero
+ * @version 1b
+ * @license http://www.gnu.org/copyleft/gpl.html
+ * @package SQLazo
  */
 class sqlazo_oracle extends sqlazo {
 

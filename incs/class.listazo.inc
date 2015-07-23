@@ -19,20 +19,6 @@
 /**
  * Generador de listados, con caja de busqueda, filtrado y paginacion
  *
- * @author José M. Carnero
- * @version 2
- * @license http://www.gnu.org/copyleft/gpl.html
- * @package Listazo
- */
-
-/*
- * Constante con el directorio donde se encuentran las clases derivadas y/o dependientes de esta.
- */
-if(!defined('CLASSES_DIR')) define('CLASSES_DIR',dirname(__FILE__));
-
-/**
- * Clase para generar listados.
- *
  * Depende de class.ddbb.inc y class.rdatazo_*.inc
  * #core PHP 5
  * Ejemplo de uso:
@@ -59,7 +45,11 @@ $oListado->setParametrosUrl(array('wht='.$_REQUEST['wht'], 'opMenu='.$_REQUEST['
 $oListado->pintar();
  * </code>
  *
+ * @author José M. Carnero
+ * @version 2
  * @since 2010-05-28
+ * @license http://www.gnu.org/copyleft/gpl.html
+ * @package Listazo
  */
 class Listazo {
 
@@ -70,6 +60,13 @@ class Listazo {
 	 * @see Listazo::setCampos()
 	 */
 	protected $aCampos;
+
+	/**
+	 * Clase CSS base, se antepone a cualquier otra donde se necesite
+	 *
+	 * @var string
+	 */
+	protected $sCssBase;
 
 	/**
 	 * Elementos del formulario, ya construidos, que posteriormente seran pintados
@@ -101,7 +98,14 @@ class Listazo {
 	protected $iFilasPag;
 
 	/**
-	 * Total de filas recuperadas en la consulta
+	 * Array con las distintas cantidades de filas a mostrar
+	 *
+	 * @var array
+	 */
+	protected $aFilasMostradas;
+
+	/**
+	 * Total de filas recuperadas en la consulta (sin limit)
 	 *
 	 * @var integer
 	 */
@@ -166,6 +170,8 @@ class Listazo {
 	 * @param array $aFilas Filas a listar
 	 */
 	function __construct($aFilas = array(), $aCampos = array()){
+		$this->sCssBase = 'Listazo';
+
 		$this->sFrmMetodo = 'post';
 		$this->aRequest = '';
 		$this->setVariablesRequest(); //recoge las variables para busqueda y paginacion
@@ -173,6 +179,7 @@ class Listazo {
 		$this->aOrderBy = array();
 		$this->aNuevoFiltro = array();
 
+		$this->setFilasMostradas();
 		$this->setFilas($aFilas);
 		$this->setCampos($aCampos);
 		$this->aElementosFormulario = array('busqueda' => array(), 'filas' => array(), 'paginacion' => array());
@@ -180,6 +187,17 @@ class Listazo {
 		$this->iFilasPag = 0;
 
 		$this->setPaginacion(count($aFilas), 20);
+	}
+
+	/**
+	 * Traduccion de textos
+	 * Depende de class.L10n.inc
+	 *
+	 * @param string $sCadena Cadena a traducir
+	 * @return string
+	 */
+	private function _t($sCadena){
+		return $sCadena;
 	}
 
 	/**
@@ -262,17 +280,16 @@ class Listazo {
 	protected function filasMostradas(){
 		if(isset($this->aVariablesRequest['ListazoBuscCant']) && $this->aVariablesRequest['ListazoBuscCant'] != ''){
 			$this->iFilasCant = $this->aVariablesRequest['ListazoBuscCant'];
-			$this->aParamsUrl[] = 'ListazoBuscCant='.$this->aVariablesRequest['ListazoBuscCant'];
+			$this->aParamsUrl[] = 'ListazoBuscCant=' . $this->aVariablesRequest['ListazoBuscCant'];
 		}
-		$this->oDatos->filasMostradas($this->iFilasCant);
 
 		if(count($this->aFilasMostradas) > 1){
-			$sTemp = '<div class="Listazo_numFilas"><label for="ListazoBuscCant">'.$this->_t('Ver').': </label><select id="ListazoBuscCant" name="ListazoBuscCant">';
+			$sTemp = '<div class="' . $this->sCssBase . ' numFilas"><label for="ListazoBuscCant">' . $this->_t('Ver') . ': </label><select id="ListazoBuscCant" name="ListazoBuscCant">';
 			foreach($this->aFilasMostradas as $valor){
-				$sTemp .= '<option value="'.$valor.'"'.($this->iFilasCant==$valor?' selected="selected"':'').'>'.$this->_t($valor).'</option>';
+				$sTemp .= '<option value="' . $valor . '"' . ($this->iFilasCant==$valor ? ' selected="selected"' : '') . '>' . $this->_t($valor) . '</option>';
 			}
-			$sTemp .= '</select> '.$this->_t('Resultados').'</div>';
-			$this->aElementosFormulario['busqueda'][] = $sTemp."\n";
+			$sTemp .= '</select> ' . $this->_t('Resultados') . '</div>';
+			$this->aElementosFormulario['busqueda'][] = $sTemp . "\n";
 		}
 		elseif(count($this->aFilasMostradas) == 1){
 			$this->iFilasCant = $this->aFilasMostradas[0];
@@ -287,11 +304,6 @@ class Listazo {
 	 * @return boolean
 	 */
 	public function generar(){
-		if(empty($this->aFilas)){
-			trigger_error('No hay datos que listar', E_USER_WARNING);
-			return false;
-		}
-
 		//caja de busqueda
 		$this->palabrasClave();
 		$this->tipo();
@@ -299,11 +311,8 @@ class Listazo {
 		$this->ordenacion();
 
 		//toma la posicion de paginacion
-		if(isset($this->aVariablesRequest['rowPos']) && $this->aVariablesRequest['rowPos'] != '') $this->iFilasPag = $this->aVariablesRequest['rowPos'];
-		$this->oDatos->setPagina($this->iFilasPag);
-
-		//listado
-		$this->iFilasTotal = $this->oDatos->totalFilas();
+		if(isset($this->aVariablesRequest['ListazoRowPos']) && $this->aVariablesRequest['ListazoRowPos'] != '')
+			$this->iFilasPag = $this->aVariablesRequest['ListazoRowPos'];
 
 		//paginacion
 		$this->paginacion();
@@ -349,29 +358,31 @@ class Listazo {
 	 */
 	protected function ordenacion(){
 		$aCampos = array(); //campos de la base de datos con los que se ordenara
-		$this->aVariablesRequest['ListazoOrderBy'] = isset($this->aVariablesRequest['ListazoOrderBy'])?$this->aVariablesRequest['ListazoOrderBy']:'';
+		$this->aVariablesRequest['ListazoOrderBy'] = isset($this->aVariablesRequest['ListazoOrderBy']) ? $this->aVariablesRequest['ListazoOrderBy'] : '';
 
 		foreach($this->aCampos as $clave => $valor){
-			if(strpos(strtolower($valor['banderas']), 'o') !== false) $aCampos[$clave] = (isset($valor['titulo']))?$valor['titulo']:'';
+			if(strpos(strtolower($valor['banderas']), 'o') !== false)
+				$aCampos[$clave] = (isset($valor['titulo'])) ? $valor['titulo'] : '';
 		}
-		if(empty($aCampos)) return true; //ningun campo en el que buscar, no se pinta este elemento
+		if(empty($aCampos))
+			return true; //ningun campo en el que buscar, no se pinta este elemento
 
 		$this->aOrderBy = $aCampos; //array de los campos de ordenacion, por si quiere pintarse sin ayuda de la clase
 
 		//ordenacion
 		if(isset($this->aVariablesRequest['ListazoOrderBy']) && $this->aVariablesRequest['ListazoOrderBy'] != '' && isset($this->aOrderBy[$this->aVariablesRequest['ListazoOrderBy']])){
-			$this->oDatos->setOrdenacion($this->aVariablesRequest['ListazoOrderBy']);
-			//$this->sOrderBy .= ', '.$this->aVariablesRequest['ListazoOrderBy'];
-			$this->aParamsUrl[] = 'ListazoOrderBy='.$this->aVariablesRequest['ListazoOrderBy'];
+			//$this->sOrderBy .= ', ' . $this->aVariablesRequest['ListazoOrderBy'];
+			$this->aParamsUrl[] = 'ListazoOrderBy=' . $this->aVariablesRequest['ListazoOrderBy'];
 		}
 
-		$sTemp = '<div class="Listazo_ordenacion"><strong>'.$this->_t('Ordenado por').':</strong><br />'."\n";
-		$sTemp .= '<input type="radio" name="ListazoOrderBy"'.(($this->aVariablesRequest['ListazoOrderBy'] == '')?' checked="checked"':'').' value=""/>&nbsp;<label>'.$this->_t('Sin orden').'</label>'."\n";
+		$sTemp = '<div class="' . $this->sCssBase . ' ordenacion"><strong>' . $this->_t('Ordenado por') . ':</strong><br />' . "\n";
+		$sTemp .= '<input type="radio" name="ListazoOrderBy"' . ($this->aVariablesRequest['ListazoOrderBy'] == '' ? ' checked="checked"' : '') . ' value=""/>&nbsp;<label>' . $this->_t('Sin orden') . '</label>' . "\n";
 		foreach($aCampos as $clave => $valor){
-			$sTemp .= '<span>|</span>&nbsp;&nbsp;<input type="radio" name="ListazoOrderBy"'.(($this->aVariablesRequest['ListazoOrderBy'] == $clave)?' checked="checked"':'').' value="'.$clave.'"/>&nbsp;&nbsp;<label>'.$this->_t(strip_tags($valor!=''?$valor:$clave)).'</label>&nbsp;&nbsp;'."\n";
+			$sTemp .= '<span>|</span>&nbsp;&nbsp;<input type="radio" name="ListazoOrderBy"' . ($this->aVariablesRequest['ListazoOrderBy'] == $clave ? ' checked="checked"' : '') . ' value="' . $clave . '"/>&nbsp;&nbsp;<label>' . $this->_t(strip_tags($valor != '' ? $valor : $clave)) . '</label>&nbsp;&nbsp;' . "\n";
 		}
-		$sTemp .= '</div>'."\n";
-		$this->aElementosFormulario['busqueda'][] = $sTemp."\n";
+		$sTemp .= '</div>' . "\n";
+		$this->aElementosFormulario['busqueda'][] = $sTemp . "\n";
+
 		return true;
 	}
 
@@ -391,37 +402,37 @@ class Listazo {
 	 * @return array
 	 */
 	protected function paginacion(){
-		if(!empty($this->aElementosFormulario['paginacion'])) return true; //elemento ya construido
+		if(!empty($this->aElementosFormulario['paginacion'])) //elemento ya construido
+			return true;
 
-		if($this->oDatos->iFilasTotal > $this->iFilasCant || $this->bPaginacion){
-		//echo $iRowPos . '|' . $iRowCant . '|' . $this->oDatos->iFilasTotal .'<br/>';
-
+		if($this->iFilasTotal > $this->iFilasCant || $this->bPaginacion){
 			//parametros de la URL
 			/*if(count($this->aParamsUrl)) $sParamsUrl = implode('&', $this->aParamsUrl).'&';
 			else $sParamsUrl = '';*/
 			$sUrl = $this->getParametrosUrl(false);
-			$sUrl = $this->sUrl.(empty($sUrl)?'':$sUrl.'&');
+			$sUrl = $this->sUrl . (empty($sUrl) ? '' : $sUrl . '&');
 
 			//anteriores
 			if($this->iFilasPag>0){
-				$this->aElementosFormulario['paginacion'][] = '<a href="'.$sUrl.'rowPos='.($this->iFilasPag-$this->iFilasCant).'">&lt;&lt;&nbsp;'.$this->_t('previos').'</a>'."\n";
+				$this->aElementosFormulario['paginacion'][] = '<a href="' . $sUrl . 'ListazoRowPos=' . ($this->iFilasPag - $this->iFilasCant) . '">&lt;&lt;&nbsp;' . $this->_t('previos') . '</a>' . "\n";
 			}
 
 			//seleccionable y total
 			//TODO convertir evento (onchange) a no obstrusivo
 			//TODO traduccion de textos visibles
-			$this->aElementosFormulario['paginacion'][] = $this->_t('página').' <select id="Listazo_paginacion_pags" name="Listazo_paginacion_pags" onchange="window.location.href=\''.$sUrl.'rowPos=\' + this.options[this.selectedIndex].value;">'."\n";
-			$iTotalPags = ceil($this->oDatos->iFilasTotal/$this->iFilasCant);
-			for($i = 0;$i <= $iTotalPags-1;$i++){
-				$this->aElementosFormulario['paginacion'][] = '<option value="'.($i*$this->iFilasCant).'"'.(($i == $this->iFilasPag/$this->iFilasCant)?' selected="selected"':'').'>'.($i+1).'</option>'."\n";
+			$this->aElementosFormulario['paginacion'][] = $this->_t('página') . ' <select id="Listazo_paginacion_pags" name="Listazo_paginacion_pags" onchange="window.location.href=\'' . $sUrl . 'ListazoRowPos=\' + this.options[this.selectedIndex].value;">' . "\n";
+			$iTotalPags = ceil($this->iFilasTotal / $this->iFilasCant);
+			for($i = 0; $i <= $iTotalPags-1; $i++){
+				$this->aElementosFormulario['paginacion'][] = '<option value="' . ($i * $this->iFilasCant) . '"' . ($i == $this->iFilasPag / $this->iFilasCant ? ' selected="selected"' : '') . '>' . ($i + 1) . '</option>' . "\n";
 			}
-			$this->aElementosFormulario['paginacion'][] = '</select> '.$this->_t('de').' '.$iTotalPags."\n";
+			$this->aElementosFormulario['paginacion'][] = '</select> ' . $this->_t('de') . ' ' . $iTotalPags . "\n";
 
 			//siguientes
-			if(($this->iFilasPag+$this->iFilasCant) <= $this->oDatos->iFilasTotal){
-				$this->aElementosFormulario['paginacion'][] = '<a href="'.$sUrl.'rowPos='.($this->iFilasPag+$this->iFilasCant).'">'.$this->_t('siguientes').'&nbsp;&gt;&gt;</a>'."\n";
+			if(($this->iFilasPag+$this->iFilasCant) <= $this->iFilasTotal){
+				$this->aElementosFormulario['paginacion'][] = '<a href="' . $sUrl . 'ListazoRowPos=' . ($this->iFilasPag + $this->iFilasCant) . '">' . $this->_t('siguientes') . '&nbsp;&gt;&gt;</a>' . "\n";
 			}
 		}
+
 		return true;
 	}
 
@@ -432,19 +443,21 @@ class Listazo {
 	 */
 	protected function palabrasClave(){
 		$aCampos = array(); //campos de la base de datos en los que se buscara
-		$this->aVariablesRequest['ListazoBuscKeyword'] = isset($this->aVariablesRequest['ListazoBuscKeyword'])?$this->aVariablesRequest['ListazoBuscKeyword']:'';
+		$this->aVariablesRequest['ListazoBuscKeyword'] = isset($this->aVariablesRequest['ListazoBuscKeyword']) ? $this->aVariablesRequest['ListazoBuscKeyword'] : '';
 
 		foreach($this->aCampos as $clave => $valor){
-			if(strpos(strtolower($valor['banderas']), 'b') !== false) $aCampos[] = $clave;
+			if(strpos(strtolower($valor['banderas']), 'b') !== false)
+				$aCampos[] = $clave;
 		}
-		if(empty($aCampos)) return true; //ningun campo en el que buscar, no se pinta este elemento
+		if(empty($aCampos)) //ningun campo en el que buscar, no se pinta este elemento
+			return true;
 
 		if(isset($this->aVariablesRequest['ListazoBuscKeyword']) && $this->aVariablesRequest['ListazoBuscKeyword'] != ''){
-			$this->oDatos->palabrasClave($aCampos, $this->aVariablesRequest['ListazoBuscKeyword']);
-			$this->aParamsUrl[] = 'ListazoBuscKeyword='.$this->aVariablesRequest['ListazoBuscKeyword'];
+			$this->aParamsUrl[] = 'ListazoBuscKeyword=' . $this->aVariablesRequest['ListazoBuscKeyword'];
 		}
 
-		$this->aElementosFormulario['busqueda'][] = '<div class="Listazo_palabrasClave"><label for="ListazoBuscKeyword">'.$this->_t('Palabras clave').': </label><input id="ListazoBuscKeyword" type="text" name="ListazoBuscKeyword" value="'.$this->aVariablesRequest['ListazoBuscKeyword'].'" /></div>'."\n";
+		$this->aElementosFormulario['busqueda'][] = '<div class="' . $this->sCssBase . ' palabrasClave"><label for="ListazoBuscKeyword">' . $this->_t('Palabras clave') . ': </label><input id="ListazoBuscKeyword" type="text" name="ListazoBuscKeyword" value="' . $this->aVariablesRequest['ListazoBuscKeyword'] . '" /></div>' . "\n";
+
 		return true;
 	}
 
@@ -456,24 +469,21 @@ class Listazo {
 	 * @return string
 	 */
 	public function pintar($echo = true){
-		if($this->iFilasTotal === false) $this->generar();
-
-		$sTemp = '';
-
 		//caja de busqueda
-		$sTemp .= $this->pintarBusqueda(false);
+		$sBusqueda = $this->pintarBusqueda(false);
 
 		//listado
-		$sTemp .= $this->pintarListado(false);
+		$sListado = $this->pintarListado(false);
 
 		//paginacion
-		$sTemp .= $this->pintarPaginacion(false);
+		$sPaginacion = $this->pintarPaginacion(false);
 
 		if($echo){
-			echo $sTemp;
+			echo $sBusqueda . $sListado . $sPaginacion;
 			return true;
 		}
-		else return $sTemp;
+		else
+			return $sBusqueda . $sListado . $sPaginacion;
 	}
 
 	/**
@@ -484,24 +494,29 @@ class Listazo {
 	 * @return string
 	 */
 	public function pintarBusqueda($echo = true){
-		if($this->iFilasTotal === false && empty($this->aElementosFormulario['busqueda'])) $this->generar();
+		if(empty($this->aElementosFormulario['busqueda']))
+			$this->generar();
 
 		$sRet = '';
 		$sUrl = $this->getParametrosUrl(true);
-		$sUrl = $this->sUrl.$sUrl;
+		$sUrl = $this->sUrl . $sUrl;
 
 		if(!empty($this->aElementosFormulario['busqueda'])){ //cajas de busqueda
-			$sRet .= '<div id="Listazo_busqueda"><form id="Listazo_busqueda_form" action="'.$sUrl.'" method="'.$this->sFrmMetodo.'">';
-			$sRet .= implode('', $this->aElementosFormulario['busqueda'])."\n";
-			if(!empty($this->aNuevoFiltro) && is_array($this->aNuevoFiltro)) $sRet .= implode('', $this->aNuevoFiltro)."\n";
-			$sRet .= '<input type="submit" value="Enviar" name="submit" /></form></div>'."\n";
+			$sRet .= '<div id="Listazo_busqueda"><form id="Listazo_busqueda_form" action="' . $sUrl . '" method="' . $this->sFrmMetodo . '">';
+			$sRet .= implode('', $this->aElementosFormulario['busqueda']) . "\n";
+
+			if(!empty($this->aNuevoFiltro) && is_array($this->aNuevoFiltro))
+				$sRet .= implode('', $this->aNuevoFiltro) . "\n";
+
+			$sRet .= '<input type="submit" value="Enviar" name="submit" /></form></div>' . "\n";
 		}
 
 		if($echo){
 			echo $sRet;
 			return true;
 		}
-		else return $sRet;
+		else
+			return $sRet;
 	}
 
 	/**
@@ -513,48 +528,55 @@ class Listazo {
 	 * @return string
 	 */
 	public function pintarListado($echo = true){
-		if($this->iFilasTotal === false) $this->generar();
-
 		$sTemp = '';
-		$sTemp .= '<div id="Listazo_filas">'."\n";
+		$sTemp .= '<div id="Listazo_filas">' . "\n";
 
 		if(!empty($this->aFilas)){
 			$iNumFilas = count($this->aFilas);
 
 			foreach($this->aFilas as $clave => $valor){ //recorre todas las filas
-				$sTempClass = ' class="';
-				$sTempClass .= (!$clave)?'Listazo_fila_primera ':'';
-				$sTempClass .= ($clave%2)?'Listazo_fila_par':'Listazo_fila_impar';
-				$sTempClass .= (($clave+1) == $iNumFilas)?' Listazo_fila_ultima':'';
+				$sTempClass = ' class="' . $this->sCssBase . ' ';
+				$sTempClass .= (!$clave) ? 'fila_primera ' : '';
+				$sTempClass .= ($clave % 2) ? 'fila_par' : 'fila_impar';
+				$sTempClass .= (($clave + 1) == $iNumFilas) ? ' fila_ultima' : '';
 				$sTempClass .= '"';
 
-				$sTemp .= '<div id="Listazo_fila_'.$clave.'"'.$sTempClass.'>'."\n";
+				$sTemp .= '<div id="Listazo_fila_' . $clave . '"' . $sTempClass . '>' . "\n";
 				foreach($this->aCampos as $clavef => $valorf){ //recorre los campos de cada fila
-					if(strpos(strtolower($valorf['banderas']), 'l') === false) continue;
-					$sTemp .= '<p id="'.$clavef.'_'.$clave.'">';
+					if(strpos(strtolower($valorf['banderas']), 'l') === false)
+						continue;
+
+					$sTemp .= '<p id="' . $clavef . '_' . $clave . '">';
+
 					//campos evaluados
-					$sTitulo = empty($valorf['titulo'])?'':$valorf['titulo'];
+					$sTitulo = empty($valorf['titulo']) ? '' : $valorf['titulo'];
 					if(strpos($sTitulo, '<?php') !== false){ //titulo evaluado
-						$sTitulo = $this->eval_html(str_replace('$field', '$this->aFilas['.$clave.']', $sTitulo));
+						$sTitulo = $this->eval_html(str_replace('$field', '$this->aFilas[' . $clave . ']', $sTitulo));
 					}
-					$sCampo = empty($valorf['campo'])?(empty($valor[$clavef])?'':$valor[$clavef]):$valorf['campo'];
+
+					$sCampo = empty($valorf['campo']) ? (empty($valor[$clavef]) ? '' : $valor[$clavef]) : $valorf['campo'];
 					if(strpos($sCampo, '<?php') !== false){ //campo evaluado
-						$sCampo = $this->eval_html(str_replace('$field', '$this->aFilas['.$clave.']', $sCampo));
+						$sCampo = $this->eval_html(str_replace('$field', '$this->aFilas[' . $clave . ']', $sCampo));
 					}
-					if(!empty($sCampo)) $sTemp .= $sTitulo.(empty($valorf['visibleCars'])?$sCampo:$this->recortarCad($sCampo, $valorf['visibleCars']));
-					$sTemp .= '</p>'."\n";
-					if(!empty($valorf['sublistazo'])) $sTemp .= $this->sublistado($valorf['sublistazo'], $clave);
+
+					if(!empty($sCampo))
+						$sTemp .= $sTitulo . (empty($valorf['visibleCars']) ? $sCampo : $this->recortarCad($sCampo, $valorf['visibleCars']));
+
+					$sTemp .= '</p>' . "\n";
+					if(!empty($valorf['sublistazo']))
+						$sTemp .= $this->sublistado($valorf['sublistazo'], $clave);
 				}
-				$sTemp .= '</div>'."\n";
+				$sTemp .= '</div>' . "\n";
 			}
 		}
-		$sTemp .= '</div>'."\n";
+		$sTemp .= '</div>' . "\n";
 
 		if($echo){
 			echo $sTemp;
 			return true;
 		}
-		else return $sTemp;
+		else
+			return $sTemp;
 	}
 
 	/**
@@ -565,19 +587,21 @@ class Listazo {
 	 * @return string
 	 */
 	public function pintarPaginacion($echo = true){
-		if($this->iFilasTotal === false && empty($this->aElementosFormulario['paginacion'])) $this->generar();
+		if(empty($this->aElementosFormulario['paginacion']))
+			$this->generar();
 
 		$sTemp = '';
 
 		$sTemp .= '<div id="Listazo_paginacion">';
-		$sTemp .= implode('', $this->aElementosFormulario['paginacion'])."\n";
+		$sTemp .= implode('', $this->aElementosFormulario['paginacion']) . "\n";
 		$sTemp .= '</div>';
 
 		if($echo){
 			echo $sTemp;
 			return true;
 		}
-		else return $sTemp;
+		else
+			return $sTemp;
 	}
 
 	/**
@@ -592,7 +616,8 @@ class Listazo {
 	 * @return string
 	 */
 	protected function recortarCad($cad, $long, $punto = false){
-		if(strlen($cad) <= $long) return $cad;
+		if(strlen($cad) <= $long)
+			return $cad;
 
 		$sFinal = '&hellip;'; //&hellip; entidad de puntos suspensivos
 		//$long -= strlen($sFinal);
@@ -614,7 +639,6 @@ class Listazo {
 	 * 	'banderas' => 'blo',
 	 * 	'sublistazo' => array('Título' => 'campo_o_evaluado', 'Título 2' => 'campo_o_evaluado'), //opcional
 	 * 	'tipos' => array('Seleccione ...' => '', 'Título de la opcion' => 'valor', 'Título de la opcion 2' => 'valor'), //opcional
-	 * 	'extra' => 'elementos extra que se incorporaran despues del dibujado del campo' //opcional
 	 * 	'visibleCars' => 'numero maximo de caracteres que se mostraran, si supera esta cantidad se corta en la palabra mas proxima y se añade [...]' //opcional
 	 * )
 	 * banderas:
@@ -635,10 +659,12 @@ class Listazo {
 		}
 
 		foreach($aCampos as $clave => $valor){ //'banderas' es exclusivo de esta clase, si un campo no lo lleva se ignora el campo
-			if(isset($valor['banderas'])) $this->aCampos[$clave] = $valor;
+			if(isset($valor['banderas']))
+				$this->aCampos[$clave] = $valor;
 		}
 
-		if(count($this->aCampos)) return true;
+		if(count($this->aCampos))
+			return true;
 		else{ //ningun campo utilizable
 			trigger_error('Sólo se mostrarán filas vacías, el array de campos no contiene ninguno válido', E_USER_WARNING);
 			return false;
@@ -672,7 +698,7 @@ class Listazo {
 	 * @param array $filas Cantidades a mostrar; se pintaran en el desplegable en el mismo orden; o un solo numero, no array
 	 * @return boolean
 	 */
-	public function setFilasMostradas($filas = array(10, 20, 50, 100, 200)){
+	public function setFilasMostradas($filas = array(5, 10, 20, 50)){
 		$this->aFilasMostradas = array();
 
 		if(is_array($filas)){
@@ -703,7 +729,8 @@ class Listazo {
 	 * @return boolean
 	 */
 	public function setNuevoFiltro($forme = false){
-		if(empty($forme)) return false;
+		if(empty($forme))
+			return false;
 
 		$this->aNuevoFiltro[] = $forme;
 		return true;
@@ -717,7 +744,8 @@ class Listazo {
 	 * @return boolean
 	 */
 	public function setParametrosUrl($campos = array()){
-		if(empty($campos)) return false;
+		if(empty($campos))
+			return false;
 
 		if(is_array($campos)){
 			foreach($campos as $valor) $this->aParamsUrl[] = $valor;
@@ -750,9 +778,12 @@ class Listazo {
 	 * @return string
 	 */
 	public function setUrl($url = false){
-		if($url == false) $this->sUrl = $_SERVER['REQUEST_URI'];
+		if($url == false)
+			$this->sUrl = $_SERVER['REQUEST_URI'];
 
-		if(strpos($this->sUrl, '?') !== false) $this->sUrl = substr($this->sUrl, 0, strpos($this->sUrl, '?'));
+		if(strpos($this->sUrl, '?') !== false)
+			$this->sUrl = substr($this->sUrl, 0, strpos($this->sUrl, '?'));
+
 		$this->sUrl .= '?';
 
 		return true;
@@ -763,18 +794,23 @@ class Listazo {
 	 *
 	 * @return string
 	 */
-	public function setVariablesRequest(){
+	private function setVariablesRequest(){
 		$this->aVariablesRequest = array();
 
 		if($_SERVER['REQUEST_METHOD'] == 'GET') $aTemp = &$_GET;
 		elseif($_SERVER['REQUEST_METHOD'] == 'POST') $aTemp = &$_POST;
 		else $aTemp = &$_REQUEST;
 
-		if(isset($aTemp['ListazoBuscKeyword'])) $this->aVariablesRequest['ListazoBuscKeyword'] = $aTemp['ListazoBuscKeyword'];
-		if(isset($aTemp['ListazoBuscTipo'])) $this->aVariablesRequest['ListazoBuscTipo'] = $aTemp['ListazoBuscTipo'];
-		if(isset($aTemp['ListazoBuscCant'])) $this->aVariablesRequest['ListazoBuscCant'] = $aTemp['ListazoBuscCant'];
-		if(isset($aTemp['ListazoOrderBy'])) $this->aVariablesRequest['ListazoOrderBy'] = $aTemp['ListazoOrderBy'];
-		if(isset($aTemp['rowPos'])) $this->aVariablesRequest['rowPos'] = $aTemp['rowPos'];
+		if(isset($aTemp['ListazoBuscKeyword'])) //palabra a buscar
+			$this->aVariablesRequest['ListazoBuscKeyword'] = $aTemp['ListazoBuscKeyword'];
+		if(isset($aTemp['ListazoBuscTipo'])) //busqueda por tipos
+			$this->aVariablesRequest['ListazoBuscTipo'] = $aTemp['ListazoBuscTipo'];
+		if(isset($aTemp['ListazoBuscCant'])) //cantidad de filas a mostrar
+			$this->aVariablesRequest['ListazoBuscCant'] = $aTemp['ListazoBuscCant'];
+		if(isset($aTemp['ListazoOrderBy'])) //criterio de ordenacion
+			$this->aVariablesRequest['ListazoOrderBy'] = $aTemp['ListazoOrderBy'];
+		if(isset($aTemp['ListazoRowPos'])) //posicion de paginacion
+			$this->aVariablesRequest['ListazoRowPos'] = $aTemp['ListazoRowPos'];
 
 		return true;
 	}
@@ -787,22 +823,24 @@ class Listazo {
 	 * @return string
 	 */
 	protected function sublistado($sublistado, $pos = 0){
-		if(empty($sublistado)) return '';
+		if(empty($sublistado))
+			return '';
 
-		$sTemp = '<ul class="Listazo_sublistazo">';
+		$sTemp = '<ul class="' . $this->sCssBase . ' sublistazo">';
 
 		foreach($sublistado as $clave => $valor){
-			$sTitulo = empty($clave)?'':$clave;
+			$sTitulo = empty($clave) ? '' : $clave;
 			if(strpos($sTitulo, '<?php') !== false){ //titulo evaluado
-				$sTitulo = $this->eval_html(str_replace('$field', '$this->aFilas['.$pos.']', $sTitulo));
+				$sTitulo = $this->eval_html(str_replace('$field', '$this->aFilas[' . $pos . ']', $sTitulo));
 			}
 
 			$sCampo = empty($valor)?'':$valor;
 			if(strpos($sCampo, '<?php') !== false){ //campo evaluado
-				$sCampo = $this->eval_html(str_replace('$field', '$this->aFilas['.$pos.']', $sCampo));
+				$sCampo = $this->eval_html(str_replace('$field', '$this->aFilas[' . $pos . ']', $sCampo));
 			}
 
-			if(!empty($sTitulo) || !empty($sCampo)) $sTemp .= '<li>'.$sTitulo.$sCampo.'</li>';
+			if(!empty($sTitulo) || !empty($sCampo))
+				$sTemp .= '<li>' . $sTitulo . $sCampo . '</li>';
 		}
 		$sTemp .= '</ul>';
 
@@ -823,23 +861,24 @@ class Listazo {
 		foreach($this->aCampos as $clave => $valor){
 			if(!empty($valor['tipos'])) $aCampos[] = $clave;
 		}
-		if(empty($aCampos)) return true; //ningun campo de tipo, no se pinta este elemento
+
+		if(empty($aCampos))
+			return true; //ningun campo de tipo, no se pinta este elemento
 
 		for($i = 0;$i < count($aCampos); $i++){
 			if(isset($this->aVariablesRequest['ListazoBuscTipo'.$i]) && $this->aVariablesRequest['ListazoBuscTipo'.$i] != ''){
-				$this->oDatos->tipo($aCampos[$i], $this->aVariablesRequest['ListazoBuscTipo'.$i]);
-				$this->aParamsUrl[] = 'ListazoBuscTipo'.$i.'='.$this->aVariablesRequest['ListazoBuscTipo'.$i];
+				$this->aParamsUrl[] = 'ListazoBuscTipo' . $i . '=' . $this->aVariablesRequest['ListazoBuscTipo' . $i];
 			}
 
-			$sTitulo = isset($this->aCampos[$aCampos[$i]]['titulo'])?$this->aCampos[$aCampos[$i]]['titulo']:$aCampos[$i];
-			$sTemp = '<div class="Listazo_tipo"><label for="ListazoBuscTipo'.$i.'">'.$this->_t($sTitulo).'</label><select id="ListazoBuscTipo'.$i.'" name="ListazoBuscTipo'.$i.'">'."\n";
-			//$sTemp .= '<option value="">Seleccione ...</option>'."\n";
+			$sTitulo = isset($this->aCampos[$aCampos[$i]]['titulo']) ? $this->aCampos[$aCampos[$i]]['titulo'] : $aCampos[$i];
+			$sTemp = '<div class="' . $this->sCssBase . ' tipo"><label for="ListazoBuscTipo' . $i . '">' . $this->_t($sTitulo) . '</label><select id="ListazoBuscTipo' . $i . '" name="ListazoBuscTipo' . $i . '">' . "\n";
+			//$sTemp .= '<option value="">Seleccione ...</option>' . "\n";
 			foreach($this->aCampos[$aCampos[$i]]['tipos'] as $clave => $valor){
-				$sVarRequest = isset($this->aVariablesRequest['ListazoBuscTipo'.$i])?$this->aVariablesRequest['ListazoBuscTipo'.$i]:'';
-				$sTemp .= '<option value="'.$valor.'"'.(($sVarRequest == $valor)?' selected="selected"':'').'>'.$this->_t($clave).'</option>'."\n";
+				$sVarRequest = isset($this->aVariablesRequest['ListazoBuscTipo' . $i]) ? $this->aVariablesRequest['ListazoBuscTipo' . $i] : '';
+				$sTemp .= '<option value="' . $valor . '"' . ($sVarRequest == $valor ? ' selected="selected"' : '') . '>' . $this->_t($clave) . '</option>' . "\n";
 			}
-			$sTemp .= '</select></div>'."\n";
-			$this->aElementosFormulario['busqueda'][] = $sTemp."\n";
+			$sTemp .= '</select></div>' . "\n";
+			$this->aElementosFormulario['busqueda'][] = $sTemp . "\n";
 		}
 		return true;
 	}

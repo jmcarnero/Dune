@@ -16,30 +16,14 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 # http://www.gnu.org/copyleft/gpl.html
 
-/**
-\mainpage
- * SQLazo
-\section Description
- * \~spanish Conexión y consultas a bases de datos.
- * \~english Database connetion and querys.\~
- *
- * @author José M. Carnero
- * @version 2.5
- * @license http://www.gnu.org/copyleft/gpl.html
- * @package Dune
- */
-
-/*
- * Constante con el directorio donde se encuentran las clases derivadas y/o dependientes de esta.
- */
-if(!defined('CLASSES_DIR')) define('CLASSES_DIR',dirname(__FILE__));
+//Constante con el directorio donde se encuentran las clases derivadas y/o dependientes de esta
+defined('CLASSES_DIR') or define('CLASSES_DIR', dirname(__FILE__));
 
 /**
- * \~spanish Selector de tipo de base de datos con la que conectar.
- * \~english Database type selector\~
+ * Selector de tipo de base de datos con la que conectar.
  *
  * @access public
- * @param string $motor \~spanish Motor de base de datos\~english Database engine\~
+ * @param string $motor Motor de base de datos
  * @return object Objeto sqlazo
  */
 function &sqlazo_sel($motor = 'mysql', $servidor = 'localhost', $usuario = 'root', $password = '', $ddbb = false){
@@ -59,14 +43,13 @@ function &sqlazo_sel($motor = 'mysql', $servidor = 'localhost', $usuario = 'root
 }
 
 /**
- * \~spanish Clase para conexion y consultas a bases de datos.
+ * Clase para conexion y consultas a bases de datos.
  * De momento solo MYSQL.
  *
  * Motores soportados ("$this->sMotor"):
  * mysql -> MySQL 4, 5
  * postgresql -> PostgreSQL
  * #core PHP 4
- * \~english Database connection and querys\~
  *
  * \code{.php}
 include_once("./class.sqlazo.inc");
@@ -86,14 +69,17 @@ while($oTest->leeFila()){
 $oTest->desconectar();
  * \endcode
  *
+ * @author José M. Carnero
+ * @version 2.5
  * @since 2008-03-01
  * @abstract
+ * @license http://www.gnu.org/copyleft/gpl.html
+ * @package SQLazo
  */
 class sqlazo{
 
 	/**
-	 * \~spanish Campos de la consulta, en la forma: ('nombre' => nombre, 'tipo' => tipo, 'long' => longitud, 'flags' => flags) (para cada campo de los resultados).
-	 * \~english Fields in query.\~
+	 * Campos de la consulta, en la forma: ('nombre' => nombre, 'tipo' => tipo, 'long' => longitud, 'flags' => flags) (para cada campo de los resultados).
 	 *
 	 * @var array
 	 */
@@ -103,8 +89,7 @@ class sqlazo{
 	//var $sCollation; //collation en que se lanzaran las querys; vacio usara la que tenga la base de datos; util para evitar problemas en las comparaciones de cadenas de distintas tablas
 
 	/**
-	 * \~spanish Indica si se ha conseguido conectar o no a la base de datos.
-	 * \~english True if connected.\~
+	 * Indica si se ha conseguido conectar o no a la base de datos.
 	 *
 	 * @var boolean
 	 * @access private
@@ -112,24 +97,21 @@ class sqlazo{
 	var $bConectado;
 
 	/**
-	 * \~spanish Base de datos a usar (schema).
-	 * \~english Database schema to use.\~
+	 * Base de datos a usar (schema).
 	 *
 	 * @var string
 	 */
 	var $sDDBB;
 
 	/**
-	 * \~spanish Clave del usuario.
-	 * \~english Database password.\~
+	 * Clave del usuario.
 	 *
 	 * @var string
 	 */
 	var $sDDBBPassword;
 
 	/**
-	 * \~spanish Puerto del servidor de base de datos.
-	 * \~english Database server port.\~
+	 * Puerto del servidor de base de datos.
 	 *
 	 * @var integer
 	 * @see sqlazo::setDDBBPuerto($puerto)
@@ -137,24 +119,21 @@ class sqlazo{
 	var $sDDBBPuerto;
 
 	/**
-	 * \~spanish Servidor de base de datos; nombre cualificado o IP.
-	 * \~english Database server, FQDN or IP.\~
+	 * Servidor de base de datos; nombre cualificado (FQDN) o IP.
 	 *
 	 * @var string
 	 */
 	var $sDDBBServidor;
 
 	/**
-	 * \~spanish Usuario de la base de datos.
-	 * \~english Database user.\~
+	 * Usuario de la base de datos.
 	 *
 	 * @var string
 	 */
 	var $sDDBBUsuario;
 
 	/**
-	 * \~spanish Control de errores.
-	 * \~english Error control.\~
+	 * Control de errores.
 	 *
 	 * @access private
 	 * @see sqlazo::getError(),sqlazo::setError()
@@ -163,8 +142,7 @@ class sqlazo{
 	var $aError;
 
 	/**
-	 * \~spanish Mensajes de error la clase, a fin de que puedan ser traducidos/modificados; las secuencias %s deben dejarse ya que corresponden a variables que seran luego sustituidas, si es necesario poner un % se pondra como %%
-	 * \~english Error messages.\~
+	 * Mensajes de error la clase, a fin de que puedan ser traducidos/modificados; las secuencias %s deben dejarse ya que corresponden a variables que seran luego sustituidas, si es necesario poner un % se pondra como %%
 	 *
 	 * @var array
 	 * @see sqlazo::setErrorMensaje($clave, $valor),sqlazo::getErrorMensaje($clave)
@@ -172,24 +150,21 @@ class sqlazo{
 	var $aErrorMensajes;
 
 	/**
-	 * \~spanish Una fila de resultados.
-	 * \~english One result row.\~
+	 * Una fila de resultados.
 	 *
 	 * @var array
 	 */
 	var $aFila;
 
 	/**
-	 * \~spanish Todas las filas de resultados.
-	 * \~english All result rows.\~
+	 * Todas las filas de resultados.
 	 *
 	 * @var array
 	 */
 	var $aFilaTodos;
 
 	/**
-	 * \~spanish Motor de base de datos (mysql, postgresql).
-	 * \~english Database engine\~
+	 * Motor de base de datos (mysql, postgresql).
 	 *
 	 * @var boolean
 	 * @access private
@@ -198,24 +173,21 @@ class sqlazo{
 	var $sMotor;
 
 	/**
-	 * \~spanish Prefijo para las tablas.
-	 * \~english Tables prefix.\~
+	 * Prefijo para las tablas.
 	 *
 	 * @var string
 	 */
 	var $sPrefijo;
 
 	/**
-	 * \~spanish Identificador de prefijo para las tablas que sera sustituido con $this->sPrefijo, por defecto '_p_'; no usar ni % ni $
-	 * \~english Prefix identifier, "_p_" is the default value; don't use % or $\~
+	 * Identificador de prefijo para las tablas que sera sustituido con $this->sPrefijo, por defecto '_p_'; no usar ni % ni $
 	 *
 	 * @var string
 	 */
 	var $sPrefijoId;
 
 	/**
-	 * \~spanish SQL query completa, pasar entre comillas dobles ("); se envia a las funciones como cadena, cada "%x" implica una sustitucion con un valor del array pasado ver "consulta" y "query").
-	 * \~english SQL Query, %x is a placeholder, if you need a literal % write %%\~
+	 * SQL query completa, pasar entre comillas dobles ("); se envia a las funciones como cadena, cada "%x" implica una sustitucion con un valor del array pasado ver "consulta" y "query").
 	 *
 	 * @var string
 	 */
@@ -224,39 +196,35 @@ class sqlazo{
 	//var $sQueryTipoArray; //define que tipo de array devolvera una query: dos (MYSQL_BOTH) -> ambos tipos de array, aso (MYSQL_ASSOC) -> asociativo, num (MYSQL_NUM) -> numerico; por defecto (si no se define explicitamente valor): ambos; es valido asignandole las constantes entre parentesis (naturales de PHP)
 
 	/**
-	 * \~spanish Subtipo de query que se esta realizando, para consultas alter, create o drop: table, database
-	 * \~english Query subtype.\~
+	 * Subtipo de query que se esta realizando, para consultas alter, create o drop: table, database
 	 *
 	 * @var string
 	 */
 	var $sSubTipoQuery;
 
 	/**
-	 * \~spanish Tablas implicadas en la consulta.
-	 * \~english Tables in query.\~
+	 * Tablas implicadas en la consulta.
 	 *
 	 * @var array
 	 */
 	var $aTablas;
 
 	/**
-	 * \~spanish Cadena de texto con tags HTML permitidos (en consultas insert/update, en la forma '<p><strong>[...]'; 'todos' -> permite todos los tags (comportamiento por defecto), '' -> (o sin valor) elimina todos los tags.
-	 * \~english For insert/update, HTML tags allowed.\~
+	 * Cadena de texto con tags HTML permitidos (en consultas insert/update, en la forma '<p><strong>[...]'; 'todos' -> permite todos los tags (comportamiento por defecto), '' -> (o sin valor) elimina todos los tags.
 	 *
 	 * @var string
 	 */
 	var $sTagsPermitidosIns;
 
 	/**
-	 * \~spanish Cadena de texto con tags html permitidos (en consultas que devuelvan datos, como select), en la forma '<p><strong>[...]'; 'todos' -> permite todos los tags, '' -> (o sin valor) elimina todos los tags (comportamiento por defecto).
-	 * \~english For select, HTML tags allowed.\~
+	 * Cadena de texto con tags html permitidos (en consultas que devuelvan datos, como select), en la forma '<p><strong>[...]'; 'todos' -> permite todos los tags, '' -> (o sin valor) elimina todos los tags (comportamiento por defecto).
 	 *
 	 * @var string
 	 */
 	var $sTagsPermitidosSel;
 
 	/**
-	 * \~spanish Tiempos empleado en consultas; asociativo:
+	 * Tiempos empleado en consultas; asociativo:
 	 * Conectar -> tiempo en conectar a servidor,
 	 * SeleccionarDDBB -> tiempo en seleccionar base de datos,
 	 * $this->sTipoQuery -> tiempo en realizar consulta,
@@ -264,31 +232,27 @@ class sqlazo{
 	 * totalLimit -> tiempo para el recuento de resultados en consultas tipo SELECT limitadas
 	 * filasTodos -> tiempo para rellenado del array "$aFilaTodos"
 	 * total -> suma de tiempos de todas las operaciones
-	 * \~english Times used.\~
 	 *
 	 * @var array
 	 */
 	var $aTiempos;
 
 	/**
-	 * \~spanish Tipo de query que se esta realizando: select, insert, update, delete, ...
-	 * \~english Query type: select, insert, update, delete, ...\~
+	 * Tipo de query que se esta realizando: select, insert, update, delete, ...
 	 *
 	 * @var string
 	 */
 	var $sTipoQuery;
 
 	/**
-	 * \~spanish Total de registros encontrados (select o similar) o afectados (insert, update, etc.)
-	 * \~english Total rows.\~
+	 * Total de registros encontrados (select o similar) o afectados (insert, update, etc.)
 	 *
 	 * @var integer
 	 */
 	var $iTotalFilas;
 
 	/**
-	 * \~spanish Ultima id insertada en campos "autoincrement"; false mientras no haya inserciones.
-	 * \~english Last insert id.\~
+	 * Ultima id insertada en campos "autoincrement"; false mientras no haya inserciones.
 	 *
 	 * @var string
 	 * @todo puede devolver valor incorrecto si el campo id de la tabla es "BIGINT"
@@ -296,12 +260,11 @@ class sqlazo{
 	var $sUltimaId;
 
 	/**
-	 * \~spanish Extrae la codificacion de la pagina en la que se esta ejecutando el objeto
+	 * Extrae la codificacion de la pagina en la que se esta ejecutando el objeto
 	 * y la convierte a un formato reconocido por la base de datos.
-	 * \~english Codification of the connection.\~
 	 *
 	 * @access protected
-	 * @param string $tipo \~spanish Tipo de dato devuelto\~english Data type returned\~
+	 * @param string $tipo Tipo de dato devuelto
 	 * @return string
 	 */
 	protected function codificacion($tipo = 'charset'){
@@ -337,39 +300,36 @@ class sqlazo{
 	}
 
 	/**
-	 * \~spanish Conexion al servidor.
+	 * Conexion al servidor.
 	 * Selecciona automaticamente la base de datos,
 	 * llamar a "seleccionarDDBB()" cambiando la propiedad "$this->sDDBB"
 	 * para usar otra base de datos con esta misma conexion.
-	 * \~english Server connect.\~
 	 *
 	 * @access public
-	 * @param string $servidor \~spanish Servidor\~english Server\~
-	 * @param string $usuario \~spanish Usuario\~english User\~
-	 * @param string $clave \~spanish Clave\~english Password\~
-	 * @param string $db \~spanish Schema (base de datos)\~english Schema\~
+	 * @param string $servidor Servidor
+	 * @param string $usuario Usuario
+	 * @param string $clave Clave
+	 * @param string $db Schema (base de datos)
 	 * @return boolean
 	 * @abstract
 	 */
 	public function conectar($servidor = false, $usuario = false, $clave = false, $db = false){}
 
 	/**
-	 * \~spanish Consulta a la base de datos, (si "SELECT", necesita de "ddbb::leeFila()" para empezar a devolver resultados).
-	 * \~english Runs the query.\~
+	 * Consulta a la base de datos, (si "SELECT", necesita de "ddbb::leeFila()" para empezar a devolver resultados)
 	 *
 	 * @access public
 	 * @param string $query Query SQL
-	 * @param array $pars \~spanish Parametros de la query\~english Query parameters\~
-	 * @param integer $cantidad \~spanish Numero de registros a devolver\~english Number of rows to return\~
-	 * @param integer $inicial \~spanish Registro inicial a devolver\~english Initial row to return\~
+	 * @param array $pars Parametros de la query
+	 * @param integer $cantidad Numero de registros a devolver
+	 * @param integer $inicial Registro inicial a devolver
 	 * @return boolean
 	 * @abstract
 	 */
 	public function consulta($query = false, $pars = array(), $cantidad = 0, $inicial = 0){}
 
 	/**
-	 * \~spanish Desconexion del servidor.
-	 * \~english Disconnect server.\~
+	 * Desconexion del servidor
 	 *
 	 * @access public
 	 * @return boolean
@@ -378,8 +338,7 @@ class sqlazo{
 	public function desconectar(){}
 
 	/**
-	 * \~spanish Devuelve los errores que se hayan producido.
-	 * \~english Returns errors.\~
+	 * Devuelve los errores que se hayan producido
 	 *
 	 * @access public
 	 * @return array
@@ -389,13 +348,12 @@ class sqlazo{
 	}
 
 	/**
-	 * \~spanish Muestra el texto asignado a un error.
+	 * Muestra el texto asignado a un error.
 	 * Si no se pasa ninguna clave se muestran todos.
-	 * \~english Shows error texts.\~
 	 *
 	 * @todo mostrar la clave de un texto de mensaje de error (invirtiendo el array y un foreach para buscar coincidencia de texto)
 	 * @access public
-	 * @param string $clave \~spanish Clave del mensaje de error\~english Error message key\~
+	 * @param string $clave Clave del mensaje de error
 	 * @return string
 	 */
 	//TODO mostrar la clave de un texto de mensaje de error (invirtiendo el array y un foreach para buscar coincidencia de texto)
@@ -405,8 +363,7 @@ class sqlazo{
 	}
 
 	/**
-	 * \~spanish Devuelve el actual tipo de base de datos usado.
-	 * \~english Returns database engine.\~
+	 * Devuelve el actual tipo de base de datos usado.
 	 *
 	 * @access public
 	 * @return string
@@ -416,10 +373,9 @@ class sqlazo{
 	}
 
 	/**
-	 * \~spanish Contador de instancias de la clase;
+	 * Contador de instancias de la clase;
 	 * se usa al cerrar la conexion a la base de datos,
 	 * para no dejar instancias sin acceso.
-	 * \~english Class instances counter.\~
 	 *
 	 * @access protected
 	 * @param integer $inc Incremento
@@ -436,8 +392,7 @@ class sqlazo{
 	}
 
 	/**
-	 * \~spanish Lee una fila de resultados.
-	 * \~english Returns one result row.\~
+	 * Lee una fila de resultados.
 	 *
 	 * @access public
 	 * @return boolean
@@ -446,8 +401,7 @@ class sqlazo{
 	public function leeFila(){}
 
 	/**
-	 * \~spanish Crea un array con todas las filas de resultados.
-	 * \~english Returns all results rows.\~
+	 * Crea un array con todas las filas de resultados.
 	 *
 	 * @access public
 	 * @return boolean
@@ -456,11 +410,10 @@ class sqlazo{
 	public function leeFilasTodos(){}
 
 	/**
-	 * \~spanish Devuelve microtime en segundos
-	 * \~english Converts microtime to seconds\~
+	 * Devuelve microtime en segundos
 	 *
 	 * @access protected
-	 * @param boolean $float \~spanish Si true devuelve un numero flotante, si false devuelve formateado "legible para humanos" (parecido a ISO 8601)\~english True returns float, false return readable time\~
+	 * @param boolean $float Si true devuelve un numero flotante, si false devuelve formateado "legible para humanos" (parecido a ISO 8601)
 	 * @return float
 	 */
 	protected function microtimeSeg($float = true){
@@ -471,12 +424,11 @@ class sqlazo{
 	}
 
 	/**
-	 * \~spanish Lanza una modificacion de la consulta antes de lanzar la consulta en si para recuperar algun tipo de valor de forma automatizada (maximo, minimo, etc) //pensada, por ahora, para SQL y consultas "select".
-	 * \~english Modify the query before run'em.\~
+	 * Lanza una modificacion de la consulta antes de lanzar la consulta en si para recuperar algun tipo de valor de forma automatizada (maximo, minimo, etc) //pensada, por ahora, para SQL y consultas "select".
 	 *
 	 * @access public
-	 * @param string $tipo \~spanish Tipo de modificacion ('max' => maximo valor de $campo)\~english Modification type\~
-	 * @param string $campo \~spanish Campo sobre el que se operara la modificacion\~english Field to modify\~
+	 * @param string $tipo Tipo de modificacion ('max' => maximo valor de $campo)
+	 * @param string $campo Campo sobre el que se operara la modificacion
 	 * @return mixed
 	 */
 	public function operaQuery($tipo = 'max', $campo = false){
@@ -514,7 +466,7 @@ class sqlazo{
 	}
 
 	/**
-	 * \~spanish Construir query.
+	 * Construir query
 	 * si ya se ha asignado una query mediante la propiedad "sQuery" y no se desea cambiar NO llamar a esta funcion y llamar al metodo "consulta" sin parametros
 	 * ej: $obj->fQuery("SELECT * FROM tabla WHERE campo = %s AND b = %s", array('1', '2'))
 	 * cuando se requiera el comodin SQL "%" escribirlo doble "%%"; ej: $obj->consulta("SELECT * FROM tabla WHERE campo='%%%s%%'", array('hola')) ->producira la salida: "SELECT * FROM tabla WHERE campo='%hola%'"
@@ -523,53 +475,43 @@ class sqlazo{
 	 * %d -> entero con signo
 	 * %u -> entero sin signo
 	 * %F -> flotante (PHP>4.3)
-	 * \~english Build query.
-	 * ex: $obj->fQuery("SELECT * FROM oneTable WHERE oneField = %s AND otherField = %s", array('1', '2'))
-	 * %s -> string
-	 * %d -> integer, signed
-	 * %u -> integer, unsigned
-	 * %F -> float
-	 * \~
 	 *
 	 * @access protected
 	 * @param string $query Query SQL
-	 * @param array $pars \~spanish Parametros de la query\~english Query parameters\~
-	 * @param integer $cantidad \~spanish Numero de registros a devolver\~english Number of rows to return\~
-	 * @param integer $inicial \~spanish Registro inicial a devolver\~english Initial row to return\~
+	 * @param array $pars Parametros de la query
+	 * @param integer $cantidad Numero de registros a devolver
+	 * @param integer $inicial Registro inicial a devolver
 	 * @return void
 	 * @abstract
 	 */
 	protected function query($query, $pars = array(), $cantidad = 0, $inicial = 0){}
 
 	/**
-	 * \~spanish Recolocar puntero en el array de resultados (solo para SELECT).
-	 * \~english Pointer position.\~
+	 * Recolocar puntero en el array de resultados (solo para SELECT)
 	 *
 	 * @access public
-	 * @param integer $pos \~spanish Posicion puntero\~english Pointer position\~
+	 * @param integer $pos Posicion puntero
 	 * @return boolean
 	 * @abstract
 	 */
 	public function recPuntero($pos = 0){}
 
 	/**
-	 * \~spanish Seleccion de base de datos.
-	 * \~english Database selection.\~
+	 * Seleccion de base de datos
 	 *
 	 * @todo comprobar que el servidor admite mayusculas para el nombre de la base de datos, si no cambiarla a minusculas
 	 * @access public
-	 * @param string $db \~spanish Base de datos\~english Database\~
+	 * @param string $db Base de datos
 	 * @return boolean
 	 * @abstract
 	 */
 	public function seleccionarDDBB($db = false){}
 
 	/**
-	 * \~spanish Establece el puerto con el que se conectara.
-	 * \~english Sets database port.\~
+	 * Establece el puerto con el que se conectara
 	 *
 	 * @access public
-	 * @param integer $puerto \~spanish Número de puerto\~english Port number\~
+	 * @param integer $puerto Número de puerto
 	 * @return boolean
 	 */
 	public function setDDBBPuerto($puerto){
@@ -593,8 +535,7 @@ class sqlazo{
 	}
 
 	/**
-	 * \~spanish Guarda los errores que se hayan producido.
-	 * \~english Saves errors that have occurred.\~
+	 * Guarda los errores que se hayan producido
 	 *
 	 * @since 2012-01-19
 	 * @access protected
@@ -613,14 +554,13 @@ class sqlazo{
 	}
 
 	/**
-	 * \~spanish Cambia mensajes de error (su texto).
-	 * Util, por ejemplo, para traducciones.
-	 * Si clave igual a false se reinicializan los mensajes.
-	 * \~english Changes error messages.\~
+	 * Cambia mensajes de error (su texto)
+	 * Util, por ejemplo, para traducciones
+	 * Si clave igual a false se reinicializan los mensajes
 	 *
 	 * @access public
-	 * @param mixed $clave \~spanish Clave del mensaje de error, o un array con todos los mensajes de error (array('clave' => 'mensaje de error',[...]);); si no existe se genera un error\~english Error message key or messages array\~
-	 * @param string $valor \~spanish Nuevo texto para el mensaje de error\~english New error text\~
+	 * @param mixed $clave Clave del mensaje de error, o un array con todos los mensajes de error (array('clave' => 'mensaje de error',[...]);); si no existe se genera un error
+	 * @param string $valor Nuevo texto para el mensaje de error
 	 * @return boolean
 	 */
 	public function setErrorMensaje($clave = false, $valor = false){
@@ -677,10 +617,9 @@ class sqlazo{
 	}
 
 	/**
-	 * \~spanish Constructor
+	 * Constructor
 	 * Los parametros por defecto conectan a un servidor local,
 	 * con el usuario administrador (sin clave) y a la base de datos "test"
-	 * \~english Constructor\~
 	 */
 	function sqlazo($servidor = 'localhost', $usuario = 'root', $password = '', $ddbb = 'test', $puerto = ''){
 		$this->aError = false;
@@ -709,9 +648,8 @@ class sqlazo{
 	}
 
 	/**
-	 * \~spanish Tipo de query (primera palabra de la sentencia SQL).
+	 * Tipo de query (primera palabra de la sentencia SQL).
 	 * Sin incluir parentesis y demas (caso de UNION)
-	 * \~english Query type.\~
 	 *
 	 * @todo detectar (guardando en array) todas las consultas que se hacen (por ejemplo en UNION) y las tablas utilizadas, categorizando segun sean JOIN ...; devuelve nombres imcompletos de tablas cuando llevan espacios
 	 * @access protected
@@ -812,13 +750,12 @@ class sqlazo{
 	}*/
 
 	/**
-	 * \~spanish Sustituye los valores indicados en la query por los parametros pasados.
+	 * Sustituye los valores indicados en la query por los parametros pasados.
 	 * Imitacion de "vsprintf".
-	 * \~english Replaces placeholder with their values.\~
 	 *
 	 * @access protected
 	 * @param string $query Query SQL
-	 * @param array $pars \~spanish Parametros de la query\~english Query parameters\~
+	 * @param array $pars Parametros de la query
 	 * @return string
 	 */
 	protected function valoresEnQuery($query, $pars){

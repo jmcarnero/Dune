@@ -13,6 +13,7 @@
 - Envío de correos.
 - Formularios.
 - Listados.
+- Miniaturas de imágenes.
 - Sistema unificado de acceso a datos: SQL, CSV
 
 ====
@@ -30,5 +31,6 @@
 - Email sends.
 - Forms.
 - Lists.
+- Thumbnails.
 - Unified data access: SQL, CSV
 
