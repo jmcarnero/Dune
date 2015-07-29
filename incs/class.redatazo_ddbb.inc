@@ -36,7 +36,7 @@ include_once (CLASSES_DIR . '/class.sqlazo.inc');
 class Redatazo_ddbb implements iRedatazo {
 
 	//almacen de fragmentos de la consulta para la posterior composicion
-	protected $aConsulta = array('select' => array(), 'from' => '', 'join' => array(), 'where' => array(), 'order_by' => array());
+	protected $aConsulta = array('select' => array(), 'from' => '', 'join' => array(), 'where' => array(), 'group_by' => array(), 'order_by' => array());
 
 	/**
 	 * Objeto de base de datos (class.sqlazo)
@@ -189,7 +189,8 @@ class Redatazo_ddbb implements iRedatazo {
 			$this->sUltimaSql = $this->oDDBB->sQuery; //consulta lanzada
 		}
 		else{
-			trigger_error('No se puede ejecutar la consulta: [' . $this->sUltimaSql . ']', E_USER_WARNING);
+			$sError = implode(' // ', $this->oDDBB->getError());
+			trigger_error('No se puede ejecutar la consulta: [' . $this->sUltimaSql . ']; error: [' . $sError . ']', E_USER_WARNING);
 			return false; //error
 		}
 
@@ -275,6 +276,19 @@ class Redatazo_ddbb implements iRedatazo {
 			return $this->oDDBB->aFilaTodos;
 
 		return false;
+	}
+
+	/**
+	 * Opciones de agrupacion
+	 *
+	 * @access public
+	 * @param string $campo Campo por el que se agruparan los resultados
+	 * @return boolean
+	 */
+	public function group_by($campo){
+		$this->aConsulta['group_by'][] = $campo;
+
+		return true;
 	}
 
 	/**
@@ -409,6 +423,8 @@ class Redatazo_ddbb implements iRedatazo {
 				}
 			}
 
+			if(!empty($this->aConsulta['group_by'])) $this->sSql .= ' GROUP BY ' . implode(', ', $this->aConsulta['group_by']) . "\n";
+
 			if(!empty($this->aConsulta['order_by'])) $this->sSql .= ' ORDER BY ' . implode(', ', $this->aConsulta['order_by']) . "\n";
 		}
 		else{
@@ -511,7 +527,7 @@ class Redatazo_ddbb implements iRedatazo {
 				$this->aConsulta['where_p'][] = $valor;
 			}
 			elseif(strtolower($valor) == 'null'){
-				$sAux = " = null";
+				$sAux = " IS NULL";
 			}
 			else{
 				$sAux = " = '%s'";

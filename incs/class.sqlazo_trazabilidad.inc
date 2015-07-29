@@ -139,7 +139,8 @@ class sqlazo_trazabilidad extends sqlazo{
 		if(!isset($bCreaTablas_trazabilidad)){
 			static $bCreaTablas_trazabilidad = 0;
 		}
-		else return($bCreaTablas_trazabilidad);
+		else
+			return $bCreaTablas_trazabilidad;
 
 		$aTablas = array(
 			$this->sPrefijo.'traza_sql' => false,
@@ -149,7 +150,8 @@ class sqlazo_trazabilidad extends sqlazo{
 		);
 
 		$aResultados = $this->consultaInterna("SHOW TABLES LIKE '".$this->sPrefijo."traza_%'");
-		if($aResultados === false) $bRet = false;
+		if($aResultados === false)
+			$bRet = false;
 
 		for($i=0;$i<count($aResultados);$i++){
 			$aTablas[$aResultados[$i][0]] = true;
@@ -157,21 +159,25 @@ class sqlazo_trazabilidad extends sqlazo{
 
 		if(!$aTablas[$this->sPrefijo.'traza_sql']){ //tabla para resto de consultas
 			$sTrazaSql = 'CREATE TABLE IF NOT EXISTS `'.$this->sPrefijo.'traza_sql` (`trzId` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT, `idUsuario` VARCHAR(255) NOT NULL, `ip` VARCHAR(15) NOT NULL, `fecha` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, `tipo` varchar(10) default NULL, `error` TEXT, `query` LONGBLOB NULL, PRIMARY KEY (`trzId`)) ENGINE = InnoDB;';
-			if($this->consultaInterna($sTrazaSql) === false) $bRet = false;
+			if($this->consultaInterna($sTrazaSql) === false)
+				$bRet = false;
 		}
 
 		if($this->bGuardaDatos){ //tablas para consultas de insercion/actualizacion/borrado
 			if(!$aTablas[$this->sPrefijo.'traza_insert'] && $this->aGuardaTipos['insert']){
 				$sTrazaSql = 'CREATE TABLE IF NOT EXISTS `'.$this->sPrefijo.'traza_insert` (`triId` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT, `trzId` INT(11) UNSIGNED NOT NULL, `fecha` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, `datos` LONGBLOB NULL, PRIMARY KEY (`triId`), INDEX `fk_trazaInsert_trazaSql_trzId` (`trzId` ASC), CONSTRAINT `fk_trazaInsert_trazaSql_trzId` FOREIGN KEY (`trzId`) REFERENCES `_p_traza_sql` (`trzId`) ON DELETE RESTRICT ON UPDATE RESTRICT) ENGINE = InnoDB;';
-				if($this->consultaInterna($sTrazaSql) === false) $bRet = false;
+				if($this->consultaInterna($sTrazaSql) === false)
+					$bRet = false;
 			}
 			if(!$aTablas[$this->sPrefijo.'traza_update'] && $this->aGuardaTipos['update']){
 				$sTrazaSql = 'CREATE TABLE IF NOT EXISTS `'.$this->sPrefijo.'traza_update` (`truId` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT, `trzId` INT(11) UNSIGNED NOT NULL, `fecha` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, `datos` LONGBLOB NULL, PRIMARY KEY (`truId`), INDEX `fk_trazaUpdate_trazaSql_trzId` (`trzId` ASC), CONSTRAINT `fk_trazaUpdate_trazaSql_trzId` FOREIGN KEY (`trzId`) REFERENCES `_p_traza_sql` (`trzId`) ON DELETE RESTRICT ON UPDATE RESTRICT) ENGINE = InnoDB;';
-				if($this->consultaInterna($sTrazaSql) === false) $bRet = false;
+				if($this->consultaInterna($sTrazaSql) === false)
+					$bRet = false;
 			}
 			if(!$aTablas[$this->sPrefijo.'traza_delete'] && $this->aGuardaTipos['delete']){
 				$sTrazaSql = 'CREATE TABLE IF NOT EXISTS `'.$this->sPrefijo.'traza_delete` (`trdId` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT, `trzId` INT(11) UNSIGNED NOT NULL, `fecha` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, `datos` LONGBLOB NULL, PRIMARY KEY (`trdId`), INDEX `fk_trazaDelete_trazaSql_trzId` (`trzId` ASC), CONSTRAINT `fk_trazaDelete_trazaSql_trzId` FOREIGN KEY (`trzId`) REFERENCES `_p_traza_sql` (`trzId`) ON DELETE RESTRICT ON UPDATE RESTRICT) ENGINE = InnoDB;';
-				if($this->consultaInterna($sTrazaSql) === false) $bRet = false;
+				if($this->consultaInterna($sTrazaSql) === false)
+					$bRet = false;
 			}
 		}
 
@@ -179,7 +185,8 @@ class sqlazo_trazabilidad extends sqlazo{
 		if(!$bRet){
 			$this->setError(__METHOD__);
 		}
-		return($bRet);
+
+		return $bRet;
 	}
 
 	/**
@@ -190,7 +197,7 @@ class sqlazo_trazabilidad extends sqlazo{
 	 * @return mixed
 	 */
 	public function getIdUsuario(){
-		return($this->sIdUsuario);
+		return $this->sIdUsuario;
 	}
 
 	/**
@@ -205,12 +212,16 @@ class sqlazo_trazabilidad extends sqlazo{
 		//$this->aQuerySolicitada = array('query' => $this->sQuery, 'datos' => $pars, 'cantidad' => $cantidad, 'inicial' => $inicial);
 
 		$sTipo = $this->sTipoQuery;
-		if(!isset($this->aGuardaTipos[$sTipo])) $sTipo = 'otras';
+		if(!isset($this->aGuardaTipos[$sTipo]))
+			$sTipo = 'otras';
+
 		$sError = $this->getError();
-		if(!empty($sError)) $sTipo = 'error';
+		if(!empty($sError))
+			$sTipo = 'error';
 
 		if($this->creaTablas()){
-			if($this->aGuardaTipos[$sTipo]) $bRet = $this->consultaInterna("INSERT INTO ".$this->sPrefijo."traza_sql (`idUsuario`, `ip`, `tipo`, `error`, `query`) VALUES ('".$this->sIdUsuario."', '".$this->sIpCliente."', '".$sTipo."', '".($this->getError()?addslashes(implode("\n", $this->getError())):'')."', '".addslashes($this->sQuery)."')");
+			if($this->aGuardaTipos[$sTipo])
+				$bRet = $this->consultaInterna("INSERT INTO ".$this->sPrefijo."traza_sql (`idUsuario`, `ip`, `tipo`, `error`, `query`) VALUES ('".$this->sIdUsuario."', '".$this->sIpCliente."', '".$sTipo."', '".($this->getError()?addslashes(implode("\n", $this->getError())):'')."', '".addslashes($this->sQuery)."')");
 			//else if($this->aGuardaTipos['otras']) $bRet = $this->consultaInterna("INSERT INTO ".$this->sPrefijo."traza_sql (`idUsuario`, `ip`, `tipo`, `sql`) VALUES ('".$this->sIdUsuario."', '".$this->sIpCliente."', '".$sTipo."', '".addslashes($this->sQuery)."')");
 
 			if($this->bGuardaDatos && $this->aGuardaTipos[$sTipo]){ //tablas para consultas de insercion/actualizacion/borrado
@@ -237,9 +248,10 @@ class sqlazo_trazabilidad extends sqlazo{
 		if($bRet === false){
 			$this->setError(__METHOD__);
 		}
-		else $bRet = true;
+		else
+			$bRet = true;
 
-		return($bRet);
+		return $bRet;
 	}
 
 	/**
@@ -251,10 +263,10 @@ class sqlazo_trazabilidad extends sqlazo{
 	 */
 	private function ipCliente(){
 		if(isset($_SERVER['HTTP_X_FORWARDED_FOR']) AND $_SERVER['HTTP_X_FORWARDED_FOR']!="")
-			return($_SERVER['HTTP_X_FORWARDED_FOR']);
+			return $_SERVER['HTTP_X_FORWARDED_FOR'];
 		else if(isset($_SERVER['REMOTE_ADDR']) AND $_SERVER['REMOTE_ADDR']!="")
-				return($_SERVER['REMOTE_ADDR']);
-			else return('999:999:999:999'); //ip desconocida
+				return $_SERVER['REMOTE_ADDR'];
+			else return '999:999:999:999'; //ip desconocida
 		//redes privadas ("10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16");
 	}
 
@@ -272,10 +284,12 @@ class sqlazo_trazabilidad extends sqlazo{
 		}
 
 		//var_dump('$sIdUsuario_trazabilidad => ', $sIdUsuario_trazabilidad);
-		if(isset($id) && $id !== false) $sIdUsuario_trazabilidad = $id;
+		if(isset($id) && $id !== false)
+			$sIdUsuario_trazabilidad = $id;
+
 		$this->sIdUsuario = $sIdUsuario_trazabilidad;
 
-		return(true);
+		return true;
 	}
 
 	/**

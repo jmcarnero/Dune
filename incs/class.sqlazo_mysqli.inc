@@ -170,7 +170,7 @@ class sqlazo_mysqli extends sqlazo_trazabilidad {
 		if(!is_array($pars)) $pars = array($pars); //se ha pasado un solo parametro y no como array
 		if(count($aParams) != count($pars)){
 			$this->setError(__METHOD__.'1');
-			return(false);
+			return false;
 		}
 
 		$i = 0;
@@ -205,12 +205,13 @@ class sqlazo_mysqli extends sqlazo_trazabilidad {
 						else $pars[$clave] = NULL;
 					}
 					else{
-						if(!get_magic_quotes_gpc()) $pars[$clave] = isset($valor)?addslashes($valor):NULL; //escapado generico
+						if(!get_magic_quotes_gpc())
+							$pars[$clave] = isset($valor)?addslashes($valor):NULL; //escapado generico
 					}
 					break;
 				default:
 					$this->setError(__METHOD__.'3', $aParams[$i]);
-					return(false);
+					return false;
 			}
 			$i++;
 		}
@@ -235,7 +236,7 @@ class sqlazo_mysqli extends sqlazo_trazabilidad {
 		if(!class_exists('mysqli')){
 			$this->setError(__METHOD__.'1');
 			$this->bConectado = false;
-			return(false);
+			return false;
 		}
 
 		sqlazo::instCount(); //contador de instancias
@@ -252,8 +253,10 @@ class sqlazo_mysqli extends sqlazo_trazabilidad {
 			$this->oMysqli->init(); //inicializar (crea un recurso necesario para metodos como mysqli::real_connect)
 		}
 
-		if($this->sDDBBPuerto) $this->bConectado = @ $this->oMysqli->real_connect($this->sDDBBServidor, $this->sDDBBUsuario, $this->sDDBBPassword, false, $this->sDDBBPuerto);
-		else $this->bConectado = @ $this->oMysqli->real_connect($this->sDDBBServidor, $this->sDDBBUsuario, $this->sDDBBPassword, false);
+		if($this->sDDBBPuerto)
+			$this->bConectado = @ $this->oMysqli->real_connect($this->sDDBBServidor, $this->sDDBBUsuario, $this->sDDBBPassword, false, $this->sDDBBPuerto);
+		else
+			$this->bConectado = @ $this->oMysqli->real_connect($this->sDDBBServidor, $this->sDDBBUsuario, $this->sDDBBPassword, false);
 
 		$iTiempoFin = $this->microtimeSeg();
 		$this->aTiempos['Conectar'] = number_format($iTiempoFin - $iTiempoIni, 6);
@@ -262,20 +265,22 @@ class sqlazo_mysqli extends sqlazo_trazabilidad {
 		//PHP >= 5.2.9
 		if(@ $this->oMysqli->connect_error){
 			$this->setError(__METHOD__.'2', $this->sDDBB, @ $this->oMysqli->connect_errno, @ $this->oMysqli->connect_error);
-			return(false);
+			return false;
 		}
 		//PHP < 5.2.9
 		elseif(mysqli_connect_error()){
 			$this->setError(__METHOD__.'2', $this->sDDBB, mysqli_connect_errno(), mysqli_connect_error());
-			return(false);
+			return false;
 		}
 		elseif(!$this->bConectado){
 			$this->setError(__METHOD__.'3');
-			return(false);
+			return false;
 		}
 
-		if($db === false) return(true);
-		else return($this->seleccionarDDBB($db));
+		if($db === false)
+			return true;
+		else
+			return $this->seleccionarDDBB($db);
 	}
 
 	/**
@@ -293,10 +298,12 @@ class sqlazo_mysqli extends sqlazo_trazabilidad {
 		$iRet = true;
 
 		if(!$this->bConectado){
-			if(!$this->conectar($this->sDDBBServidor, $this->sDDBBUsuario, $this->sDDBBPassword, $this->sDDBB)) return(false);
+			if(!$this->conectar($this->sDDBBServidor, $this->sDDBBUsuario, $this->sDDBBPassword, $this->sDDBB))
+				return false;
 		}
 
-		if($query) $this->query($query, $pars, $cantidad, $inicial);
+		if($query)
+			$this->query($query, $pars, $cantidad, $inicial);
 
 		//limpia los arrays de resultados, para evitar "datos fantasma"
 		$this->aFila = array();
@@ -310,28 +317,41 @@ class sqlazo_mysqli extends sqlazo_trazabilidad {
 		pero esto impedira lanzar funciones que interactuen con el servidor (devolviendo error 'out of sync'), como otra query*/
 		/*nota: mysqli::use_result recupera sin colocar en bufer (unbuffered) las filas de resultado, mas rapido pero bloquea las tablas implicadas y da problemas con el recuento de resultados*/
 
-		if(!empty($this->oResultados->num_rows)) $this->oResultados->free(); //importante cuando se usa mysqli::store_result
+		if(!empty($this->oResultados->num_rows))
+			$this->oResultados->free(); //importante cuando se usa mysqli::store_result
 
-		if($this->bTrazabilidad) $this->transaccionInicio(); //se inicia el guardado de trazas
+		if($this->bTrazabilidad)
+			$this->transaccionInicio(); //se inicia el guardado de trazas
 
 		$sTempUltIns = 0; //id de la ultima insercion, se guarda temporalmente para evitar que la pise el fin de la transaccion
-		if($this->sCharset) $this->oMysqli->set_charset($this->sCharset); //codificacion en que se lanzan las consultas //si se lanza despues de mysqli::init casca
+		if($this->sCharset) //codificacion en que se lanzan las consultas //si se lanza despues de mysqli::init casca
+			$this->oMysqli->set_charset($this->sCharset);
+
 		if($this->oMysqli->real_query($this->sQuery)){
-			if($this->sTipoQuery == 'insert') $sTempUltIns = $this->oMysqli->insert_id;
-			else $this->oResultados = $this->oMysqli->store_result(); //recurso de resultados
+			if($this->sTipoQuery == 'insert')
+				$sTempUltIns = $this->oMysqli->insert_id;
+			else
+				$this->oResultados = $this->oMysqli->store_result(); //recurso de resultados
 		}
 		else{
 			$this->setError(__METHOD__.'1', $this->sQuery, $this->oMysqli->errno, $this->oMysqli->error);
+
 			if($cantidad){
 				$this->sQuery = str_replace('SQL_CALC_FOUND_ROWS ', '', $this->sQuery); //no es necesario en caso de error y no es algo puesto por el usuario
 			}
-			if($this->bTrazabilidad) $this->transaccionFinal(); //finaliza el guardado de trazas
-			return(false);
+
+			if($this->bTrazabilidad)
+				$this->transaccionFinal(); //finaliza el guardado de trazas
+
+			return false;
 		}
 
 		//seleccionar una base de datos despues de crearla
-		if($this->sTipoQuery == 'create' && $this->sSubTipoQuery == 'database') $this->seleccionarDDBB($this->aTablas[0]); //despues de crear una base de datos la selecciona para las siguientes sentencias
-		if($this->sTipoQuery == 'use') $this->seleccionarDDBB($this->aTablas[0]); //use `database`
+		if($this->sTipoQuery == 'create' && $this->sSubTipoQuery == 'database')
+			$this->seleccionarDDBB($this->aTablas[0]); //despues de crear una base de datos la selecciona para las siguientes sentencias
+
+		if($this->sTipoQuery == 'use')
+			$this->seleccionarDDBB($this->aTablas[0]); //use `database`
 
 		$iTiempoFin = $this->microtimeSeg();
 		$this->aTiempos[$this->sTipoQuery] = number_format($iTiempoFin - $iTiempoIni, 6);
@@ -362,7 +382,8 @@ class sqlazo_mysqli extends sqlazo_trazabilidad {
 					$this->aTiempos['totalLimit'] = number_format($iTiempoFin - $iTiempoIni, 6);
 					$this->aTiempos['total'] += ($iTiempoFin - $iTiempoIni);
 				}
-				else $this->numResultados(); //calculo del total de resultados
+				else
+					$this->numResultados(); //calculo del total de resultados
 
 				$this->listaCampos(); //lista de campos de la consulta
 				break;
@@ -388,8 +409,10 @@ class sqlazo_mysqli extends sqlazo_trazabilidad {
 				$iRet = false;
 		}
 
-		if($this->bTrazabilidad) $this->transaccionFinal(); //finaliza el guardado de trazas; no puede estar antes del recuento, ya que este devolveria valores incorrectos al sustituir la traza a la que interesaba como ultima consulta
-		return($iRet);
+		if($this->bTrazabilidad)
+			$this->transaccionFinal(); //finaliza el guardado de trazas; no puede estar antes del recuento, ya que este devolveria valores incorrectos al sustituir la traza a la que interesaba como ultima consulta
+
+		return $iRet;
 	}
 
 	/**
@@ -404,21 +427,23 @@ class sqlazo_mysqli extends sqlazo_trazabilidad {
 		//TODO debe devolver al menos la id en caso de insert (tambien para udate/delete?)
 		if(!$this->oMysqli->real_query($sql)){
 			$this->setError(__METHOD__, $this->oMysqli->errno, $this->oMysqli->error, $sql);
-			return(false);
+			return false;
 		}
 
 		$oResultados = $this->oMysqli->use_result();
 		$aResultados = array();
 
 		if($oResultados){
-			if(function_exists('mysqli_result::fetch_all')) $aResultados = $oResultados->fetch_all();
+			if(function_exists('mysqli_result::fetch_all'))
+				$aResultados = $oResultados->fetch_all();
 			else{
 				while($aResultados[] = $oResultados->fetch_array());
 			}
+
 			$oResultados->close();
 		}
 
-		return($aResultados);
+		return $aResultados;
 	}
 
 	/**
@@ -428,7 +453,9 @@ class sqlazo_mysqli extends sqlazo_trazabilidad {
 	 * @return boolean
 	 */
 	public function desconectar(){
-		if(!empty($this->oResultados)) @ $this->oResultados->free(); //fuerza liberacion de memoria, solo sirve para "SELECT" (devuelve booleano) //TODO "Warning: mysqli_result::free() [mysqli-result.free]: Couldn't fetch mysqli_result" en ocasiones
+		if(!empty($this->oResultados))
+			@ $this->oResultados->free(); //fuerza liberacion de memoria, solo sirve para "SELECT" (devuelve booleano) //TODO "Warning: mysqli_result::free() [mysqli-result.free]: Couldn't fetch mysqli_result" en ocasiones
+
 		if(sqlazo::instCount(-1) == 0){
 			//PHP >= 5.2.9
 			if(!$this->oMysqli->close()){
@@ -436,7 +463,7 @@ class sqlazo_mysqli extends sqlazo_trazabilidad {
 					$this->setError(__METHOD__.'1', $this->sDDBB, @ $this->oMysqli->connect_errno, @ $this->oMysqli->connect_error);
 				}
 				$this->bConectado = true;
-				return(false);
+				return false;
 			}
 			//PHP < 5.2.9
 			/*elseif(!mysqli_close()){
@@ -445,13 +472,15 @@ class sqlazo_mysqli extends sqlazo_trazabilidad {
 				}
 				$sReturn = false;
 			}*/
-			else $sReturn = true;
+			else
+				$sReturn = true;
 		}
-		else $sReturn = true;
+		else
+			$sReturn = true;
 
 		$this->bSeleccion = false;
 		$this->bConectado = false;
-		return($sReturn);
+		return $sReturn;
 	}
 
 	/**
@@ -493,7 +522,8 @@ class sqlazo_mysqli extends sqlazo_trazabilidad {
 		if($f & MYSQLI_UNIQUE_KEY_FLAG)     { $flags .= 'unique_key ';}
 		if($f & MYSQLI_PRI_KEY_FLAG)        { $flags .= 'primary_key ';}
 		if($f & MYSQLI_NOT_NULL_FLAG)       { $flags .= 'not_null ';}
-		return(trim($flags));
+
+		return trim($flags);
 	}
 
 	/**
@@ -507,13 +537,14 @@ class sqlazo_mysqli extends sqlazo_trazabilidad {
 		$sError = $this->getError();
 		if(!empty($sError)){
 			$this->setError(__METHOD__.'1');
-			return(false);
+			return false;
 		}
 
 		//este metodo solo tiene sentido con consultas tipo "SELECT"
 		if($this->sTipoQuery == 'select' || $this->sTipoQuery == 'describe' || $this->sTipoQuery == 'explain' || $this->sTipoQuery == 'show'){
 
-			if(!$this->tipoArrayQuery($this->sQueryTipoArray)) return(false); //tipo de array que devolvera la query
+			if(!$this->tipoArrayQuery($this->sQueryTipoArray)) //tipo de array que devolvera la query
+				return false;
 
 			//medicion de tiempo
 			$iTiempoIni = $this->microtimeSeg();
@@ -532,16 +563,16 @@ class sqlazo_mysqli extends sqlazo_trazabilidad {
 					}
 				}
 
-				return(true);
+				return true;
 			}
 			else{
 				$this->aFila = $aTemp;
-				return(false);
+				return false;
 			}
 		}
 		else{
 			$this->setError(__METHOD__.'2');
-			return(false);
+			return false;
 		}
 	}
 
@@ -556,7 +587,7 @@ class sqlazo_mysqli extends sqlazo_trazabilidad {
 		$sError = $this->getError();
 		if(!empty($sError)){
 			$this->setError(__METHOD__.'1');
-			return(false);
+			return false;
 		}
 
 		//este metodo solo tiene sentido con consultas tipo "SELECT"
@@ -564,16 +595,20 @@ class sqlazo_mysqli extends sqlazo_trazabilidad {
 			//recoloca el puntero en el inicio para obtener todos los resultados
 			if($this->iTotalFilas > 0) $this->recPuntero();
 
-			if(!$this->tipoArrayQuery($this->sQueryTipoArray)) return(false); //tipo de array que devolvera la query
+			if(!$this->tipoArrayQuery($this->sQueryTipoArray)) //tipo de array que devolvera la query
+				return false;
 
 			//medicion de tiempo
 			$iTiempoIni = $this->microtimeSeg();
 
-			if(function_exists('mysqli_result::fetch_all')) $this->aFilaTodos = $this->oResultados->fetch_all($this->sQueryTipoArray);
+			if(function_exists('mysqli_result::fetch_all'))
+				$this->aFilaTodos = $this->oResultados->fetch_all($this->sQueryTipoArray);
 			else{
 				while($this->aFilaTodos[] = $this->oResultados->fetch_array($this->sQueryTipoArray));
+
+				if(empty($this->aFilaTodos[count($this->aFilaTodos)-1])) //el anterior bucle (si todo es correcto) colocara un false en el ultimo elemento, sobra
+					array_pop($this->aFilaTodos);
 			}
-			if(empty($this->aFilaTodos[count($this->aFilaTodos)-1])) array_pop($this->aFilaTodos); //el anterior bucle (si todo es correcto) colocara un false en el ultimo elemento, sobra
 
 			//elimina tags html y php de los resultados
 			if(!empty($this->sTagsPermitidosSel) && $this->sTagsPermitidosSel != 'todos'){
@@ -588,11 +623,11 @@ class sqlazo_mysqli extends sqlazo_trazabilidad {
 			$this->aTiempos['filasTodos'] = number_format($iTiempoFin - $iTiempoIni, 6);
 			$this->aTiempos['total'] += ($iTiempoFin - $iTiempoIni);
 
-			return(true);
+			return true;
 		}
 		else{
 			$this->setError(__METHOD__.'2');
-			return(false);
+			return false;
 		}
 	}
 
@@ -604,7 +639,8 @@ class sqlazo_mysqli extends sqlazo_trazabilidad {
 	 * @return boolean
 	 */
 	private function listaCampos(){
-		if(!is_object($this->oResultados)) return(false); //no se puede devolver la lista de campos sin objeto de resultados //TODO devolver error?
+		if(!is_object($this->oResultados))
+			return false; //no se puede devolver la lista de campos sin objeto de resultados //TODO devolver error?
 
 		$this->aCampos = array(); //se vacia, por si se vuelve a llamar la funcion
 		// Build an associative array for a type look up
@@ -660,7 +696,7 @@ class sqlazo_mysqli extends sqlazo_trazabilidad {
 			$this->aCampos[$i]->numeric = (int) (bool) ($fields[$i]->_flags & MYSQLI_NUM_FLAG);
 			$this->aCampos[$i]->blob = (int) (bool) ($fields[$i]->_flags & MYSQLI_BLOB_FLAG);*/
 		}
-		return(true);
+		return true;
 	}
 
 	/**
@@ -677,7 +713,7 @@ class sqlazo_mysqli extends sqlazo_trazabilidad {
 			case 'show':
 				//si el numero devuelto supera el rango de integer (segun maquina y sistema operativo) se devolvera como cadena
 				$this->iTotalFilas = $this->oResultados->num_rows;
-				return(true);
+				return true;
 				break;
 			case 'alter':
 			case 'create':
@@ -692,8 +728,10 @@ class sqlazo_mysqli extends sqlazo_trazabilidad {
 				//-1 indica error
 				$this->iTotalFilas = $this->oMysqli->affected_rows;
 
-				if($this->iTotalFilas < 1) $this->iTotalFilas = false;
-				return(true);
+				if($this->iTotalFilas < 1)
+					$this->iTotalFilas = false;
+
+				return true;
 				break;
 			case 'commit':
 			case 'lock':
@@ -704,7 +742,7 @@ class sqlazo_mysqli extends sqlazo_trazabilidad {
 				break;
 			default:
 				$this->setError(__METHOD__.'1', $this->sTipoQuery)."\n";
-				return(false);
+				return false;
 		}
 	}
 
@@ -756,7 +794,9 @@ class sqlazo_mysqli extends sqlazo_trazabilidad {
 		//suma a la consulta "SQL_CALC_FOUND_ROWS", permite tener el total de filas en consultas limitadas con "SELECT FOUND_ROWS()", sin volver a lanzar la consulta
 		if($cantidad){
 			$iSelectPos = strpos(strtoupper($this->sQuery), 'SELECT ');
-			if($iSelectPos !== false && strpos($this->sQuery, 'SQL_CALC_FOUND_ROWS') === false) $this->sQuery = substr($this->sQuery, 0, $iSelectPos + 7).'SQL_CALC_FOUND_ROWS '.substr($this->sQuery, $iSelectPos + 7);
+			if($iSelectPos !== false && strpos($this->sQuery, 'SQL_CALC_FOUND_ROWS') === false)
+				$this->sQuery = substr($this->sQuery, 0, $iSelectPos + 7).'SQL_CALC_FOUND_ROWS '.substr($this->sQuery, $iSelectPos + 7);
+
 			//si "$inicial=0" devuelve "$cantidad" de registros desde el primero
 			//si se quieren devolver todos los que haya desde un "$inicial=x", dar como "$cantidad" un valor mayor al total de registros que pueda devolver la consulta (un numero al azar suficientemente grande, por ejemplo 123456789123456789123456789)
 			$this->sQuery .= ' LIMIT '.$inicial.','.$cantidad;
@@ -776,9 +816,9 @@ class sqlazo_mysqli extends sqlazo_trazabilidad {
 		if($this->iTotalFilas)
 			if(!$this->oResultados->data_seek($pos)){
 				$this->setError(__METHOD__.'1', $this->oMysqli->errno, $this->oMysqli->error);
-				return(false);
+				return false;
 			}
-		return(true);
+		return true;
 	}
 
 	/**
@@ -793,7 +833,8 @@ class sqlazo_mysqli extends sqlazo_trazabilidad {
 			//if($this->sDDBB == $db) return(true); //sale con cierto si ya esta seleccionada la base de datos
 			$this->sDDBB = $db;
 		}
-		elseif($this->bSeleccion) return(true); //devuelve cierto si no se requiere seleccionar una base de datos concreta, como cuando se desee crear una
+		elseif($this->bSeleccion)
+			return true; //devuelve cierto si no se requiere seleccionar una base de datos concreta, como cuando se desee crear una
 
 		//medicion de tiempo
 		$iTiempoIni = $this->microtimeSeg();
@@ -809,9 +850,10 @@ class sqlazo_mysqli extends sqlazo_trazabilidad {
 		}
 
 		//codificacion en que se lanzaran las consultas a la base de datos
-		if(sqlazo::instCount(0) == 1 && $this->sCharset != '') $this->setCodificacion($this->sCharset, $this->sCollation);
+		if(sqlazo::instCount(0) == 1 && $this->sCharset != '')
+			$this->setCodificacion($this->sCharset, $this->sCollation);
 
-		return($this->bSeleccion);
+		return $this->bSeleccion;
 	}
 
 	/**
@@ -839,7 +881,7 @@ class sqlazo_mysqli extends sqlazo_trazabilidad {
 
 		if(!$this->oMysqli->set_charset($charset)){
 			$this->setError(__METHOD__, $charset, $this->oMysqli->error);
-			return(false);
+			return false;
 		}
 		/*else {
 			printf("Current character set: %s\n", $this->oMysqli->character_set_name());
@@ -867,7 +909,7 @@ class sqlazo_mysqli extends sqlazo_trazabilidad {
 
 		$this->sCharset = $charset;
 		$this->sCollation = $collation;
-		return(true);
+		return true;
 	}
 
 	/**
@@ -878,7 +920,8 @@ class sqlazo_mysqli extends sqlazo_trazabilidad {
 	 * @return boolean
 	 */
 	private function tipoArrayQuery($tipo = ''){
-		if(!empty($tipo)) $this->sQueryTipoArray = $tipo;
+		if(!empty($tipo))
+			$this->sQueryTipoArray = $tipo;
 
 		//tambien admite las constantes de mysql (no i)
 		switch($this->sQueryTipoArray){
@@ -899,10 +942,10 @@ class sqlazo_mysqli extends sqlazo_trazabilidad {
 				break;
 			default:
 				$this->setError(__METHOD__, $this->sQueryTipoArray)."\n";
-				return(false);
+				return false;
 		}
 
-		return(true);
+		return true;
 	}
 
 	/**
@@ -917,17 +960,19 @@ class sqlazo_mysqli extends sqlazo_trazabilidad {
 		$bRet = true;
 
 		$sError = $this->getError();
-		if(empty($sError)) $bRet = $this->oMysqli->commit(); //fija las querys
-		else $bRet = $this->oMysqli->rollback(); //deshace las querys
+		if(empty($sError))
+			$bRet = $this->oMysqli->commit(); //fija las querys
+		else
+			$bRet = $this->oMysqli->rollback(); //deshace las querys
 
 		if(!$bRet || !$this->oMysqli->autocommit(true)){
 			$this->setError(__METHOD__);
-			return(false);
+			return false;
 		}
 
 		if($this->bTrazabilidad) $this->guardaTraza(); //guardado de trazas
 
-		return(true);
+		return true;
 	}
 
 	/**
@@ -941,9 +986,9 @@ class sqlazo_mysqli extends sqlazo_trazabilidad {
 	protected function transaccionInicio(){
 		if(!$this->oMysqli->autocommit(false)){
 			$this->setError(__METHOD__);
-			return(false);
+			return false;
 		}
-		return(true);
+		return true;
 	}
 
 }

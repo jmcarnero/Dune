@@ -213,6 +213,17 @@ class Redatazo_csv implements iRedatazo {
 	}
 
 	/**
+	 * Opciones de agrupacion
+	 *
+	 * @access public
+	 * @param string $campo Campo por el que se agruparan los resultados
+	 * @return boolean
+	 */
+	public function group_by($campo){
+		return false;
+	}
+
+	/**
 	 * Inserta una fila
 	 *
 	 * @access public

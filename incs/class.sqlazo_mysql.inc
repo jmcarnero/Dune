@@ -115,13 +115,14 @@ class sqlazo_mysql extends sqlazo_trazabilidad{
 		$aParams = array();
 
 		foreach($aTemp as $valor){
-			if(substr($valor, 0, 1) != "%") $aParams[] = substr($valor, 0, 1);
+			if(substr($valor, 0, 1) != "%")
+				$aParams[] = substr($valor, 0, 1);
 		}
 
 		if(!is_array($pars)) $pars = array($pars); //se ha pasado un solo parametro y no como array
 		if(count($aParams) != count($pars)){
 			$this->setError(__METHOD__.'1');
-			return(false);
+			return false;
 		}
 
 		$i = 0;
@@ -144,29 +145,35 @@ class sqlazo_mysql extends sqlazo_trazabilidad{
 					//if($this->sCharset == 'utf8') $valor = mb_detect_encoding($valor, 'UTF-8', true) == 'UTF-8' ? $valor : utf8_encode($valor);
 					if(isset($valor)){
 						$encoding = mb_detect_encoding($valor, mb_list_encodings(), true);
-						if($encoding !== 'UTF-8') $valor = mb_convert_encoding($valor, 'UTF-8', $encoding);
+
+						if($encoding !== 'UTF-8')
+							$valor = mb_convert_encoding($valor, 'UTF-8', $encoding);
 					}
 
 					//TODO ambas opciones son vulnerables a inyeccion SQL (addslashes mas)
 					if(function_exists('mysql_real_escape_string')){ //PHP >= 4.3
 						if(isset($valor)){
-							if(get_magic_quotes_gpc()) $valor = stripslashes($valor);
+							if(get_magic_quotes_gpc())
+								$valor = stripslashes($valor);
+
 							$pars[$clave] = mysql_real_escape_string($valor, $this->dConexion);
 						}
-						else $pars[$clave] = NULL;
+						else
+							$pars[$clave] = NULL;
 					}
 					else{
-						if(!get_magic_quotes_gpc()) $pars[$clave] = isset($valor)?addslashes($valor):NULL; //escapado generico
+						if(!get_magic_quotes_gpc())
+							$pars[$clave] = isset($valor)?addslashes($valor):NULL; //escapado generico
 					}
 					break;
 				default:
 					$this->setError(__METHOD__.'3', $aParams[$i]);
-					return(false);
+					return false;
 			}
 			$i++;
 		}
 
-		return($pars);
+		return $pars;
 	}
 
 	/**
@@ -186,19 +193,26 @@ class sqlazo_mysql extends sqlazo_trazabilidad{
 		if(!function_exists('mysql_connect')){
 			$this->setError(__METHOD__.'1');
 			$this->bConectado = false;
-			return(false);
+			return false;
 		}
 
 		sqlazo::instCount(); //contador de instancias
-		if($servidor) $this->sDDBBServidor = $servidor;
-		if($usuario) $this->sDDBBUsuario = $usuario;
-		if($clave) $this->sDDBBPassword = $clave;
+
+		if($servidor)
+			$this->sDDBBServidor = $servidor;
+
+		if($usuario)
+			$this->sDDBBUsuario = $usuario;
+
+		if($clave)
+			$this->sDDBBPassword = $clave;
+
 		$this->setDDBBPuerto($puerto);
 
 		//medicion de tiempo
 		$iTiempoIni = $this->microtimeSeg();
 
-		$this->dConexion = @ mysql_connect($this->sDDBBServidor.(!empty($this->sDDBBPuerto)?':'.$this->sDDBBPuerto:''), $this->sDDBBUsuario, $this->sDDBBPassword);
+		$this->dConexion = @ mysql_connect($this->sDDBBServidor . (!empty($this->sDDBBPuerto) ? ':' . $this->sDDBBPuerto : ''), $this->sDDBBUsuario, $this->sDDBBPassword);
 
 		$iTiempoFin = $this->microtimeSeg();
 		$this->aTiempos['Conectar'] = number_format($iTiempoFin - $iTiempoIni, 6);
@@ -207,12 +221,14 @@ class sqlazo_mysql extends sqlazo_trazabilidad{
 		if($this->dConexion === false){
 			$this->setError(__METHOD__.'2', $this->sDDBB, mysql_errno($this->dConexion), mysql_error($this->dConexion));
 			$this->bConectado = false;
-			return(false);
+			return false;
 		}
 
 		$this->bConectado = true;
-		if($db === false) return($this->bConectado);
-		else return($this->seleccionarDDBB($db));
+		if($db === false)
+			return $this->bConectado;
+		else
+			return $this->seleccionarDDBB($db);
 	}
 
 	/**
@@ -230,10 +246,12 @@ class sqlazo_mysql extends sqlazo_trazabilidad{
 		$iRet = true;
 
 		if(!$this->bConectado){
-			if(!$this->conectar($this->sDDBBServidor, $this->sDDBBUsuario, $this->sDDBBPassword, $this->sDDBB)) return(false);
+			if(!$this->conectar($this->sDDBBServidor, $this->sDDBBUsuario, $this->sDDBBPassword, $this->sDDBB))
+				return false;
 		}
 
-		if($query) $this->query($query, $pars, $cantidad, $inicial);
+		if($query)
+			$this->query($query, $pars, $cantidad, $inicial);
 
 		//limpia los arrays de resultados, para evitar "datos fantasma"
 		$this->aFila = array();
@@ -242,7 +260,8 @@ class sqlazo_mysql extends sqlazo_trazabilidad{
 		//medicion de tiempo
 		$iTiempoIni = $this->microtimeSeg();
 
-		if($this->bTrazabilidad) $this->transaccionInicio(); //se inicia el guardado de trazas
+		if($this->bTrazabilidad)
+			$this->transaccionInicio(); //se inicia el guardado de trazas
 
 		$sTempUltIns = 0; //id de la ultima insercion, se guarda temporalmente para evitar que la pise el fin de la transaccion
 		//if($this->sCharset) $this->set_charset($this->sCharset); //codificacion en que se lanzan las consultas //si se lanza despues de mysqli::init casca
@@ -250,20 +269,27 @@ class sqlazo_mysql extends sqlazo_trazabilidad{
 		/*nota: mysql_unbuffered_query Envia una consulta SQL a MySQL, sin recuperar ni colocar en bufer las filas de resultado*/
 		$this->rResultados = mysql_query($this->sQuery); //recurso de resultados
 
-		if($this->sTipoQuery == 'insert') $sTempUltIns = mysql_insert_id();
+		if($this->sTipoQuery == 'insert')
+			$sTempUltIns = mysql_insert_id();
 
 		//seleccionar una base de datos despues de crearla
 		//TODO, revisar como se selecciona una base de datos despues de su creacion
-		if($this->sTipoQuery == 'create' && $this->sSubTipoQuery == 'database') $this->seleccionarDDBB($this->aTablas[0]); //despues de crear una base de datos la selecciona para las siguientes sentencias
-		if($this->sTipoQuery == 'use') $this->seleccionarDDBB($this->aTablas[0]); //use `database`
+		if($this->sTipoQuery == 'create' && $this->sSubTipoQuery == 'database')
+			$this->seleccionarDDBB($this->aTablas[0]); //despues de crear una base de datos la selecciona para las siguientes sentencias
+
+		if($this->sTipoQuery == 'use')
+			$this->seleccionarDDBB($this->aTablas[0]); //use `database`
 
 		if($this->rResultados === false){
 			$this->setError(__METHOD__.'1', $this->sQuery, mysql_errno($this->dConexion), mysql_error($this->dConexion));
+
 			if($cantidad){
 				$this->sQuery = str_replace('SQL_CALC_FOUND_ROWS ', '', $this->sQuery); //no es necesario en caso de error y no es algo puesto por el usuario
 			}
-			if($this->bTrazabilidad) $this->transaccionFinal(); //finaliza el guardado de trazas
-			return(false);
+			if($this->bTrazabilidad)
+				$this->transaccionFinal(); //finaliza el guardado de trazas
+
+			return false;
 		}
 
 		$iTiempoFin = $this->microtimeSeg();
@@ -291,7 +317,8 @@ class sqlazo_mysql extends sqlazo_trazabilidad{
 					$this->aTiempos['totalLimit'] = number_format($iTiempoFin - $iTiempoIni, 6);
 					$this->aTiempos['total'] += ($iTiempoFin - $iTiempoIni);
 				}
-				else $this->numResultados(); //calculo del total de resultados
+				else
+					$this->numResultados(); //calculo del total de resultados
 
 				$this->listaCampos(); //lista de campos de la consulta
 				break;
@@ -317,8 +344,10 @@ class sqlazo_mysql extends sqlazo_trazabilidad{
 				$iRet = false;
 		}
 
-		if($this->bTrazabilidad) $this->transaccionFinal(); //finaliza el guardado de trazas; no puede estar antes del recuento, ya que este devolveria valores incorrectos al sustituir la traza a la que interesaba como ultima consulta
-		return($iRet);
+		if($this->bTrazabilidad)
+			$this->transaccionFinal(); //finaliza el guardado de trazas; no puede estar antes del recuento, ya que este devolveria valores incorrectos al sustituir la traza a la que interesaba como ultima consulta
+
+		return $iRet;
 	}
 
 	/**
@@ -334,16 +363,17 @@ class sqlazo_mysql extends sqlazo_trazabilidad{
 		$rResultados = mysql_query($sql, $this->dConexion);
 		if(!$rResultados){
 			$this->setError(__METHOD__, mysql_errno(), mysql_error(), $sql);
-			return(false);
+			return false;
 		}
 		$aResultados = array();
 
 		if($rResultados !== true){
 			while($aResultados[] = mysql_fetch_array($rResultados));
-			if($aResultados[count($aResultados)-1] === false) array_pop($aResultados); //el anterior bucle (si todo es correcto) colocara un false en el ultimo elemento, sobra
+			if($aResultados[count($aResultados)-1] === false)
+				array_pop($aResultados); //el anterior bucle (si todo es correcto) colocara un false en el ultimo elemento, sobra
 		}
 
-		return($aResultados);
+		return $aResultados;
 	}
 
 	/**
@@ -363,7 +393,8 @@ class sqlazo_mysql extends sqlazo_trazabilidad{
 
 		$this->bSeleccion = false;
 		$this->bConectado = false;
-		return($sReturn);
+
+		return $sReturn;
 	}
 
 	/**
@@ -377,13 +408,14 @@ class sqlazo_mysql extends sqlazo_trazabilidad{
 		$sError = $this->getError();
 		if(!empty($sError)){
 			$this->setError(__METHOD__.'1');
-			return(false);
+			return false;
 		}
 
 		//este metodo solo tiene sentido con consultas tipo "SELECT"
 		if($this->sTipoQuery == 'select' || $this->sTipoQuery == 'describe' || $this->sTipoQuery == 'explain' || $this->sTipoQuery == 'show'){
 
-			if(!$this->tipoArrayQuery($this->sQueryTipoArray)) return(false); //tipo de array que devolvera la query
+			if(!$this->tipoArrayQuery($this->sQueryTipoArray))
+				return false; //tipo de array que devolvera la query
 
 			//medicion de tiempo
 			$iTiempoIni = $this->microtimeSeg();
@@ -402,16 +434,16 @@ class sqlazo_mysql extends sqlazo_trazabilidad{
 					}
 				}
 
-				return(true);
+				return true;
 			}
 			else{
 				$this->aFila = $aTemp;
-				return(false);
+				return false;
 			}
 		}
 		else{
 			$this->setError(__METHOD__.'2');
-			return(false);
+			return false;
 		}
 	}
 
@@ -426,7 +458,7 @@ class sqlazo_mysql extends sqlazo_trazabilidad{
 		$sError = $this->getError();
 		if(!empty($sError)){
 			$this->setError(__METHOD__.'1');
-			return(false);
+			return false;
 		}
 
 		//este metodo solo tiene sentido con consultas tipo "SELECT"
@@ -434,13 +466,15 @@ class sqlazo_mysql extends sqlazo_trazabilidad{
 			//recoloca el puntero en el inicio para obtener todos los resultados
 			if($this->iTotalFilas > 0) $this->recPuntero();
 
-			if(!$this->tipoArrayQuery($this->sQueryTipoArray)) return(false); //tipo de array que devolvera la query
+			if(!$this->tipoArrayQuery($this->sQueryTipoArray))
+				return false; //tipo de array que devolvera la query
 
 			//medicion de tiempo
 			$iTiempoIni = $this->microtimeSeg();
 
 			while($this->aFilaTodos[] = mysql_fetch_array($this->rResultados, $this->sQueryTipoArray));
-			if($this->aFilaTodos[count($this->aFilaTodos)-1] === false) array_pop($this->aFilaTodos); //el anterior bucle (si todo es correcto) colocara un false en el ultimo elemento, sobra
+			if($this->aFilaTodos[count($this->aFilaTodos)-1] === false)
+				array_pop($this->aFilaTodos); //el anterior bucle (si todo es correcto) colocara un false en el ultimo elemento, sobra
 
 			//elimina tags html y php de los resultados
 			if(!empty($this->sTagsPermitidosSel) && $this->sTagsPermitidosSel != 'todos'){
@@ -455,11 +489,11 @@ class sqlazo_mysql extends sqlazo_trazabilidad{
 			$this->aTiempos['filasTodos'] = number_format($iTiempoFin - $iTiempoIni, 6);
 			$this->aTiempos['total'] += ($iTiempoFin - $iTiempoIni);
 
-			return(true);
+			return true;
 		}
 		else{
 			$this->setError(__METHOD__.'2');
-			return(false);
+			return false;
 		}
 	}
 
@@ -481,9 +515,9 @@ class sqlazo_mysql extends sqlazo_trazabilidad{
 				$this->aCampos[$this->aCampos[$i]['nombre']]['long'] = $this->aCampos[$i]['long'] = mysql_field_len($this->rResultados, $i);
 				$this->aCampos[$this->aCampos[$i]['nombre']]['flags'] = $this->aCampos[$i]['flags'] = mysql_field_flags($this->rResultados, $i);
 			}
-			return(true);
+			return true;
 		}
-		return(false);
+		return false;
 	}
 
 	/**
@@ -501,7 +535,7 @@ class sqlazo_mysql extends sqlazo_trazabilidad{
 			case 'show':
 				$this->iTotalFilas = mysql_num_rows($this->rResultados);
 				//var_dump($this->rResultados);
-				return(true);
+				return true;
 				break;
 			case 'alter':
 			case 'create':
@@ -511,8 +545,10 @@ class sqlazo_mysql extends sqlazo_trazabilidad{
 			case 'insert':
 			case 'update':
 				$this->iTotalFilas = mysql_affected_rows($this->dConexion);
-				if($this->iTotalFilas < 1) $this->iTotalFilas = false;
-				return(true);
+				if($this->iTotalFilas < 1)
+					$this->iTotalFilas = false;
+
+				return true;
 				/*TODO If the last query was a DELETE query with no WHERE clause, all of the records will have been deleted from the table but this function will return zero with MySQL versions prior to 4.1.2.*/
 				break;
 			case 'commit':
@@ -524,7 +560,7 @@ class sqlazo_mysql extends sqlazo_trazabilidad{
 				break;
 			default:
 				$this->setError(__METHOD__.'1', $this->sTipoQuery);
-				return(false);
+				return false;
 		}
 	}
 
@@ -555,14 +591,16 @@ class sqlazo_mysql extends sqlazo_trazabilidad{
 		//TODO ver mysqli::real_escape_string
 		if($this->sTagsPermitidosIns != 'todos'){
 			for($i=0;$i<count($pars);$i++){
-				if(isset($pars[$i])) $pars[$i] = strip_tags($pars[$i], $this->sTagsPermitidosIns);
+				if(isset($pars[$i]))
+					$pars[$i] = strip_tags($pars[$i], $this->sTagsPermitidosIns);
 			}
 		}
 
 		//preparar parametros para que no den problemas SQL
 		//if(!get_magic_quotes_gpc()){
 			//$pars = array_map('addslashes', $pars);
-			if(count($pars)) $pars = $this->aseguraQuery($query, $pars);
+			if(count($pars))
+				$pars = $this->aseguraQuery($query, $pars);
 		//}
 
 		$this->tipoQuery($query); //comprueba el tipo de query
@@ -571,13 +609,15 @@ class sqlazo_mysql extends sqlazo_trazabilidad{
 		$this->sQuery = $this->valoresEnQuery($this->sQuery, $pars);
 		if($this->sQuery === false){
 			$this->setError(__METHOD__);
-			return(false);
+			return false;
 		}
 
 		//suma a la consulta "SQL_CALC_FOUND_ROWS", permite tener el total de filas en consultas limitadas con "SELECT FOUND_ROWS()", sin volver a lanzar la consulta
 		if($cantidad){
 				$iSelectPos = strpos(strtoupper($this->sQuery), 'SELECT ');
-				if($iSelectPos !== false && strpos($this->sQuery, 'SQL_CALC_FOUND_ROWS') === false) $this->sQuery = substr($this->sQuery, 0, $iSelectPos + 7).'SQL_CALC_FOUND_ROWS '.substr($this->sQuery, $iSelectPos + 7);
+				if($iSelectPos !== false && strpos($this->sQuery, 'SQL_CALC_FOUND_ROWS') === false)
+					$this->sQuery = substr($this->sQuery, 0, $iSelectPos + 7).'SQL_CALC_FOUND_ROWS '.substr($this->sQuery, $iSelectPos + 7);
+
 				//si "$inicial=0" devuelve "$cantidad" de registros desde el primero
 				//si se quieren devolver todos los que haya desde un "$inicial=x", dar como "$cantidad" un valor mayor al total de registros que pueda devolver la consulta (un numero al azar suficientemente grande, por ejemplo 123456789123456789123456789)
 				$this->sQuery .= ' LIMIT '.$inicial.','.$cantidad;
@@ -593,12 +633,16 @@ class sqlazo_mysql extends sqlazo_trazabilidad{
 	 * @abstract
 	 */
 	public function recPuntero($pos = 0){
-		if($this->iTotalFilas) $bReturn = mysql_data_seek($this->rResultados, $pos); //falla con E_WARNING y devuelve FALSE si el result set esta vacio
-		else $bReturn = false;
+		if($this->iTotalFilas)
+			$bReturn = mysql_data_seek($this->rResultados, $pos); //falla con E_WARNING y devuelve FALSE si el result set esta vacio
+		else
+			$bReturn = false;
+
 		if(!$bReturn){
 			$this->setError(__METHOD__.'1', mysql_errno($this->dConexion), mysql_error($this->dConexion));
 		}
-		return($bReturn);
+
+		return $bReturn;
 	}
 
 	/**
@@ -613,7 +657,8 @@ class sqlazo_mysql extends sqlazo_trazabilidad{
 			//if($this->sDDBB == $db) return(true); //sale con cierto si ya esta seleccionada la base de datos
 			$this->sDDBB = $db;
 		}
-		elseif($this->bSeleccion) return(true); //devuelve cierto si no se requiere seleccionar una base de datos concreta, como cuando se desee crear una
+		elseif($this->bSeleccion)
+			return true; //devuelve cierto si no se requiere seleccionar una base de datos concreta, como cuando se desee crear una
 
 		//medicion de tiempo
 		$iTiempoIni = $this->microtimeSeg();
@@ -629,9 +674,10 @@ class sqlazo_mysql extends sqlazo_trazabilidad{
 		}
 
 		//codificacion en que se lanzaran las consultas a la base de datos
-		if(sqlazo::instCount(0) == 1 && $this->sCharset != '') $this->setCodificacion($this->sCharset, $this->sCollation);
+		if(sqlazo::instCount(0) == 1 && $this->sCharset != '')
+			$this->setCodificacion($this->sCharset, $this->sCollation);
 
-		return($this->bSeleccion);
+		return $this->bSeleccion;
 	}
 
 	/**
@@ -664,7 +710,7 @@ class sqlazo_mysql extends sqlazo_trazabilidad{
 			}
 		}
 
-		return($this->bSeleccion);
+		return $this->bSeleccion;
 	}
 
 	/**
@@ -715,7 +761,8 @@ class sqlazo_mysql extends sqlazo_trazabilidad{
 	 * @return boolean
 	 */
 	private function tipoArrayQuery($tipo = ''){
-		if(!empty($tipo)) $this->sQueryTipoArray = $tipo;
+		if(!empty($tipo))
+			$this->sQueryTipoArray = $tipo;
 
 		//tambien admite las constantes de mysql (no i)
 		switch($this->sQueryTipoArray){
@@ -733,10 +780,10 @@ class sqlazo_mysql extends sqlazo_trazabilidad{
 				break;
 			default:
 				$this->setError(__METHOD__, $this->sQueryTipoArray);
-				return(false);
+				return false;
 		}
 
-		return(true);
+		return true;
 	}
 
 	/**
@@ -758,12 +805,13 @@ class sqlazo_mysql extends sqlazo_trazabilidad{
 
 		if(!$bRet){
 			$this->setError(__METHOD__);
-			return(false);
+			return false;
 		}
 
-		if($this->bTrazabilidad) $this->guardaTraza(); //guardado de trazas
+		if($this->bTrazabilidad)
+			$this->guardaTraza(); //guardado de trazas
 
-		return(true);
+		return true;
 	}
 
 	/**
@@ -777,9 +825,9 @@ class sqlazo_mysql extends sqlazo_trazabilidad{
 	protected function transaccionInicio(){
 		if(!mysql_query('START TRANSACTION', $this->dConexion)){
 			$this->setError(__METHOD__);
-			return(false);
+			return false;
 		}
-		return(true);
+		return true;
 	}
 
 }

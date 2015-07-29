@@ -27,19 +27,20 @@ defined('CLASSES_DIR') or define('CLASSES_DIR', dirname(__FILE__));
  * @return object Objeto sqlazo
  */
 function &sqlazo_sel($motor = 'mysql', $servidor = 'localhost', $usuario = 'root', $password = '', $ddbb = false){
-	if($motor == 'mysql' && class_exists('mysqli')) $motor = 'mysqli';
+	if($motor == 'mysql' && class_exists('mysqli'))
+		$motor = 'mysqli';
 
 	$class = 'sqlazo_'.$motor;
-	include_once(CLASSES_DIR.'/class.sqlazo_trazabilidad.inc');
-	include_once(CLASSES_DIR.'/class.'.$class.'.inc'); //si no existe el fichero a incluir no se devuelve error, se controla a continuacion
+	include_once CLASSES_DIR . '/class.sqlazo_trazabilidad.inc';
+	include_once CLASSES_DIR . '/class.' . $class . '.inc'; //si no existe el fichero a incluir no se devuelve error, se controla a continuacion
 
 	if(!class_exists('sqlazo_trazabilidad') || !class_exists($class)){
 		die('No se puede usar el tipo de base de datos -> '.$class."\n");
-		return(false);
+		return false;
 	}
 
 	$obj = new $class($servidor, $usuario, $password, $ddbb);
-	return($obj);
+	return $obj;
 }
 
 /**
@@ -271,32 +272,40 @@ class sqlazo{
 		//extraer codificacion de la pagina actual de las cabeceras enviadas al navegador
 		if(!isset($this->sCharset)){
 			$this->sCharset = '';
-			if(!isset($this->sCollation)) $this->sCollation = '';
+			if(!isset($this->sCollation))
+				$this->sCollation = '';
 		}
 		$aCodificacion = array();
 
 		//necesita php>=4.3.0
-		if(function_exists('headers_list')) $aCodificacion = headers_list();
-		elseif(function_exists('apache_response_headers')) $aCodificacion = apache_response_headers();
+		if(function_exists('headers_list'))
+			$aCodificacion = headers_list();
+		elseif(function_exists('apache_response_headers'))
+			$aCodificacion = apache_response_headers();
 
 		//lista de charset: SHOW CHARACTER SET (SQL en MYSQL)
 		$codificacion = '';
 		foreach($aCodificacion as $codificacion){
 			//if(strpos($codificacion, 'charset=') !== false) $this->sCharset = str_replace('"', '', substr($codificacion, strpos($codificacion, 'charset=')+8));
-			if(strpos($codificacion, 'charset=') !== false) break;
+			if(strpos($codificacion, 'charset=') !== false)
+				break;
 		}
 
 		if(strpos(strtolower($codificacion), 'utf') !== false){
-			if($tipo == 'charset') return('utf8');
-			elseif($tipo == 'collation') return('utf8_general_ci');
+			if($tipo == 'charset')
+				return 'utf8';
+			elseif($tipo == 'collation')
+				return 'utf8_general_ci';
 		}
 		elseif(strpos(strtolower($codificacion), 'iso-8859-1') !== false || strpos(strtolower($codificacion), 'iso-8859-15') !== false){
-			if($tipo == 'charset') return('latin1');
-			elseif($tipo == 'collation') return('latin1_spanish_ci');
+			if($tipo == 'charset')
+				return 'latin1';
+			elseif($tipo == 'collation')
+				return 'latin1_spanish_ci';
 		}
 		//TODO revisar funcionamiento; valores que devuelve headers_list() y demas
 
-		return(false);
+		return false;
 	}
 
 	/**
@@ -344,7 +353,7 @@ class sqlazo{
 	 * @return array
 	 */
 	public function getError(){
-		return($this->aError);
+		return $this->aError;
 	}
 
 	/**
@@ -358,8 +367,9 @@ class sqlazo{
 	 */
 	//TODO mostrar la clave de un texto de mensaje de error (invirtiendo el array y un foreach para buscar coincidencia de texto)
 	public function getErrorMensaje($clave = false){
-		if($clave === false) return($this->aErrorMensajes);
-		return($this->aErrorMensajes[$clave]);
+		if($clave === false)
+			return $this->aErrorMensajes;
+		return $this->aErrorMensajes[$clave];
 	}
 
 	/**
@@ -369,7 +379,7 @@ class sqlazo{
 	 * @return string
 	 */
 	public function getMotor(){
-		return($this->sMotor);
+		return $this->sMotor;
 	}
 
 	/**
@@ -385,10 +395,15 @@ class sqlazo{
 		if(!isset($iInstCount)){
 			static $iInstCount = 0;
 		}
-		if($inc == 1) $iInstCount++;
-		if($inc == -1) $iInstCount--;
+
+		if($inc == 1)
+			$iInstCount++;
+
+		if($inc == -1)
+			$iInstCount--;
+
 		//echo('$iInstCount --> '.$iInstCount);
-		return($iInstCount);
+		return $iInstCount;
 	}
 
 	/**
@@ -419,8 +434,10 @@ class sqlazo{
 	protected function microtimeSeg($float = true){
 		list($mseg, $seg) = explode(" ", microtime());
 
-		if($float) return((float)$mseg + (float)$seg);
-		else return(date('Y-m-d H:i:s', $seg).substr($mseg, 1));
+		if($float)
+			return ((float) $mseg + (float) $seg);
+		else
+			return (date('Y-m-d H:i:s', $seg) . substr($mseg, 1));
 	}
 
 	/**
@@ -434,11 +451,11 @@ class sqlazo{
 	public function operaQuery($tipo = 'max', $campo = false){
 		$ret = false;
 
-		include_once(dirname(__FILE__).'/class.parse_sql.inc');
+		include_once CLASSES_DIR . '/class.parse_sql.inc';
 
 		if(!class_exists('parse_sql')){
 			$this->setError(__METHOD__.'1');
-			return(false);
+			return false;
 		}
 
 		$aFragmentos = parse_sql::ParseString($this->sQuery)->getArray();
@@ -449,20 +466,20 @@ class sqlazo{
 			case 'max':
 				if(stripos($aFragmentos['select'], 'select') !== 0){ //solo para consultas select
 					$this->setError(__METHOD__.'2');
-					return(false);
+					return false;
 				}
 				$aFragmentos['sql'] = 'SELECT MAX('.$campo.') AS valor ';
 				if($this->consulta($aFragmentos['sql'].$aFragmentos['from']) && $this->leeFila()){
-					return($this->aFila['valor']);
+					return $this->aFila['valor'];
 				}
 				else{
 					$this->setError(__METHOD__.'3', $this->sQuery);
-					return(false);
+					return false;
 				}
 				break;
 		}
 
-		return(false); //error desconocido
+		return false; //error desconocido
 	}
 
 	/**
@@ -521,17 +538,20 @@ class sqlazo{
 			$this->sDDBBServidor = substr($this->sDDBBServidor, 0, strpos($this->sDDBBServidor, ':'));
 		}
 		if($sTemp != $puerto){
-			if(empty($puerto)) $puerto = $sTemp;
+			if(empty($puerto))
+				$puerto = $sTemp;
 			else{
 				$this->setError(__METHOD__, $sTemp, $puerto, $puerto);
 				//return(false);
 			}
 		}
 
-		if($puerto === false) return(false);
+		if($puerto === false)
+			return false;
+
 		$this->sDDBBPuerto = $puerto;
 
-		return(true);
+		return true;
 	}
 
 	/**
@@ -543,14 +563,15 @@ class sqlazo{
 	 */
 	protected function setError(){
 		$argumentos = func_get_args();
-		if(empty($argumentos)) return(false);
+		if(empty($argumentos))
+			return false;
 
 		$clave = array_shift($argumentos);
 
 		$this->aError[] = $clave.' ['.$this->microtimeSeg().'] '.vsprintf($this->aErrorMensajes[$clave], $argumentos);
 		//trigger_error($this->aError[count($this->aError)-1]);
 
-		return(true);
+		return true;
 	}
 
 	/**
@@ -574,7 +595,8 @@ class sqlazo{
 			'operaQuery2' => 'sqlazo::operaQuery() Sólo se puede calcular el valor máximo para consultas tipo "SELECT".',
 			'operaQuery3' => 'sqlazo::operaQuery() Error en la consulta tipo "max"; consulta:"%s".'
 			);
-			return(true);
+
+			return true;
 		}
 
 		$aMensajes = array();
@@ -613,7 +635,8 @@ class sqlazo{
 					return(false);
 			}*/
 		}
-		return(true);
+
+		return true;
 	}
 
 	/**
@@ -657,7 +680,9 @@ class sqlazo{
 	 * @return boolean
 	 */
 	protected function tipoQuery($query = false){
-		if($query === false) $query = $this->sQuery;
+		if($query === false)
+			$query = $this->sQuery;
+
 		//$aQuery = explode(' ', trim(str_replace(array('(', ')', "\n", "\r", "\t"), '', $query))); //evita que en UNION o similar (pueden empezar con parentesis) no encuentre el primer SELECT, saltos de carro indeseados, etc
 		$aQuery = explode(' ', trim(preg_replace('/[\s|\(|\)]{2,}/', ' ', $query))); //evita que en UNION o similar (pueden empezar con parentesis) no encuentre el primer SELECT, saltos de carro indeseados, etc
 		$this->sTipoQuery = strtolower($aQuery[0]);
@@ -719,8 +744,12 @@ class sqlazo{
 			if(preg_match_all($sPat, $query, $regs, PREG_PATTERN_ORDER)){
 				for($cont=0;$cont<count($regs[0]);$cont++){
 					$sTemp = '';
-					if(strpos($regs[1][$cont], '.') === false) $sTemp = str_replace($this->sPrefijoId, $this->sPrefijo, $regs[1][$cont]);
-					else $sTemp = str_replace($this->sPrefijoId, $this->sPrefijo, substr($regs[1][$cont], strpos($regs[1][$cont], '.')+1));
+
+					if(strpos($regs[1][$cont], '.') === false)
+						$sTemp = str_replace($this->sPrefijoId, $this->sPrefijo, $regs[1][$cont]);
+					else
+						$sTemp = str_replace($this->sPrefijoId, $this->sPrefijo, substr($regs[1][$cont], strpos($regs[1][$cont], '.')+1));
+
 					$this->aTablas[$sTemp] = $sTemp;
 
 					$this->sQuery = str_replace($regs[0][$cont], str_replace($regs[1][$cont], str_replace($this->sPrefijoId, $this->sPrefijo, $regs[1][$cont]), $regs[0][$cont]), $this->sQuery); //prefijado de tablas en la consulta
@@ -729,7 +758,7 @@ class sqlazo{
 				$this->aTablas = array_keys($this->aTablas); //elimina entradas duplicadas
 			}
 		}
-		return(true);
+		return true;
 	}
 
 	/**
@@ -782,14 +811,18 @@ class sqlazo{
 						if(substr($query, strlen($query)-1, 1) == "'" || substr($query, strlen($query)-1, 1) == "\x0b"){ //limpia este final de cadena para poner el nulo
 							$query = rtrim($query, "'%\x0b").'NULL';
 						}
-						else $query .= 'NULL';
+						else
+							$query .= 'NULL';
+
 						if(substr($valor, 1, 1) == "'" || substr($valor, 1, 1) == "\x0b"){ //limpia este principio de cadena para poner el nulo
 							$query .= ltrim(substr($valor, 1), "'%\x0b");
 						}
-						else $query .= substr($valor, 1);
+						else
+							$query .= substr($valor, 1);
 					}
 					else{
-						if(isset($pars[$clave])) $query .= $pars[$clave].substr($valor, 1);
+						if(isset($pars[$clave]))
+							$query .= $pars[$clave].substr($valor, 1);
 						else{
 							trigger_error('No corresponde el parametro pasado con su clave', E_USER_WARNING);
 							return false;

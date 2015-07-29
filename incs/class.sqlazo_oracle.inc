@@ -71,9 +71,16 @@ class sqlazo_oracle extends sqlazo {
 	 */
 	public function conectar($servidor = false, $usuario = false, $clave = false, $db = false, $puerto = false){
 		sqlazo::instCount(); //contador de instancias
-		if($servidor) $this->sDDBBServidor = $servidor;
-		if($usuario) $this->sDDBBUsuario = $usuario;
-		if($clave) $this->sDDBBPassword = $clave;
+
+		if($servidor)
+			$this->sDDBBServidor = $servidor;
+
+		if($usuario)
+			$this->sDDBBUsuario = $usuario;
+
+		if($clave)
+			$this->sDDBBPassword = $clave;
+
 		$this->setDDBBPuerto($puerto);
 
 		//Conecta al servicio $db (esto es, una base de datos) en la máquina "localhost"
@@ -96,7 +103,8 @@ class sqlazo_oracle extends sqlazo {
 	 * @abstract
 	 */
 	public function consulta($query = false, $pars = array(), $cantidad = 0, $inicial = 0){
-		if($query) $this->query($query, $pars, $cantidad, $inicial);
+		if($query)
+			$this->query($query, $pars, $cantidad, $inicial);
 
 		$this->rResultados = oci_parse($this->rOracle, $this->sQuery);
 		oci_execute($this->rResultados);
