@@ -67,7 +67,7 @@ class Formazo {
 	 *  'tipo' -> tipo de cada elemento; tipos: ('checkbox', 'group', 'heading', 'hidden', 'multiple', 'password', 'radio', 'select', 'text', 'textarea'), siendo cada elemento del array el nombre del tag o de tipo de INPUT, excepto "group" que crea agrupaciones de elementos (todos aquellos que tengan 'group' => id_grupo) y "heading" que solo crea cabeceras (titulos de secciones o similar); se ignoran los elementos sin tipo
 	 *  'validacion' -> validacion, tipo de datos que contendra; validado por javascript; la cadena se pondra directamente en el atributo "class", asi permite varios tipos de validacion para el mismo campo y es completamente externa a la clase
 	 *  'obligatorio' -> not null; 0 (opcional), 1 (obligatorio), string (llamada a una funcion que controle su obligatoriedad, tanto en creacion de formulario como en procesado, la cadena pasada es el nombre de la funcion -sin parentesis-); pasar "0" si se necesitan los siguientes y no es obligatorio
-	 *  'longitud' -> longitud maxima (input text, input password, textarea), si =0 -> solo lectura (disabled="disabled") y valor actual en campo hidden; longitud maxima en caso de ficheros (se pasa en bytes); opcional
+	 *  'longitud' -> longitud maxima (input text, input password, textarea), si =0 -> solo lectura (disabled="disabled"); longitud maxima en caso de ficheros (se pasa en bytes); opcional
 	 *  'titulo' -> titulo (humano) del campo
 	 *  'valor' -> valor del campo; en caso de "SELECT" el valor es el que toma por defecto
 	 *  'valores' -> array con los valores para los "OPTION" o para radioButtons, siendo la clave el valor del "OPTION" y [0] su texto; en select y multiple si cualquier valor es un array se convierte en agrupado (la clave sera la etiqueta del agrupado y el array los options contenidos, en el mismo formato que cualquier option)
@@ -76,7 +76,7 @@ class Formazo {
 	 *  'modo' => modo de representacion del elemento, para "select" puede ser [vacio|select] (select normal) o [radio] (las opciones del select se pintaran como radio buttons, para "multiple" puede ser [nada|multiple] (select multiple normal) o [checkbox] (las opciones del select multiple se pintaran como checkbox); para ficheros: si 'validacion' => 'fichero', 'modo' puede contener los tipos de ficheros permitidos como lista de extensiones separada por comas, ej: 'modo' => 'jpg,png,tiff'
 	 *  'rutaFichero' => ruta fisica donde guardar el fichero (para campos file)
 	 *  'rutaUrl' => URL donde encontrar el fichero (para campos file) para previsualizarlo
-	 *  'pisar' => solo para ficheros, si true sobreescribe ficheros con el mismo nombre, si false crea un nuevo nombre en caso de existir un fichero con el nombre pasado
+	 *  'sustituir' => solo para ficheros, si true elimina el fichero anterior (el recibido en la propiedad 'valor'), si false crea un nuevo nombre en caso de existir un fichero con el nombre pasado
 	 *  //'formato' => solo para campos con validacion fecha, formato de la fecha a validar, ej.: yyyy-mm-dd (por defecto) //de momento no permite hora
 	 *  'thumbnail' => debe tener como valor ancho y alto del thumbnail (100x120, ej), solo para imagenes
 	 *
@@ -87,9 +87,9 @@ class Formazo {
 
 	/**
 	 * Clases CSS para los elementos del formulario:
-	 * 	label -> todos los label, cada tipo de elemento segun su nombre,
+	 * 	label -> todos los label,
 	 * 	disabled -> deshabilitado,
-	 * Clases de las filas (grupo label + elemento), asociativo:
+	 * Clases de las filas:
 	 * 	'primera' (primera fila),
 	 * 	'impar' (filas impares),
 	 * 	'par' (filas pares),
@@ -115,7 +115,7 @@ class Formazo {
 	 * Formulario resultado; asociativo
 	 *
 	 * El inicio del formulario se llama "$this->aFormulario['inicio']", el final "$this->aFormulario['final']" y los elementos por su nombre; cada elemento contiene un array asociativo, donde (excepto si se indica lo contrario todos los elementos son necesarios para construir un formulario funcional)
-	 * -> "$this->aFormulario['btnSubmit']" \~spanish es el boton de submit\~english submit button\~,
+	 * -> "$this->aFormulario['btnSubmit']" es el boton de submit,
 	 * -> "$this->aFormulario['elementos']['nombre_elemento_formulario']['texto']" es el titulo que acompana al elemento,
 	 * -> "$this->aFormulario['elementos']['nombre_elemento_formulario']['campo']" es el elemento propiamente dicho
 	 * -> y "$this->aFormulario['elementos']['nombre_elemento_formulario']['file']" es el fichero (imagen reducida o referencia a fichero) que acompana a los elementos "file", si existe
@@ -197,7 +197,7 @@ class Formazo {
 			}
 		}
 
-		return($ret);
+		return $ret;
 	}
 
 	/**
@@ -226,18 +226,23 @@ class Formazo {
 		$this->aFormulario = array(); //para crear se limpia el previo //TODO comprobar que mas hay que limpiar antes de crear
 
 		$this->setCampos($campos);
-		if(empty($this->aCampos)) return(false);
+		if(empty($this->aCampos)){
+			trigger_error('No hay campos para crear el formulario', E_USER_NOTICE);
+			return false;
+		}
 
 		$this->setFormNombre(); //nombre del formulario
 
 		//inicia formulario
 		if(empty($this->sSubmit)) $this->sAction = '#';
-		$this->aFormulario['inicio']['campo'] = '<form id="frm'.$this->sFormNombre.'" action="'.$this->sAction.'" method="'.$this->sMethod.'">'."\n";
+		$this->aFormulario['inicio']['campo'] = '<form id="frm' . $this->sFormNombre . '" action="' . $this->sAction . '" method="' . $this->sMethod . '" class="' . $this->aCss['namespace'] . '">' . "\n";
 		$this->aFormulario['inicio']['texto'] = '';
 
 		//crear formulario
 		foreach($this->aCampos as $clave => $valor){
 			if(empty($valor['tipo'])) continue; //ignora los elementos que no tengan "tipo"; permite leer selectivamente arrays comunes para este y el generador de listados
+
+			$oElemento = null;
 
 			//NOTA si cambian los tipos cambiar los que se ignoran en FormazoProc::setCampos()
 			switch(strtolower($valor['tipo'])){
@@ -248,7 +253,7 @@ class Formazo {
 					//poner "enctype"
 					if(strpos($this->aFormulario['inicio']['campo'], 'enctype') === false){
 						//header('Content-Disposition: form-data; name="frm'.$this->sFormNombre.'"');
-						$this->aFormulario['inicio']['campo'] = '<form enctype="multipart/form-data"'.substr($this->aFormulario['inicio']['campo'], 5);
+						$this->aFormulario['inicio']['campo'] = '<form enctype="multipart/form-data"' . substr($this->aFormulario['inicio']['campo'], 5);
 					}
 					$oElemento = new FormazoFile($clave, $valor);
 					break;
@@ -278,7 +283,7 @@ class Formazo {
 					break;
 				default:
 					trigger_error('Tipo de elemento ("' . $valor['tipo'] . '") no reconocido', E_USER_WARNING);
-					return(false);
+					return false;
 			}
 
 			$oElemento->setFormNombre($this->sFormNombre);
@@ -288,11 +293,12 @@ class Formazo {
 
 			$this->aFormulario['elementos'][$clave]['texto'] = $aElemento['texto'];
 			$this->aFormulario['elementos'][$clave]['campo'] = $aElemento['campo'];
-			if(!empty($aElemento['file'])) $this->aFormulario['elementos'][$clave]['file'] = $aElemento['file'];
+			if(!empty($aElemento['file']))
+				$this->aFormulario['elementos'][$clave]['file'] = $aElemento['file'];
 		}
 		if(empty($this->aFormulario['elementos'])){
 			trigger_error('No se han podido procesar los campos', E_USER_ERROR);
-			return(false);
+			return false;
 		}
 
 		$this->aFormulario['btnSubmit']['campo'] = '';
@@ -311,7 +317,7 @@ class Formazo {
 		//opcion de aviso antes de salir
 		//TODO avisar que campos han cambiado? y solo avisar si realmente ha habido cambios (depende de tener guardado el valor de inicio)
 
-		return(true);
+		return true;
 	}
 
 	/**
@@ -321,7 +327,7 @@ class Formazo {
 	 * @return boolean
 	 */
 	public function getCampos(){
-		return($this->aCampos);
+		return $this->aCampos;
 	}
 
 	/**
@@ -331,7 +337,7 @@ class Formazo {
 	 * @return string
 	 */
 	public function getFormNombre(){
-		return($this->sFormNombre);
+		return $this->sFormNombre;
 	}
 
 	/**
@@ -342,10 +348,10 @@ class Formazo {
 	 * @return string
 	 */
 	public function pinta($campos = array(), $echo = true){
-		if(count($campos) && !count($this->aFormulario)) $this->crea($campos);
-		$sEcho = '';
+		if(count($campos) && !count($this->aFormulario))
+			$this->crea($campos);
 
-		$sEcho .= $this->aFormulario['inicio']['campo'].$this->aFormulario['inicio']['texto'];
+		$sEcho = $this->aFormulario['inicio']['campo'] . $this->aFormulario['inicio']['texto'];
 		$i = 0;
 		$aEcho = array();
 		$sHidden = ''; //agrupa los campos ocultos al final, para evitar problemas de validacion y dibujado en la pagina
@@ -353,14 +359,22 @@ class Formazo {
 			if($this->aCampos[$clave]['tipo'] != 'hidden'){
 				//clases css
 				$css = array();
-				if(!$i) $css[] = $this->aCss['primera']; //primera fila
-				if($i%2) $css[] = $this->aCss['impar']; //fila impar
-				else $css[] = $this->aCss['par']; //fila par
-				if($i == count($this->aFormulario['elementos'])-1) $css[] = $this->aCss['ultima']; //ultima fila
-				if(!empty($css)) $css = ' class="'.implode(' ', $css).'"';
+				if(!$i) //primera fila
+					$css[] = $this->aCss['primera'];
+
+				if($i%2) //fila impar
+					$css[] = $this->aCss['impar'];
+				else //fila par
+					$css[] = $this->aCss['par'];
+
+				if($i == count($this->aFormulario['elementos']) - 1) //ultima fila
+					$css[] = $this->aCss['ultima'];
+
+				if(!empty($css))
+					$css = ' class="' . implode(' ', $css) . '"';
 
 				//guardando en una variable para su posterior dibujado
-				$aEcho[$clave] = '<p' . $css . '>'.(isset($valor['texto']) ? $valor['texto'] : '') . $valor['campo'] . '</p>';
+				$aEcho[$clave] = '<p' . $css . '>' . (isset($valor['texto']) ? $valor['texto'] : '') . $valor['campo'] . '</p>';
 
 				//guardando en una variable para su posterior dibujado
 				if($this->aCampos[$clave]['tipo'] != 'group'){
@@ -382,7 +396,8 @@ class Formazo {
 				if(!empty($this->aCampos[$clave]['group'])){
 					$aEcho[$this->aCampos[$clave]['group']]['g'][$clave] = array($sApertura, $sCierre);
 				}
-				else $aEcho[$clave] = array($sApertura, $sCierre);
+				else
+					$aEcho[$clave] = array($sApertura, $sCierre);
 			}
 			else $sHidden .= $valor['campo'];
 		}
@@ -390,8 +405,10 @@ class Formazo {
 		$sEcho .= $this->agrupaElementos($aEcho) . $this->aFormulario['final']['texto'] . $sHidden . $this->aFormulario['final']['campo'];
 		//$sEcho .= implode('', $aEcho) . $this->aFormulario['final']['texto'] . $sHidden . $this->aFormulario['final']['campo'];
 
-		if($echo) echo($sEcho);
-		else return($sEcho);
+		if($echo)
+			echo $sEcho;
+		else
+			return $sEcho;
 	}
 
 	/**
@@ -419,7 +436,8 @@ class Formazo {
 		elseif(count($campos)){ //origen array
 			$this->aCampos = array();
 			foreach($campos as $clave => $valor){
-				if(isset($valor['tipo'])) $this->aCampos[$clave] = $valor; //evita procesar campos dedicados exclusivamente al pintado de listados
+				if(isset($valor['tipo'])) //evita procesar campos dedicados exclusivamente al pintado de listados
+					$this->aCampos[$clave] = $valor;
 			}
 		}
 
@@ -430,13 +448,17 @@ class Formazo {
 
 		//recoge los valores enviados, si es el caso (formulario enviado a la misma pagina, por ejemplo)
 		//recoge GET o POST segun el que se haya utilizado para llegar a esta pagina
-		if($this->sMethod == 'get') $this->aRequest = &$_GET;
-		elseif($this->sMethod == 'post') $this->aRequest = &$_POST;
-		else $this->aRequest = array();
+		if($this->sMethod == 'get')
+			$this->aRequest = &$_GET;
+		elseif($this->sMethod == 'post')
+			$this->aRequest = &$_POST;
+		else
+			$this->aRequest = array();
 		//TODO opcion para recogerlos o no
 
 		foreach($this->aCampos as $clave => $valor){
-			if(isset($this->aRequest[$clave]) && $this->aRequest[$clave] != '') $this->aCampos[$clave]['valor'] = $this->aRequest[$clave];
+			if(isset($this->aRequest[$clave]) && $this->aRequest[$clave] != '')
+				$this->aCampos[$clave]['valor'] = $this->aRequest[$clave];
 		}
 
 		return true;
@@ -448,33 +470,34 @@ class Formazo {
 	 * @since 201-12-24
 	 * @access public
 	 * @param mixed $clave Clave del array CSS; array completo o false para valores por defecto
-	 * @param mixed $clave Clase CSS para la clave
+	 * @param mixed $clave Clase(s) CSS para la clave
 	 * @return boolean
 	 */
-	protected function setCss($clave = false, $clase = false){
+	public function setCss($clave = false, $clase = false){
 		$aCss = array();
 
 		if($clave === false){ //reinicio de clases CSS
 			$aCss = array(
-				'namespace' => 'frm', //pseudo espacio de nombres para todas las clases, como prefijo
-				'disabled' => 'Disabled', //elementos desabilitados ("disabled")
-				'label' => 'Label', 'impar' => 'Impar', 'par' => 'Par', 'primera' => 'Primera', 'ultima' => 'Ultima', //pintado de formularios
-				'button' => 'Button', 'checkbox' => 'Checkbox', 'file' => 'File', 'multiple' => 'Multiple', 'password' => 'Passwd', 'radio' => 'Radio', 'select' => 'Select', 'text' => 'Text', 'textarea' => 'Textarea', //elementos del formulario
-				'bic' => 'BicSwift', 'clave' => 'Clave', 'email' => 'Email', 'entero' => 'Entero', 'fecha' => 'Fecha', 'iban' => 'Iban', 'nif' => 'Nif', 'numerico' => 'Numerico', 'obligatorio' => 'Obligatorio', 'telefono' => 'Telefono', 'url' => 'Url' //validaciones
+				'namespace' => 'Formazo', //pseudo espacio de nombres para todas las clases
+				'disabled' => ' disabled', //elementos desabilitados ("disabled")
+				'label' => '', 'impar' => 'impar', 'par' => 'par', 'primera' => 'primera', 'ultima' => 'ultima', //pintado de formularios
+				'button' => '', 'checkbox' => '', 'file' => '', 'multiple' => '', 'password' => '', 'radio' => '', 'select' => '', 'text' => '', 'textarea' => '', //elementos del formulario
+				'bic' => 'bicSwift', 'clave' => 'clave', 'email' => 'email', 'entero' => 'entero', 'fecha' => 'fecha', 'iban' => 'iban', 'nif' => 'nif', 'numerico' => 'numerico', 'obligatorio' => 'obligatorio', 'telefono' => 'telefono', 'url' => 'url' //validaciones
 			);
+
+			$this->aCss = $aCss;
 		}
 		else{
-			if(is_array($clave)) $aCss = $clave;
-			else $aCss[$clave] = $valor;
+			if(is_array($clave)){
+				foreach($clave as $c => $v){
+					$this->aCss[$c] = $v;
+				}
+			}
+			else
+				$this->aCss[$clave] = $clase;
 		}
 
-		$sNamespace = isset($aCss['namespace']) ? $aCss['namespace'] : '';
-
-		foreach($aCss as $c => $v){
-			$this->aCss[$c] = ($c != 'namespace' ? $sNamespace : '') . $v;
-		}
-
-		return(true);
+		return true;
 	}
 
 	/**
@@ -485,8 +508,10 @@ class Formazo {
 	 * @return string
 	 */
 	public function setFormNombre($formName = ''){
-		if($formName != '') $this->sFormNombre = $formName;
-		elseif($this->sFormNombre == '' && !empty($this->aCampos)) $this->sFormNombre = $this->crc16(serialize($this->aCampos));
+		if($formName != '')
+			$this->sFormNombre = $formName;
+		elseif($this->sFormNombre == '' && !empty($this->aCampos))
+			$this->sFormNombre = $this->crc16(serialize($this->aCampos));
 
 		return $this->sFormNombre;
 	}
@@ -521,15 +546,21 @@ class Formazo {
 		}
 
 		$sUserAgent = empty($_SERVER['HTTP_USER_AGENT']) ? '' : $_SERVER['HTTP_USER_AGENT'];
-		$sServer = empty($_SERVER['SERVER_ADDR'])?'':$_SERVER['SERVER_ADDR'];
-		if(!empty($_SERVER['SERVER_PORT'])) $sServer .= $_SERVER['SERVER_PORT'];
-		if(!empty($_SERVER['SERVER_SOFTWARE'])) $sServer .= $_SERVER['SERVER_SOFTWARE'];
-		if(!empty($_SERVER['SERVER_NAME'])) $sServer .= $_SERVER['SERVER_NAME'];
+
+		$sServer = empty($_SERVER['SERVER_ADDR']) ? '' : $_SERVER['SERVER_ADDR'];
+		if(!empty($_SERVER['SERVER_PORT']))
+			$sServer .= $_SERVER['SERVER_PORT'];
+		if(!empty($_SERVER['SERVER_SOFTWARE']))
+			$sServer .= $_SERVER['SERVER_SOFTWARE'];
+		if(!empty($_SERVER['SERVER_NAME']))
+			$sServer .= $_SERVER['SERVER_NAME'];
+
 		$sIp = empty($_SERVER['HTTP_X_FORWARDED_FOR']) ? (empty($_SERVER['REMOTE_ADDR']) ? '999:999:999:999' : $_SERVER['REMOTE_ADDR']) : $_SERVER['HTTP_X_FORWARDED_FOR'];
-		$aCampos = /*empty($this->aCampos)?*/array()/*:array_keys($this->aCampos)*/;
+		//$aCampos = empty($this->aCampos) ? array() : array_keys($this->aCampos);
+		$aCampos = array();
 		$token = $sFormNombre . '/' . $sSesion . '/' . implode('', $aCampos) . '/' . $sUserAgent . '/' . $sIp . '/' . $sServer;
 
-		return(sha1($token));
+		return sha1($token);
 	}
 
 }
@@ -553,8 +584,7 @@ abstract class FormazoElementos {
 	protected $aCss; //Clases CSS que daran estilo al elemento
 
 	/**
-	 * \~spanish Caracteristicas de los elementos; de cual depende, titulo, valor, etc.
-	 * \~english Element definition.\~
+	 * Caracteristicas de los elementos; de cual depende, titulo, valor, etc.
 	 *
 	 * @var array
 	 * @see FormazoElementos::setDatos($datos)
@@ -587,9 +617,14 @@ abstract class FormazoElementos {
 	 */
 	protected function getCss(){
 		$sCssLabel = '';
+		$aCssTag = array();
 
-		if(!empty($this->aCss[$this->aDatos['tipo']])) $aCssTag[] = $this->aCss[$this->aDatos['tipo']]; //los elementos que no llevan tipo son exclusivos para listazo
-		if(!empty($this->aCss['obligatorio']) && !empty($this->aDatos['obligatorio'])) $aCssTag[] = $this->aCss['obligatorio'];
+		if(!empty($this->aCss[$this->aDatos['tipo']])) //los elementos que no llevan tipo son exclusivos para class.listazo.inc
+			$aCssTag[] = $this->aCss[$this->aDatos['tipo']];
+
+		if(!empty($this->aCss['obligatorio']) && !empty($this->aDatos['obligatorio']))
+			$aCssTag[] = $this->aCss['obligatorio'];
+
 		if(isset($this->aDatos['validacion'])){
 			if(isset($this->aCss[$this->aDatos['validacion']]))
 				$aCssTag[] = $this->aCss[$this->aDatos['validacion']];
@@ -615,7 +650,7 @@ abstract class FormazoElementos {
 	 * @return array
 	 */
 	public function getElemento(){
-		return($this->elemento());
+		return $this->elemento();
 	}
 
 	/**
@@ -639,17 +674,21 @@ abstract class FormazoElementos {
 	protected function getLongitud(){
 		$sRet = '';
 
-		if(!empty($this->aDatos['longitud'])){
-			switch($this->aDatos['tipo']){
-				case 'multiple':
-				case 'select':
-					$sRet = ' size="' . $this->aDatos['longitud'] . '"';
-					break;
-				case 'text':
-				case 'textarea':
-					$sRet = ' maxlength="' . $this->aDatos['longitud'] . '"';
-					break;
-				default;
+		if(isset($this->aDatos['longitud'])){
+			if(is_numeric($this->aDatos['longitud']) && $this->aDatos['longitud'] == 0) //cualquier campo con longitud 0 se deshabilita
+				$sRet = ' disabled="disabled"';
+			else{
+				switch($this->aDatos['tipo']){
+					case 'multiple':
+					case 'select':
+						$sRet = ' size="' . $this->aDatos['longitud'] . '"';
+						break;
+					case 'text':
+					case 'textarea':
+						$sRet = ' maxlength="' . $this->aDatos['longitud'] . '"';
+						break;
+					default;
+				}
 			}
 		}
 
@@ -682,8 +721,7 @@ abstract class FormazoElementos {
 	}
 
 	/**
-	 * \~spanish Transforma la notación "php.ini" para números (como 2M) en enteros (2 * 1024 * 1024, en este caso).
-	 * \~english This function transforms the "php.ini" notation for numbers (like '2M') to an integer (2*1024*1024 in this case).\~
+	 * Transforma la notación "php.ini" para números (como 2M) en enteros (2 * 1024 * 1024, en este caso)
 	 *
 	 * @access protected
 	 * @param string $v Num
@@ -716,9 +754,11 @@ abstract class FormazoElementos {
 	 * @return boolean
 	 */
 	public function setCss($aCss = array()){
-		if(empty($aCss)) return(false);
+		if(empty($aCss))
+			return false;
+
 		$this->aCss = $aCss;
-		return(true);
+		return true;
 	}
 
 	protected function setDatos($datos){
@@ -728,9 +768,10 @@ abstract class FormazoElementos {
 		$this->aDatos['titulo'] = isset($this->aDatos['titulo']) ? $this->aDatos['titulo'] : '';
 		$this->aDatos['valor'] = isset($this->aDatos['valor']) ? $this->aDatos['valor'] : null;
 
-		if(!isset($this->aDatos['separador'])) $this->aDatos['separador'] = ',';
+		if(!isset($this->aDatos['separador']))
+			$this->aDatos['separador'] = ',';
 
-		return(true);
+		return true;
 	}
 
 	/**
@@ -741,9 +782,11 @@ abstract class FormazoElementos {
 	 * @return boolean
 	 */
 	public function setFormNombre($sFormNombre = ''){
-		if(empty($sFormNombre)) return(false);
+		if(empty($sFormNombre))
+			return false;
+
 		$this->sFormNombre = $sFormNombre;
-		return(true);
+		return true;
 	}
 
 }
@@ -764,9 +807,9 @@ class FormazoCheckbox extends FormazoElementos {
 		$aElemento = array();
 
 		$aElemento['texto'] = $this->getLabel();
-		$aElemento['campo'] = '<input id="' . $this->sClave . $this->sFormNombre . '" name="' . $this->sClave . '" type="checkbox"' . $this->getTabIndex() . $this->getCss() . $this->getValor() . ' />';
+		$aElemento['campo'] = '<input id="' . $this->sClave . $this->sFormNombre . '" name="' . $this->sClave . '" type="checkbox"' . $this->getTabIndex() . $this->getCss() . $this->getValor() . $this->getLongitud() . ' />';
 
-		return($aElemento);
+		return $aElemento;
 	}
 
 	protected function getValor($valor = false){
@@ -792,7 +835,7 @@ class FormazoFile extends FormazoElementos {
 	protected function elemento(){
 		$aElemento = array();
 		$this->aDatos['rutaFichero'] = empty($this->aDatos['rutaFichero']) ? '.' : $this->aDatos['rutaFichero']; //TODO evita problemas si no se ha puesto ruta en el fichero, pero no comprueba si esta es valida, deberia ser /tmp por defecto?
-		$this->aDatos['rutaUrl'] = empty($this->aDatos['rutaUrl']) ? $this->aDatos['rutaFichero'] : $this->aDatos['rutaUrl'];
+		$this->aDatos['rutaUrl'] = isset($this->aDatos['rutaUrl']) ? $this->aDatos['rutaUrl'] : $this->aDatos['rutaFichero'];
 
 		$aElemento['texto'] = $this->getLabel();
 
@@ -803,7 +846,7 @@ class FormazoFile extends FormazoElementos {
 			$iMaxUpload = min($iMaxUpload, $this->aDatos['longitud']);
 		}
 		$this->aFormulario['elementos'][$this->sClave]['campo'] = '<input type="hidden" name="MAX_FILE_SIZE" value="' . $iMaxUpload . '" />';
-		$aElemento['campo'] = '<input id="' . $this->sClave . $this->sFormNombre . '" name="' . $this->sClave . '" type="file" data-previewId="img_' . $this->sClave . $this->sFormNombre . '" ' . $this->getTabIndex() . $this->getCss() . ' />'; //data-previewId se usa en javascript para crear una vista previa cuando se cambia de fichero
+		$aElemento['campo'] = '<input id="' . $this->sClave . $this->sFormNombre . '" name="' . $this->sClave . '" type="file" data-previewId="img_' . $this->sClave . $this->sFormNombre . '" ' . $this->getTabIndex() . $this->getCss() . $this->getLongitud() . ' />'; //data-previewId se usa en javascript para crear una vista previa cuando se cambia de fichero
 		$aElemento['campo'] .= '<br />Tama&ntilde;o m&aacute;ximo: ' . $iMaxUpload . ' bytes';
 
 		//muestra la imagen (si lo es), o el nombre del fichero actual
@@ -821,15 +864,14 @@ class FormazoFile extends FormazoElementos {
 		}
 		$aElemento['file'] .= '</a></div>';
 
-		return($aElemento);
+		return $aElemento;
 	}
 
 }
 
 /**
- * \~spanish Agrupacion de elementos en 'fieldset'.
- * Observese que "$aElemento['texto']" es la apertura del grupo (apertura de div) y "$aElemento['campo']" es el cierre del grupo.
- * \~english Form groups in 'fieldset'.\~
+ * Agrupacion de elementos en 'fieldset'
+ * Observese que "$aElemento['texto']" es la apertura del grupo (apertura de div) y "$aElemento['campo']" es el cierre del grupo
  *
  * @since 2011-06-22
  */
@@ -845,7 +887,7 @@ class FormazoGroup extends FormazoElementos {
 		$aElemento['texto'] = '<fieldset id="' . $this->sClave . $this->sFormNombre . '"' . $this->getCss() . '><legend>' . $this->aDatos['titulo'] . '</legend>';
 		$aElemento['campo'] = '</fieldset>';
 
-		return($aElemento);
+		return $aElemento;
 	}
 
 }
@@ -865,9 +907,9 @@ class FormazoHidden extends FormazoElementos {
 		$aElemento = array();
 
 		$aElemento['texto'] = '';
-		$aElemento['campo'] = '<input id="' . $this->sClave . $this->sFormNombre . '" name="' . $this->sClave . '" type="hidden"' . $this->getValor() . ' />';
+		$aElemento['campo'] = '<input id="' . $this->sClave . $this->sFormNombre . '" name="' . $this->sClave . '" type="hidden"' . $this->getValor() . $this->getLongitud() . ' />';
 
-		return($aElemento);
+		return $aElemento;
 	}
 
 }
@@ -928,10 +970,10 @@ class FormazoMultiple extends FormazoElementos {
 						if(is_array($v)){
 							$aElemento['campo'] .= '<span>' . $c;
 							foreach($v as $c2 => $v2)
-								$aElemento['campo'] .= '<input id="c_' . $iCheckCont . $this->sClave . '" name="' . $this->sClave . '[]" type="checkbox"' . $this->getCss() . ' value="' . $c2 . '"' . (isset($aTempVal[$c2]) ? ' checked="checked"' : '') . ' /><label for="c_' . ($iCheckCont++) . $this->sClave . '">' . $v2 . '</label>';
+								$aElemento['campo'] .= '<input id="c_' . $iCheckCont . $this->sClave . '" name="' . $this->sClave . '[]" type="checkbox"' . $this->getCss() . $this->getLongitud() . ' value="' . $c2 . '"' . (isset($aTempVal[$c2]) ? ' checked="checked"' : '') . ' /><label for="c_' . ($iCheckCont++) . $this->sClave . '">' . $v2 . '</label>';
 							$aElemento['campo'] .= '</span>';
 						}
-						else $aElemento['campo'] .= '<input id="c_' . $iCheckCont . $this->sClave . '" name="' . $this->sClave . '[]" type="checkbox"' . $this->getCss() . ' value="' . $c . '"' . (isset($aTempVal[$c]) ? ' checked="checked"' : '') . ' /><label for="c_' . ($iCheckCont++) . $this->sClave . '">' . $v . '</label>';
+						else $aElemento['campo'] .= '<input id="c_' . $iCheckCont . $this->sClave . '" name="' . $this->sClave . '[]" type="checkbox"' . $this->getCss() . $this->getLongitud() . ' value="' . $c . '"' . (isset($aTempVal[$c]) ? ' checked="checked"' : '') . ' /><label for="c_' . ($iCheckCont++) . $this->sClave . '">' . $v . '</label>';
 					}
 				}
 			}
@@ -940,7 +982,7 @@ class FormazoMultiple extends FormazoElementos {
 		if($this->aDatos['modo'] == 'multiple') $aElemento['campo'] .= '</select>';
 		elseif($this->aDatos['modo'] == 'checkbox') $aElemento['campo'] .= '</span>';
 
-		return($aElemento);
+		return $aElemento;
 	}
 
 }
@@ -962,7 +1004,7 @@ class FormazoPassword extends FormazoElementos {
 		$aElemento['texto'] = $this->getLabel();
 		$aElemento['campo'] = '<input id="' . $this->sClave . $this->sFormNombre . '" name="' . $this->sClave . '" type="password"' . $this->getTabIndex() . $this->getCss() . $this->getLongitud() . $this->getValor() . ' autocomplete="off" />'; //autocomplete="off" es importante para que firefox no rellene con autocompletado (aunque solo funciona en carga de pagina, no cuando se tabula por los campos)
 
-		return($aElemento);
+		return $aElemento;
 	}
 
 }
@@ -981,18 +1023,18 @@ class FormazoRadio extends FormazoElementos {
 	protected function elemento(){
 		$aElemento = array();
 
-		$aElemento['texto'] = '<span>'.$this->aDatos['titulo'].'</span><br />';
+		$aElemento['texto'] = '<span>' . $this->aDatos['titulo'] . '</span><br />';
 		$aElemento['campo'] = '';
 
 		//botones
 		if(count($this->aDatos['valores']) > 0){
 			foreach($this->aDatos['valores'] as $c => $v){
 				$aElemento['campo'] .= '<label for="r_' . $c . $this->sFormNombre . '">' . $v . '</label>&nbsp;';
-				$aElemento['campo'] .= '<input id="r_' . $c . $this->sFormNombre . '" name="' . $this->sClave . '" type="radio"' . $this->getTabIndex() . $this->getCss() . $this->getValor($c) . ' value="' . $c . '" />';
+				$aElemento['campo'] .= '<input id="r_' . $c . $this->sFormNombre . '" name="' . $this->sClave . '" type="radio"' . $this->getTabIndex() . $this->getCss() . $this->getLongitud() . $this->getValor($c) . ' value="' . $c . '" />';
 			}
 		}
 
-		return($aElemento);
+		return $aElemento;
 	}
 
 	protected function getValor($valor = false){
@@ -1032,20 +1074,20 @@ class FormazoSelect extends FormazoElementos {
 			foreach($this->aDatos['valores'] as $c => $v){
 				if($this->aDatos['modo'] == 'select'){
 					if(is_array($v)){
-						$aElemento['campo'] .= '<optgroup label="'.$c.'">';
-						foreach($v as $c2 => $v2) $aElemento['campo'] .= '<option value="'.$c2.'"'.((isset($this->aDatos['valor']) && $this->aDatos['valor'] == $c2)?' selected="selected"':'').'>'.$v2.'</option>';
+						$aElemento['campo'] .= '<optgroup label="' . $c . '">';
+						foreach($v as $c2 => $v2) $aElemento['campo'] .= '<option value="' . $c2 . '"'.((isset($this->aDatos['valor']) && $this->aDatos['valor'] == $c2) ? ' selected="selected"' : '') . '>' . $v2 . '</option>';
 						$aElemento['campo'] .= '</optgroup>';
 					}
 					else
-						$aElemento['campo'] .= '<option value="'.$c.'"'.((isset($this->aDatos['valor']) && $this->aDatos['valor'] == $c)?' selected="selected"':'').'>'.$v.'</option>';
+						$aElemento['campo'] .= '<option value="' . $c . '"' . ((isset($this->aDatos['valor']) && $this->aDatos['valor'] == $c) ? ' selected="selected"' : '').'>' . $v . '</option>';
 				}
 				elseif($this->aDatos['modo'] == 'radio'){
 					if(is_array($v)){
 						$aElemento['campo'] .= '<span>' . $c;
-						foreach($v as $c2 => $v2) $aElemento['campo'] .= '<input id="r_' . $iRadioCont . $this->sClave . '" name="' . $this->sClave . '" type="radio"' . $this->getCss() . ' value="' . $c2 . '"' . ((isset($this->aDatos['valor']) && $this->aDatos['valor'] == $c2) ? ' checked="checked"' : '') . ' /><label for="r_' . ($iRadioCont++) . $this->sClave . '">' . $v2 . '</label>';
+						foreach($v as $c2 => $v2) $aElemento['campo'] .= '<input id="r_' . $iRadioCont . $this->sClave . '" name="' . $this->sClave . '" type="radio"' . $this->getCss() .$this->getLongitud() . ' value="' . $c2 . '"' . ((isset($this->aDatos['valor']) && $this->aDatos['valor'] == $c2) ? ' checked="checked"' : '') . ' /><label for="r_' . ($iRadioCont++) . $this->sClave . '">' . $v2 . '</label>';
 						$aElemento['campo'] .= '</span>';
 					}
-					else $aElemento['campo'] .= '<input id="r_' . $iRadioCont . $this->sClave . '" name="' . $this->sClave . '" type="radio"' . $this->getCss() . ' value="' . $c . '"' . ((isset($this->aDatos['valor']) && $this->aDatos['valor'] == $c) ? ' checked="checked"' : '') . ' /><label for="r_' . ($iRadioCont++) . $this->sClave.'">' . $v . '</label>';
+					else $aElemento['campo'] .= '<input id="r_' . $iRadioCont . $this->sClave . '" name="' . $this->sClave . '" type="radio"' . $this->getCss() . $this->getLongitud() . ' value="' . $c . '"' . ((isset($this->aDatos['valor']) && $this->aDatos['valor'] == $c) ? ' checked="checked"' : '') . ' /><label for="r_' . ($iRadioCont++) . $this->sClave.'">' . $v . '</label>';
 				}
 			}
 		}
@@ -1053,7 +1095,7 @@ class FormazoSelect extends FormazoElementos {
 		if($this->aDatos['modo'] == 'select') $aElemento['campo'] .= '</select>';
 		elseif($this->aDatos['modo'] == 'radio') $aElemento['campo'] .= '</span>';
 
-		return($aElemento);
+		return $aElemento;
 	}
 
 }
@@ -1075,7 +1117,7 @@ class FormazoText extends FormazoElementos {
 		$aElemento['texto'] = $this->getLabel();
 		$aElemento['campo'] = '<input id="' . $this->sClave . $this->sFormNombre . '" name="' . $this->sClave . '" type="text"' . $this->getTabIndex() . $this->getCss() . $this->getLongitud() . $this->getValor() . ' />';
 
-		return($aElemento);
+		return $aElemento;
 	}
 
 }
@@ -1097,7 +1139,7 @@ class FormazoTextarea extends FormazoElementos {
 		$aElemento['texto'] = $this->getLabel();
 		$aElemento['campo'] = '<textarea id="' . $this->sClave . $this->sFormNombre . '" name="' . $this->sClave . '"' . $this->getTabIndex() . $this->getCss() . $this->getLongitud() . ' rows="" cols="">' . $this->getValor() . '</textarea>';
 
-		return($aElemento);
+		return $aElemento;
 	}
 
 	protected function getValor($valor = false){

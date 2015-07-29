@@ -241,10 +241,12 @@ class FormazoProc {
 						$bRet = false; //algun problema con la validacion
 					break;
 				case 'checkbox';
-					if(isset($this->aVariablesRequest[$clave]) && strtolower($this->aVariablesRequest[$clave]) == 'on')
+					/*if(isset($this->aVariablesRequest[$clave]) && strtolower($this->aVariablesRequest[$clave]) == 'on')
 						$this->aCampos[$clave]['valor'] = 1;
 					else
-						$this->aCampos[$clave]['valor'] = 0;
+						$this->aCampos[$clave]['valor'] = 0;*/
+
+					$this->aCampos[$clave]['valor'] = (int) !empty($this->aVariablesRequest[$clave]);
 					break;
 				case 'file':
 					//aqui no se hacen subidas reales, solo se testea la validacion
@@ -452,6 +454,31 @@ class FormazoProc {
 			if(empty($sRutaFicheros)) //ruta de subida invalida
 				return false;
 
+			if(!isset($_FILES[$campo]['error']) || is_array($_FILES[$campo]['error'])){ //indefinido, multiples ficheros en un solo campo, $_FILES Corruption Attack
+				trigger_error('Parametros inválidos', E_USER_ERROR);
+				return false;
+			}
+
+			switch($_FILES[$campo]['error']){
+				case UPLOAD_ERR_OK: //no hay errores
+					break;
+				case UPLOAD_ERR_NO_FILE:
+					trigger_error('No se ha enviado fichero', E_USER_WARNING);
+					return false;
+				case UPLOAD_ERR_INI_SIZE:
+				case UPLOAD_ERR_FORM_SIZE:
+					trigger_error('Fichero demasiado grande', E_USER_WARNING);
+					return false;
+				default:
+					trigger_error('Error desconocido', E_USER_WARNING);
+					return false;
+			}
+
+			if(!empty($this->aCampos[$campo]['longitud']) && $_FILES[$campo]['size'] > $this->aCampos[$campo]['longitud']) { //tamaño de fichero
+				trigger_error('Fichero demasiado grande', E_USER_WARNING);
+				return false;
+			}
+
 			//validando tipo de fichero
 			if(isset($_FILES[$campo]) && !empty($this->aCampos[$campo]['validacion']) && $this->aCampos[$campo]['validacion'] == 'fichero' && isset($this->aCampos[$campo]['modo'])){
 				$tipos = ',' . strtolower($this->aCampos[$campo]['modo']) . ',';
@@ -469,8 +496,15 @@ class FormazoProc {
 			$sTempArchNombre = $_FILES[$campo]['name'];
 			$sTempArchNombre = $this->limpiarNombreFichero($sTempArchNombre);
 
-			if(empty($this->aCampos[$campo]['pisar'])){ //si esta opcion esta a true se elimina el fichero anterior, si existe; "move_uploaded_file" lo hace
+			if(empty($this->aCampos[$campo]['sustituir'])){ //si esta opcion esta a true se elimina el fichero anterior, si existe
 				$sTempArchNombre = $this->renombraArchivo($sTempArchNombre, $sRutaFicheros);
+			}
+			else{
+				if(!empty($this->aCampos[$campo]['valor'])){
+					$sFicheroBorrar = $sRutaFicheros . basename($this->aCampos[$campo]['valor']); //se utiliza basename ya puede recibirse como valor ruta y nombre
+					if(!is_dir($sFicheroBorrar) && is_writable($sFicheroBorrar))
+						unlink($sFicheroBorrar);
+				}
 			}
 
 			if($bTest) //modo verificacion, no se hace subida real
@@ -484,6 +518,15 @@ class FormazoProc {
 					trigger_error('No se puede acceder a la clase de thumbnails [' . $sClassThumbnails . ']', E_USER_WARNING);
 					return false;
 				}
+
+				//se borra el viejo thumbnail
+				if(!empty($this->aCampos[$campo]['sustituir']) && !empty($this->aCampos[$campo]['valor'])){ //si esta opcion esta a true se intenta eliminar el thumbnail anterior, si existe
+					$oThumbnail = new Thumbnazo();
+					$sViejoThumbnail = $oThumbnail->crearNombre(basename($this->aCampos[$campo]['valor']), true);
+
+					if(!is_dir($sRutaFicheros . $sViejoThumbnail) && is_writable($sRutaFicheros . $sViejoThumbnail))
+						unlink($sRutaFicheros . $sViejoThumbnail);
+				}
 			}
 
 			//mover el archivo a su ubicacion definitiva
@@ -494,12 +537,12 @@ class FormazoProc {
 				if(!empty($this->aCampos[$campo]['thumbnail'])){ //se intenta crear thumbnail
 					$aDimensiones = explode('x', $this->aCampos[$campo]['thumbnail']);
 
-					$oThumbnail = new Thumbnazo($sRutaFicheros . $sTempArchNombre, $aDimensiones[0], $aDimensiones[1]);
-					$oThumbnail->crear();
+					$oThumbnail = new Thumbnazo();
+					$oThumbnail->crear($sRutaFicheros . $sTempArchNombre, $aDimensiones[0], $aDimensiones[1]);
 				}
 			}
 			else{
-				trigger_error('No se ha podido subir el fichero [' . $sTempArchNombre . '] a la ruta [' . $sRutaFicheros . ']', E_USER_WARNING);
+				trigger_error('No se ha podido mover el fichero [' . $sTempArchNombre . '] a la ruta [' . $sRutaFicheros . ']', E_USER_WARNING);
 				return false;
 			}
 		}

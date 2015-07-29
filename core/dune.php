@@ -189,11 +189,9 @@ class Dune {
 
 			//si se ha pedido un metodo concreto (valor del parametro modulo) se carga y se le pasan el resto de parametros
 			//TODO eliminar nombres de metodo no permitidos? (construct, destruct, ...)
+			$sMethod = D_METODO_INICIO; //se intenta cargar el metodo por defecto
 			if(isset($_GET[$this->sModulo]) && $_GET[$this->sModulo] != ''){
 				$sMethod = $_GET[$this->sModulo];
-			}
-			else{ //se intenta cargar el metodo por defecto
-				$sMethod = D_METODO_INICIO;
 			}
 
 			if(method_exists($this->oControlazo, $sMethod)){

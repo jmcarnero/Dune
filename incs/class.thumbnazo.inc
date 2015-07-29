@@ -61,7 +61,14 @@ class Thumbnazo {
 	 *
 	 * @todo comprobar tamaño de la imagen original y verificar si hay espacio en memoria para completar el proceso, llamar solo a este procedimiento para todo el proceso (sin incluir dar valores a propiedades)
 	 */
-	public function crear(){
+	public function crear($sImagen = null, $iAncho = false, $iAlto = false){
+		if(!empty($sImagen)){
+			$this->setRutas($sImagen);
+		}
+		if(!empty($iAncho) || !empty($iAlto)){
+			$this->setDimensiones($iAncho, $iAlto);
+		}
+
 		$this->crearRuta();
 		$this->crearNombre();
 
@@ -131,8 +138,16 @@ class Thumbnazo {
 
 	/**
 	 * Crear nombre del thumbnail
+	 *
+	 * @param string $sNombreFichero Nombre del fichero, omitir para tomar el ya asignado a la propiedad
+	 * @param boolean $bPisar Crea el nombre sin tener en cuenta si ya existe (a true)
+	 * return string
 	 */
-	private function crearNombre(){
+	public function crearNombre($sNombreFichero = null, $bPisar = false){
+		if(!empty($sNombreFichero)){
+			$this->sImagen = $sNombreFichero;
+		}
+
 		$iCont = 0;
 
 		$aNombreImagen = explode('.', basename($this->sImagen));
@@ -143,17 +158,18 @@ class Thumbnazo {
 
 		$sNombreFichero = $this->sPrefijo . $sNombre . $this->sSufijo . '.' . $this->sExtension;
 
-		if(file_exists($this->sRuta . $sNombreFichero)){
+		if(!$bPisar && file_exists($this->sRuta . $sNombreFichero)){
 			while(($iCont++) < 1000){
 				$sNombreFichero = $this->sSufijo . $sNombre . $this->sSufijo . '_' . $iCont . '.' . $this->sExtension;
 
-				if(!file_exists($this->sRuta . $sNombreFichero)){ //nombre unico de fichero //TODO pisar anterior?
+				if(!file_exists($this->sRuta . $sNombreFichero)){
 					break;
 				}
 			}
 		}
 
 		$this->sNombre = $sNombreFichero;
+		return $sNombreFichero;
 	}
 
 	/**
