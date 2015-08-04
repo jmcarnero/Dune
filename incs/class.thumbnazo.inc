@@ -44,7 +44,7 @@ class Thumbnazo {
 	private $sRuta; //ruta donde guardar thumbs; si se omite se intenta guardar en la misma de $sImagen
 	private $sSufijo; //sufijo del thumb
 	private $sTipoEscalado; //tipo de escalado de la imagen: 'proporcional' (por defecto, encajara la imagen en el cuadro pasado como ancho y alto, sin deformarla), 'fijo' (ajustara la imagen al ancho y alto pasado, deformandola si no corresponde)
-	
+
 	//constructor
 	function __construct($sImagen = '', $iAncho = 100, $iAlto = 100){
 		$this->libreria();
@@ -88,7 +88,7 @@ class Thumbnazo {
 			default:
 				trigger_error('El formato de imagen [' . $aImgOriginalDatos['tipo'] . '] no está soportado', E_USER_ERROR);
 				return false; //El formato de imagen solicitado no esta soportado actualmente
-	}
+		}
 
 		switch($this->aLibreria['version']){
 			case '1':
@@ -288,7 +288,7 @@ class Thumbnazo {
 
 		if(!empty($iAlto))
 			$this->iAltura = $iAlto;
-			}
+	}
 
 	/**
 	 * Asigna la ruta de la imagen y donde guardar el thumbnail
@@ -300,7 +300,7 @@ class Thumbnazo {
 	public function setRutas($sImagen = '', $sRuta = null){
 		$this->sImagen = $sImagen;
 		$this->sRuta = $sRuta;
-			}
+	}
 
 	/**
 	 * Asigna prefijo y sufijo que se añadiran al nombre de la imagen original para crear el nombre del thumbnail
@@ -309,6 +309,6 @@ class Thumbnazo {
 	public function setSufijos($sPrefijo = '', $sSufijo = '_thb'){
 		$this->sPrefijo = empty($sPrefijo) ? '' : $sPrefijo;
 		$this->sSufijo = empty($sSufijo) ? '' : $sSufijo;
-			}
+	}
 
 }

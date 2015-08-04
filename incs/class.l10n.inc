@@ -934,7 +934,8 @@ class L10n {
 
 		//deteccion automatica de idioma
 		if(empty($lang)){
-			$sAcceptLanguage = empty($_SERVER["HTTP_ACCEPT_LANGUAGE"]) ? $this->aLangDefecto : $_SERVER["HTTP_ACCEPT_LANGUAGE"]; //fuerza un lenguaje por defecto si no detecta ninguno (file_get_contents() no envia cabecera con codigos de lenguaje)
+			//pruebas con servidor REST devuelven la cadena 'null' como lenguaje
+			$sAcceptLanguage = empty($_SERVER["HTTP_ACCEPT_LANGUAGE"]) || $_SERVER["HTTP_ACCEPT_LANGUAGE"] === 'null' ? $this->aLangDefecto : $_SERVER["HTTP_ACCEPT_LANGUAGE"]; //fuerza un lenguaje por defecto si no detecta ninguno (file_get_contents() no envia cabecera con codigos de lenguaje)
 
 			preg_match_all('/(\w{2}(-\w{2})*)(;q=(\d\.\d))*/i', $sAcceptLanguage, $aRes, PREG_SET_ORDER);
 			foreach($aRes as $clave => $valor){

@@ -208,10 +208,12 @@ class Listazo {
 	 */
 	private function eval_buffer($string){
 		global $oResultados, $aGlobalListado, $op;
+
 		ob_start();
 		eval("$string[2]");
 		$ret = ob_get_contents();
 		ob_end_clean();
+
 		return $ret;
 	}
 
@@ -508,7 +510,7 @@ class Listazo {
 			if(!empty($this->aNuevoFiltro) && is_array($this->aNuevoFiltro))
 				$sRet .= implode('', $this->aNuevoFiltro) . "\n";
 
-			$sRet .= '<input type="submit" value="Enviar" name="submit" /></form></div>' . "\n";
+			$sRet .= '<input type="submit" value="' . $this->_t('Enviar') . '" name="submit" /></form></div>' . "\n";
 		}
 
 		if($echo){
@@ -858,6 +860,7 @@ class Listazo {
 	 */
 	protected function tipo(){
 		$aCampos = array(); //opciones de tipo que se buscaran
+
 		foreach($this->aCampos as $clave => $valor){
 			if(!empty($valor['tipos'])) $aCampos[] = $clave;
 		}

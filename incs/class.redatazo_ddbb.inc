@@ -516,13 +516,20 @@ class Redatazo_ddbb implements iRedatazo {
 	 * @todo poner nombre de campos entre ` (tildes graves); decidir si el usuario puede enviar la palabra clave "where"
 	 * @todo condiciones like
 	 * @param string $campo Nombre del campo
-	 * @param string $valor Valor con el que comparar el campo
+	 * @param string $valor Valor con el que comparar el campo o array de valores
 	 * @return boolean
 	 */
 	public function where($campo, $valor = null){
 		$sAux = '';
+
 		if(!empty($valor)){
-			if(is_numeric($valor)){
+			if(is_array($valor)){ //si se pasa un array de valores
+				if(empty($this->aConsulta['where_p'])){
+					$this->aConsulta['where_p'] = array();
+				}
+				$this->aConsulta['where_p'] = array_merge($this->aConsulta['where_p'], $valor);
+			}
+			elseif(is_numeric($valor)){
 				$sAux = " = %u";
 				$this->aConsulta['where_p'][] = $valor;
 			}
@@ -534,6 +541,11 @@ class Redatazo_ddbb implements iRedatazo {
 				$this->aConsulta['where_p'][] = $valor;
 			}
 		}
+
+		if(strpos($campo, ' ') !== false){ //se ha pasado una clausula where, no solo el nombre de campo, el valor (o los valores) si los hay se añadiran al array, pero no se modifica la cadena de $campo
+			$sAux = '';
+		}
+
 		$this->aConsulta['where'][] = $campo . $sAux;
 	}
 

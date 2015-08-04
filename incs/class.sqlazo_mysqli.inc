@@ -496,11 +496,13 @@ class sqlazo_mysqli extends sqlazo_trazabilidad {
 		if(!defined('MYSQLI_ENUM_FLAG')){
 			define('MYSQLI_ENUM_FLAG', 256); // see MySQL source include/mysql_com.h
 		}
+
 		$f = $this->oResultados->fetch_field_direct($i);
 		$type = $f->type;
 		$charsetnr = $f->charsetnr;
 		$f = $f->flags;
 		$flags = '';
+
 		if($f & MYSQLI_UNIQUE_KEY_FLAG)     { $flags .= 'unique ';}
 		if($f & MYSQLI_NUM_FLAG)            { $flags .= 'num ';}
 		if($f & MYSQLI_PART_KEY_FLAG)       { $flags .= 'part_key ';}

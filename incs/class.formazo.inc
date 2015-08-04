@@ -435,6 +435,7 @@ class Formazo {
 			return false;
 		elseif(count($campos)){ //origen array
 			$this->aCampos = array();
+
 			foreach($campos as $clave => $valor){
 				if(isset($valor['tipo'])) //evita procesar campos dedicados exclusivamente al pintado de listados
 					$this->aCampos[$clave] = $valor;
@@ -743,6 +744,7 @@ abstract class FormazoElementos {
 				$ret *= 1024;
 				break;
 		}
+
 		return $ret;
 	}
 
