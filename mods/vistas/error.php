@@ -1,5 +1,5 @@
-<?php if(!defined('DUNE')) die('...'); ?>
-<?php
+<?php if(!defined('DUNE')) die('...error');
+
 $aMod['error'] = array('title' => $this->trad('Incidencia'));
 $sTitle = $aMod['error']['title'];
 $sMetas = '';

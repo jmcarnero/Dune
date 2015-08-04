@@ -67,7 +67,7 @@ class Controlazo {
 		if(is_readable(D_BASE_DIR . D_DIR_LIBS . 'class.l10n.inc')){
 			$sLang = empty($_SESSION['D_idioma']) ? (defined('D_IDIOMA_DEFECTO') ? D_IDIOMA_DEFECTO : false) : $_SESSION['D_idioma'];
 			//internacionalizacion y localizacion de la pagina
-			include_once (D_BASE_DIR . D_DIR_LIBS . 'class.l10n.inc');
+			include_once D_BASE_DIR . D_DIR_LIBS . 'class.l10n.inc';
 			l10n_sel($sLang, false, 'csv', D_BASE_DIR . 'l10n');
 			_locale($sLang);
 			//_trad('clave_test');
@@ -157,11 +157,11 @@ class Controlazo {
 		//intenta cargar el modelo
 		if(is_readable(D_BASE_DIR . D_DIR_MODEL . $sRuta)){
 			include_once(D_BASE_DIR . D_DIR_MODEL . $sRuta);
-		}
 
-		if(class_exists($sModelo)){
-			$this->$sNombre = new $sModelo();
-			return true;
+			if(class_exists($sModelo)){
+				$this->$sNombre = new $sModelo();
+				return true;
+			}
 		}
 
 		return false; //no se ha cargado el modelo o ya estaba cargado //TODO mensaje de error si ha habido problemas en la carga

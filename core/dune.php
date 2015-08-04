@@ -46,6 +46,9 @@ defined('D_MODULO_ERROR') or define('D_MODULO_ERROR', 'error'); //modulo a carga
  * - metodo -> metodo a cargar del modulo pedido; se puede omitir (se intentara cargar D_METODO_INICIO), si no existe se ignora
  * - parametro=valor -> cualquier numero de parametros con o sin valor, en el formato ordinario de una URL (separados por &); pueden recogerse con $_GET, o como parametros del metodo llamado (han de estar declarados en la firma del metodo)
  *
+ * PHP 5 >= 5.1.2
+ * [spl_autoload]
+ *
  * @author José M. Carnero
  * @since 2014-11-23
  * @version 1
@@ -58,7 +61,9 @@ class Dune {
 	protected $bControlador = false; //si true se esta cargando un controlador
 
 	protected $sContenidos = false; //contenidos cargados de la vista/controlador/modelo
-	protected $oControlazo = false; //instancia de la clase controlador
+	protected $oControlazo = null; //instancia de la clase controlador
+
+	protected $oRestazo = null; //instancia de la clase del controlador REST
 
 	/**
 	 * Nombres de ficheros de configuracion, plantilla base, etc.
@@ -74,6 +79,8 @@ class Dune {
 
 	//TODO controlar la existencia y contenido de las constantes (D_BASE_DIR, ...)
 	function __construct(){
+		spl_autoload_register(array('Dune', 'autoload')); //autocarga de clases en demanda
+
 		Dune::baseDir();
 
 		//includes comunes
@@ -94,6 +101,26 @@ class Dune {
 
 		/* final */
 		$this->pintaPagina();
+	}
+
+	//carga automaticamente clases de core
+	//se usa, por ejemplo, para cargar class.restazo.php
+	public static function autoload($sClass){
+		$bLeido = false;
+		$sClass = strtolower($sClass); //por ahora los nombres de las clases van en minusculas
+
+		//es una clase core
+		$sClaseCore = D_BASE_DIR . D_DIR_CORE  . 'class.' . $sClass . '.php';
+		if(is_readable($sClaseCore)){
+			$bLeido = include_once $sClaseCore;
+		}
+
+		/*if(!$bLeido){
+			//clase o ruta desconocida
+			throw new ErrorException('Error fatal: No se puede cargar la clase [' . $sClass . ']');
+		}*/
+
+		return $bLeido;
 	}
 
 	/**
@@ -184,7 +211,12 @@ class Dune {
 
 		//carga el controlador si existe
 		$aux = ucfirst(strtolower($this->sModulo));
-		if(class_exists($aux)){
+		$sParentClass = get_parent_class($aux);
+
+		if($sParentClass == 'Restazo'){ //controlador Restazo
+			$this->oRestazo = new $aux();
+		}
+		elseif(class_exists($aux) && $sParentClass == 'Controlazo'){ //controlador normal
 			$this->oControlazo = new $aux();
 
 			//si se ha pedido un metodo concreto (valor del parametro modulo) se carga y se le pasan el resto de parametros
@@ -246,7 +278,6 @@ class Dune {
 
 	/**
 	 * Compone la pagina y la envia al navegador
-	 *
 	 */
 	private function pintaPagina(){
 		if(!headers_sent($file, $line)){
