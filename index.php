@@ -17,10 +17,12 @@
 # http://www.gnu.org/copyleft/gpl.html
 
 /**
- * NO SE TOCA!
+ * ¡NO SE TOCA!
+ *
+ * DON'T TOUCH!
  *
  * @author José M. Carnero
- * @version 1b
+ * @version 1
  * @license http://www.gnu.org/copyleft/gpl.html
  * @package Dune
  */

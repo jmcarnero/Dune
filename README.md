@@ -6,6 +6,7 @@
 - Ligero.
 - MVC.
 - Desacoplado.
+- REST (beta).
 - Traducción automática de textos.
 
 #Librerías incluidas:
@@ -24,6 +25,7 @@
 - Lightweight.
 - MVC.
 - Decoupled.
+- REST (beta).
 - Translations.
 
 #Included libraries:
