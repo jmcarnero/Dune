@@ -160,7 +160,19 @@ class Restazo extends Controlazo {
 		header('Status: ' . $iCodHTTP);
 		header('Content-Type: application/json');
 
-		//TODO buscar la cabecera de cache y condicionarla a $bCacheable
+		if($bCacheable){
+			$iCacheSegundos = 86400; //86400 son 24 horas
+			$iTimestamp = gmdate("D, d M Y H:i:s", time() + $iCacheSegundos) . " GMT";
+			header('Expires: ' . $iTimestamp);
+			header('Pragma: cache');
+			header('Cache-Control: max-age=' . $iCacheSegundos);
+		}
+		else{
+			header('Expires: Thu, 01 Jan 1970 00:16:40 GMT');
+			header('Cache-Control: no-store, no-cache, must-revalidate'); // HTTP/1.1
+			header('Cache-Control: post-check=0, pre-check=0', false);
+			header('Pragma: no-cache');
+		}
 
 		//datos de salida
 		$sRespuesta = $this->formatea($aDatos);
