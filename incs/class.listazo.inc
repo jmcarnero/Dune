@@ -196,7 +196,7 @@ class Listazo {
 	 * @param string $sCadena Cadena a traducir
 	 * @return string
 	 */
-	private function _t($sCadena){
+	protected function _t($sCadena){
 		return $sCadena;
 	}
 

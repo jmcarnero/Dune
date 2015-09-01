@@ -127,7 +127,7 @@ class Controlazo {
 	}
 
 	/**
-	 * Carga la modelo de datos
+	 * Carga el modelo de datos
 	 * , por defecto el de la propia pagina, que se asignara a $this->oModelo
 	 *
 	 * si $sModelo = 'nombre_modelo'
