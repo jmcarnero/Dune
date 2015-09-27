@@ -74,7 +74,7 @@ class Thumbnazo {
 
 		$aImgOriginalDatos = $this->datosImgOriginal(); //obtiene los datos de la imagen original
 
-		switch($aImgOriginalDatos['tipo']){
+		switch(strtolower($aImgOriginalDatos['tipo'])){
 			case 'jpeg':
 			case 'jpg':
 				$dImg = imagecreatefromjpeg($this->sImagen);
@@ -116,7 +116,7 @@ class Thumbnazo {
 		}
 
 		//guardar imagen
-		switch($this->sExtension){
+		switch(strtolower($this->sExtension)){
 			case 'jpeg':
 			case 'jpg':
 				imagejpeg($dThumb, $this->sRuta . $this->sNombre, 75); //TODO de momento el nivel de calidad no es personalizable
@@ -128,7 +128,7 @@ class Thumbnazo {
 				imagepng($dThumb, $this->sRuta . $this->sNombre);
 				break;
 			default:
-				trigger_error('Libreria ' . $this->aLibreria['lib'] . '[' . $this->aLibreria['version'] . '] no permite guardar imagen', E_USER_ERROR);
+				trigger_error('Extension [' . $this->sExtension . '] no permitida', E_USER_ERROR);
 				return false; //no se ha podido guardar
 		}
 
@@ -139,6 +139,7 @@ class Thumbnazo {
 	/**
 	 * Crear nombre del thumbnail
 	 *
+	 * @todo mejorar la deteccion de extension y creacion de nombre
 	 * @param string $sNombreFichero Nombre del fichero, omitir para tomar el ya asignado a la propiedad
 	 * @param boolean $bPisar Crea el nombre sin tener en cuenta si ya existe (a true)
 	 * return string
@@ -152,9 +153,10 @@ class Thumbnazo {
 
 		$aNombreImagen = explode('.', basename($this->sImagen));
 
-		$sNombre = $aNombreImagen[0]; //nombre de la imagen original, sin extension
+		$sExtension = array_pop($aNombreImagen); //extension
+		$sNombre = implode('.', $aNombreImagen); //nombre de la imagen original, sin extension
 
-		$this->sExtension = empty($this->sExtension) ? $aNombreImagen[1] : $this->sExtension;
+		$this->sExtension = empty($this->sExtension) ? $sExtension : $this->sExtension;
 
 		$sNombreFichero = $this->sPrefijo . $sNombre . $this->sSufijo . '.' . $this->sExtension;
 
@@ -233,8 +235,14 @@ class Thumbnazo {
 	}
 
 	/**
-	 * Version de la libreria GD (si esta)
+	 * Librerias graficas soportadas
 	 *
+	 * @todo de momento solo GD
+	 */
+	private function libreria(){
+		//obtener version de libreria GD (pone propiedad a falso si no hay libreria, condicionales con ===)
+		if(extension_loaded('gd')){
+/*
 'GD Version' => string '2.0.36' (length=6)
 'FreeType Support' => boolean true
 'FreeType Linkage' => string 'with freetype' (length=13)
@@ -247,19 +255,16 @@ class Thumbnazo {
 'XPM Support' => boolean false
 'XBM Support' => boolean false
 'JIS-mapped Japanese Font Support' => boolean false
-	 */
-	private function libreria(){
-		//obtener version de libreria GD (pone propiedad a falso si no hay libreria, condicionales con ===)
-		if(extension_loaded('gd')){
+*/
 			$aGDinfo = gd_info();
 			//$this->aLibreria['version'] = substr(ereg_replace('[[:alpha:][:space:]()]+', '', $aGDinfo['GD Version']), 0, 1);
 
 			$this->aLibreria = array(
 				'lib' => 'GD',
 				'version' => substr(preg_replace('/[[:alpha:][:space:]()]+/im', '', $aGDinfo['GD Version']), 0, 1),
-				'gif' => $aGDinfo['GIF Create Support'],
-				'jpg' => $aGDinfo['JPEG Support'],
-				'png' => $aGDinfo['PNG Support']
+				'gif' => empty($aGDinfo['GIF Create Support']) ? false : $aGDinfo['GIF Create Support'],
+				'jpg' => empty($aGDinfo['JPEG Support']) ? false : $aGDinfo['JPEG Support'],
+				'png' => empty($aGDinfo['PNG Support']) ? false : $aGDinfo['PNG Support']
 			);
 		}
 		else{

@@ -51,7 +51,7 @@ $oListado->pintar();
  * @license http://www.gnu.org/copyleft/gpl.html
  * @package Listazo
  */
-class Listazo {
+class Listazo { //FIXME revisar id's de elementos HTML
 
 	/**
 	 * Campos que se mostraran en el listado
@@ -377,12 +377,12 @@ class Listazo {
 			$this->aParamsUrl[] = 'ListazoOrderBy=' . $this->aVariablesRequest['ListazoOrderBy'];
 		}
 
-		$sTemp = '<div class="' . $this->sCssBase . ' ordenacion"><strong>' . $this->_t('Ordenado por') . ':</strong><br />' . "\n";
-		$sTemp .= '<input type="radio" name="ListazoOrderBy"' . ($this->aVariablesRequest['ListazoOrderBy'] == '' ? ' checked="checked"' : '') . ' value=""/>&nbsp;<label>' . $this->_t('Sin orden') . '</label>' . "\n";
+		$sTemp = '<div class="' . $this->sCssBase . ' ordenacion"><label for="">' . $this->_t('Ordenado por') . ':</label><select name="ListazoOrderBy">' . "\n";
+		$sTemp .= '<option ' . ($this->aVariablesRequest['ListazoOrderBy'] == '' ? ' selected="selected"' : '') . ' value="">' . $this->_t('Sin orden') . '</option>' . "\n";
 		foreach($aCampos as $clave => $valor){
-			$sTemp .= '<span>|</span>&nbsp;&nbsp;<input type="radio" name="ListazoOrderBy"' . ($this->aVariablesRequest['ListazoOrderBy'] == $clave ? ' checked="checked"' : '') . ' value="' . $clave . '"/>&nbsp;&nbsp;<label>' . $this->_t(strip_tags($valor != '' ? $valor : $clave)) . '</label>&nbsp;&nbsp;' . "\n";
+			$sTemp .= '<option ' . ($this->aVariablesRequest['ListazoOrderBy'] == $clave ? ' selected="selected"' : '') . ' value="' . $clave . '">' . $this->_t(strip_tags($valor != '' ? $valor : $clave)) . '</option>' . "\n";
 		}
-		$sTemp .= '</div>' . "\n";
+		$sTemp .= '</select></div>' . "\n";
 		$this->aElementosFormulario['busqueda'][] = $sTemp . "\n";
 
 		return true;
@@ -504,13 +504,14 @@ class Listazo {
 		$sUrl = $this->sUrl . $sUrl;
 
 		if(!empty($this->aElementosFormulario['busqueda'])){ //cajas de busqueda
-			$sRet .= '<div id="Listazo_busqueda"><form id="Listazo_busqueda_form" action="' . $sUrl . '" method="' . $this->sFrmMetodo . '">';
+			$sRet .= '<div class="' . $this->sCssBase . ' busqueda"><form action="' . $sUrl . '" method="' . $this->sFrmMetodo . '">';
 			$sRet .= implode('', $this->aElementosFormulario['busqueda']) . "\n";
 
 			if(!empty($this->aNuevoFiltro) && is_array($this->aNuevoFiltro))
 				$sRet .= implode('', $this->aNuevoFiltro) . "\n";
 
-			$sRet .= '<input type="submit" value="' . $this->_t('Enviar') . '" name="submit" /></form></div>' . "\n";
+			$sRet .= '<p><input type="submit" value="' . $this->_t('Enviar') . '" name="submit" /></p>' . "\n";
+			$sRet .= '</form></div>' . "\n";
 		}
 
 		if($echo){
@@ -531,9 +532,12 @@ class Listazo {
 	 */
 	public function pintarListado($echo = true){
 		$sTemp = '';
-		$sTemp .= '<div id="Listazo_filas">' . "\n";
+		$sTemp .= '<div class="' . $this->sCssBase . ' filas">' . "\n";
 
-		if(!empty($this->aFilas)){
+		if(empty($this->aFilas)){ //no hay filas que pintar, mensaje de vacio
+			$sTemp .= '<p class="fila_primera fila_impar fila_ultima">' . $this->_t('Sin resultados') . '</p>' . "\n";
+		}
+		else{
 			$iNumFilas = count($this->aFilas);
 
 			foreach($this->aFilas as $clave => $valor){ //recorre todas las filas
@@ -594,7 +598,7 @@ class Listazo {
 
 		$sTemp = '';
 
-		$sTemp .= '<div id="Listazo_paginacion">';
+		$sTemp .= '<div class="' . $this->sCssBase . ' paginacion">';
 		$sTemp .= implode('', $this->aElementosFormulario['paginacion']) . "\n";
 		$sTemp .= '</div>';
 

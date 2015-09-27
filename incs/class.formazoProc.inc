@@ -320,7 +320,9 @@ class FormazoProc {
 			}
 
 			foreach($campos as $clave => $valor){
-				if(isset($valor['tipo']) &&  empty($aIgnorarTipos[$valor['tipo']])) $this->aCampos[$clave] = $valor; //evita procesar campos dedicados exclusivamente al pintado de listados y aquellos que son solo decorativos
+				if(isset($valor['tipo']) &&  empty($aIgnorarTipos[$valor['tipo']])){ //evita procesar campos dedicados exclusivamente al pintado de listados y aquellos que son solo decorativos
+					$this->aCampos[$clave] = $valor;
+				}
 			}
 		}
 		/*else{ //vacio, origen desconocido o ya asignado en formazo::setCampos()
