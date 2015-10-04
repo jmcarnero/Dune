@@ -72,7 +72,7 @@ class Redatazo implements iRedatazo {
 					$this->oRedatazo = new Redatazo_ddbb($this->aParametros);
 				}
 				else
-					throw new Exception('Fihcero de Motor [redatazo_ddbb] no disponible');
+					throw new Exception('Fichero de Motor [redatazo_ddbb] no disponible');
 				break;
 			case 'xml':
 				throw new InvalidArgumentException('Motor no implementado');

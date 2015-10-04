@@ -42,7 +42,7 @@ function error_handler($error_number, $error_string, $error_file, $error_line, $
 	return(true);
 }
 //$error_handler = set_error_handler("error_handler"); //si devuelve FALSE se continua con el gestor de errores normal
-set_error_handler("error_handler");
+set_error_handler('error_handler');
 
 /**
  * Manejador de errores (funcion).

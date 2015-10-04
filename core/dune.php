@@ -238,7 +238,7 @@ class Dune {
 
 				if(is_readable($sRutaControlador)){
 					unset($this->oControlazo);
-					include $sRutaControlador;
+					include_once $sRutaControlador; //FIXME en caso de error, ya se ha cargado antes y aqui produce error sin el _once
 
 					$this->oControlazo = new $this->sModulo();
 				}
@@ -291,9 +291,10 @@ class Dune {
 		$this->buscaModulo();
 		$this->cargaControlador();
 
-		/*if(D_DEBUG){
-			echo('uso de traducciones:');print_r(l10n_sel()->getTraduccionUso(-1));
-		}*/
+		if(D_DEBUG){
+			echo('Uso de traducciones:');
+			print_r(l10n_sel()->getTraduccionUso(-1));
+		}
 	}
 
 	/**

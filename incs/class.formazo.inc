@@ -307,12 +307,11 @@ class Formazo {
 		}
 
 		//concluye formulario
-		$this->aFormulario['final']['campo'] = $this->aFormulario['btnSubmit']['campo'];
-		$this->aFormulario['final']['campo'] .= '<input id="formName' . $this->sFormNombre . '" name="formName" type="hidden" value="' . $this->sFormNombre . "\" />\n"; //nombre del formulario se puede utilizar para identificarlo al procesarlo
-		$this->aFormulario['final']['campo'] .= '<input id="tkn' . $this->sFormNombre . '" name="tkn' . $this->sFormNombre . '" type="hidden" value="' . self::token($this->sFormNombre) . "\" />\n"; //token para verificar la integridad del envio
-		$this->aFormulario['final']['campo'] .= "</form>\n";
+		$this->aFormulario['final']['texto'] = $this->aFormulario['btnSubmit']['campo'];
+		$this->aFormulario['final']['texto'] .= '<input id="formName' . $this->sFormNombre . '" name="formName" type="hidden" value="' . $this->sFormNombre . "\" />\n"; //nombre del formulario se puede utilizar para identificarlo al procesarlo
+		$this->aFormulario['final']['texto'] .= '<input id="tkn' . $this->sFormNombre . '" name="tkn' . $this->sFormNombre . '" type="hidden" value="' . self::token($this->sFormNombre) . "\" />\n"; //token para verificar la integridad del envio
 
-		$this->aFormulario['final']['texto'] = '';
+		$this->aFormulario['final']['campo'] = "</form>\n";
 
 		//opcion de aviso antes de salir
 		//TODO avisar que campos han cambiado? y solo avisar si realmente ha habido cambios (depende de tener guardado el valor de inicio)
@@ -402,8 +401,8 @@ class Formazo {
 			else $sHidden .= $valor['campo'];
 		}
 
-		$sEcho .= $this->agrupaElementos($aEcho) . $this->aFormulario['final']['texto'] . $sHidden . $this->aFormulario['final']['campo'];
-		//$sEcho .= implode('', $aEcho) . $this->aFormulario['final']['texto'] . $sHidden . $this->aFormulario['final']['campo'];
+		$sEcho .= $this->agrupaElementos($aEcho);
+		$sEcho .= '<p>' . $this->aFormulario['final']['texto'] . $sHidden . '</p>' . $this->aFormulario['final']['campo'];
 
 		if($echo)
 			echo $sEcho;
