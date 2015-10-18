@@ -24,7 +24,7 @@ if(!defined('DUNE')) die('...');
  *
  * @author José M. Carnero
  * @since 2014-11-17
- * @version 1b
+ * @version 1
  * @license http://www.gnu.org/copyleft/gpl.html
  * @package Dune
  */

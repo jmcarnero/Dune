@@ -119,6 +119,14 @@ class Listazo { //FIXME revisar id's de elementos HTML
 	private $sFrmMetodo;
 
 	/**
+	 * Elementos HTML que se utilizaran en pintado
+	 *
+	 * @var array
+	 * @see Listazo::setHtml($aHtml)
+	 */
+	private $aHtml;
+
+	/**
 	 * Nuevos filtros para la caja de busqueda; se enviaran como parte del formulario
 	 *
 	 * @var array
@@ -185,6 +193,7 @@ class Listazo { //FIXME revisar id's de elementos HTML
 		$this->aElementosFormulario = array('busqueda' => array(), 'filas' => array(), 'paginacion' => array());
 		$this->setUrl();
 		$this->iFilasPag = 0;
+		$this->setHtml();
 
 		$this->setPaginacion(count($aFilas), 20);
 	}
@@ -286,11 +295,11 @@ class Listazo { //FIXME revisar id's de elementos HTML
 		}
 
 		if(count($this->aFilasMostradas) > 1){
-			$sTemp = '<div class="' . $this->sCssBase . ' numFilas"><label for="ListazoBuscCant">' . $this->_t('Ver') . ': </label><select id="ListazoBuscCant" name="ListazoBuscCant">';
+			$sTemp = '<' . $this->aHtml['filasMostradas'] . ' class="' . $this->sCssBase . ' numFilas"><label for="ListazoBuscCant">' . $this->_t('Ver') . ': </label><select id="ListazoBuscCant" name="ListazoBuscCant">';
 			foreach($this->aFilasMostradas as $valor){
 				$sTemp .= '<option value="' . $valor . '"' . ($this->iFilasCant==$valor ? ' selected="selected"' : '') . '>' . $this->_t($valor) . '</option>';
 			}
-			$sTemp .= '</select> ' . $this->_t('Resultados') . '</div>';
+			$sTemp .= '</select> ' . $this->_t('Resultados') . '</' . $this->aHtml['filasMostradas'] . '>';
 			$this->aElementosFormulario['busqueda'][] = $sTemp . "\n";
 		}
 		elseif(count($this->aFilasMostradas) == 1){
@@ -377,12 +386,12 @@ class Listazo { //FIXME revisar id's de elementos HTML
 			$this->aParamsUrl[] = 'ListazoOrderBy=' . $this->aVariablesRequest['ListazoOrderBy'];
 		}
 
-		$sTemp = '<div class="' . $this->sCssBase . ' ordenacion"><label for="">' . $this->_t('Ordenado por') . ':</label><select name="ListazoOrderBy">' . "\n";
+		$sTemp = '<' . $this->aHtml['ordenacion'] . ' class="' . $this->sCssBase . ' ordenacion"><label for="">' . $this->_t('Ordenado por') . ':</label><select name="ListazoOrderBy">' . "\n";
 		$sTemp .= '<option ' . ($this->aVariablesRequest['ListazoOrderBy'] == '' ? ' selected="selected"' : '') . ' value="">' . $this->_t('Sin orden') . '</option>' . "\n";
 		foreach($aCampos as $clave => $valor){
 			$sTemp .= '<option ' . ($this->aVariablesRequest['ListazoOrderBy'] == $clave ? ' selected="selected"' : '') . ' value="' . $clave . '">' . $this->_t(strip_tags($valor != '' ? $valor : $clave)) . '</option>' . "\n";
 		}
-		$sTemp .= '</select></div>' . "\n";
+		$sTemp .= '</select></' . $this->aHtml['ordenacion'] . '>' . "\n";
 		$this->aElementosFormulario['busqueda'][] = $sTemp . "\n";
 
 		return true;
@@ -458,7 +467,7 @@ class Listazo { //FIXME revisar id's de elementos HTML
 			$this->aParamsUrl[] = 'ListazoBuscKeyword=' . $this->aVariablesRequest['ListazoBuscKeyword'];
 		}
 
-		$this->aElementosFormulario['busqueda'][] = '<div class="' . $this->sCssBase . ' palabrasClave"><label for="ListazoBuscKeyword">' . $this->_t('Palabras clave') . ': </label><input id="ListazoBuscKeyword" type="text" name="ListazoBuscKeyword" value="' . $this->aVariablesRequest['ListazoBuscKeyword'] . '" /></div>' . "\n";
+		$this->aElementosFormulario['busqueda'][] = '<' . $this->aHtml['palabrasClave'] . ' class="' . $this->sCssBase . ' palabrasClave"><label for="ListazoBuscKeyword">' . $this->_t('Palabras clave') . ': </label><input id="ListazoBuscKeyword" type="text" name="ListazoBuscKeyword" value="' . $this->aVariablesRequest['ListazoBuscKeyword'] . '" /></' . $this->aHtml['palabrasClave'] . '>' . "\n";
 
 		return true;
 	}
@@ -504,14 +513,14 @@ class Listazo { //FIXME revisar id's de elementos HTML
 		$sUrl = $this->sUrl . $sUrl;
 
 		if(!empty($this->aElementosFormulario['busqueda'])){ //cajas de busqueda
-			$sRet .= '<div class="' . $this->sCssBase . ' busqueda"><form action="' . $sUrl . '" method="' . $this->sFrmMetodo . '">';
+			$sRet .= '<' . $this->aHtml['busqueda'] . ' class="' . $this->sCssBase . ' busqueda"><form action="' . $sUrl . '" method="' . $this->sFrmMetodo . '">';
 			$sRet .= implode('', $this->aElementosFormulario['busqueda']) . "\n";
 
 			if(!empty($this->aNuevoFiltro) && is_array($this->aNuevoFiltro))
 				$sRet .= implode('', $this->aNuevoFiltro) . "\n";
 
 			$sRet .= '<p><input type="submit" value="' . $this->_t('Enviar') . '" name="submit" /></p>' . "\n";
-			$sRet .= '</form></div>' . "\n";
+			$sRet .= '</form></' . $this->aHtml['busqueda'] . '>' . "\n";
 		}
 
 		if($echo){
@@ -532,7 +541,7 @@ class Listazo { //FIXME revisar id's de elementos HTML
 	 */
 	public function pintarListado($echo = true){
 		$sTemp = '';
-		$sTemp .= '<div class="' . $this->sCssBase . ' filas">' . "\n";
+		$sTemp .= '<' . $this->aHtml['listado'] . ' class="' . $this->sCssBase . ' filas">' . "\n";
 
 		if(empty($this->aFilas)){ //no hay filas que pintar, mensaje de vacio
 			$sTemp .= '<p class="fila_primera fila_impar fila_ultima">' . $this->_t('Sin resultados') . '</p>' . "\n";
@@ -547,12 +556,14 @@ class Listazo { //FIXME revisar id's de elementos HTML
 				$sTempClass .= (($clave + 1) == $iNumFilas) ? ' fila_ultima' : '';
 				$sTempClass .= '"';
 
-				$sTemp .= '<div id="Listazo_fila_' . $clave . '"' . $sTempClass . '>' . "\n";
+				$sTemp .= '<' . $this->aHtml['fila'] . ' id="Listazo_fila_' . $clave . '"' . $sTempClass . '>' . "\n";
 				foreach($this->aCampos as $clavef => $valorf){ //recorre los campos de cada fila
 					if(strpos(strtolower($valorf['banderas']), 'l') === false)
 						continue;
 
-					$sTemp .= '<p id="' . $clavef . '_' . $clave . '">';
+					$valorf['tag'] = empty($valorf['tag']) ? 'p' : $valorf['tag'];
+
+					$sTemp .= '<' . $valorf['tag'] . ' id="' . $clavef . '_' . $clave . '">';
 
 					//campos evaluados
 					$sTitulo = empty($valorf['titulo']) ? '' : $valorf['titulo'];
@@ -568,14 +579,14 @@ class Listazo { //FIXME revisar id's de elementos HTML
 					if(!empty($sCampo))
 						$sTemp .= $sTitulo . (empty($valorf['visibleCars']) ? $sCampo : $this->recortarCad($sCampo, $valorf['visibleCars']));
 
-					$sTemp .= '</p>' . "\n";
+					$sTemp .= '</' . $valorf['tag'] . '>' . "\n";
 					if(!empty($valorf['sublistazo']))
 						$sTemp .= $this->sublistado($valorf['sublistazo'], $clave);
 				}
-				$sTemp .= '</div>' . "\n";
+				$sTemp .= '</' . $this->aHtml['fila'] . '>' . "\n";
 			}
 		}
-		$sTemp .= '</div>' . "\n";
+		$sTemp .= '</' . $this->aHtml['listado'] . '>' . "\n";
 
 		if($echo){
 			echo $sTemp;
@@ -642,6 +653,7 @@ class Listazo { //FIXME revisar id's de elementos HTML
 	 * 'nombre_de_campo' => array(
 	 * 	'titulo' => 'Título del campo', //opcional
 	 * 	'campo' => '$field["nombre_de_campo"]', //opcional; necesario si el campo incorpora html o php; si no esta presente se toma la clave del elemento, que es el nombre del propio campo
+	 * 	'tag' => tag HTML que rodeara a este elemento de esta fila, por omision todos se rodean con <p>
 	 * 	'banderas' => 'blo',
 	 * 	'sublistazo' => array('Título' => 'campo_o_evaluado', 'Título 2' => 'campo_o_evaluado'), //opcional
 	 * 	'tipos' => array('Seleccione ...' => '', 'Título de la opcion' => 'valor', 'Título de la opcion 2' => 'valor'), //opcional
@@ -723,6 +735,26 @@ class Listazo { //FIXME revisar id's de elementos HTML
 			}
 			$this->aFilasMostradas[] = (int) round($filas);
 		}
+
+		return true;
+	}
+
+	/**
+	 * Asigna los elementos HTML que se utilizaran en pintado
+	 *
+	 * @since 2015-10-08
+	 * @param array $aHtml Elementos HTML
+	 * @return boolean
+	 */
+	public function setHtml($aHtml = array()){
+		$this->aHtml = $aHtml;
+
+		$this->aHtml['busqueda'] = empty($aHtml['busqueda']) ? 'div' : $aHtml['busqueda']; //caja de busqueda
+		$this->aHtml['fila'] = empty($aHtml['fila']) ? 'div' : $aHtml['fila']; //contenedor de una fila del listado
+		$this->aHtml['filasMostradas'] = empty($aHtml['filasMostradas']) ? 'div' : $aHtml['filasMostradas']; //selector de numero de filas mostradas
+		$this->aHtml['listado'] = empty($aHtml['listado']) ? 'div' : $aHtml['listado']; //contenedor del listado
+		$this->aHtml['ordenacion'] = empty($aHtml['ordenacion']) ? 'div' : $aHtml['ordenacion']; //selector de clave de ordenacion
+		$this->aHtml['palabrasClave'] = empty($aHtml['palabrasClave']) ? 'div' : $aHtml['palabrasClave']; //caja de busqueda de palabras
 
 		return true;
 	}
