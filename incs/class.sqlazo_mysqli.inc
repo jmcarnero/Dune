@@ -30,7 +30,7 @@ include_once("./inc/class.sqlazo.inc");
 include_once("./inc/class.sqlazo_trazabilidad.inc");
 include_once("./inc/class.sqlazo_mysqli.inc");
 
-$oTest = new sqlazo_mysqli(DB_SERVER, DB_USER, DB_PASSWORD, DB_DATABASE);
+$oTest = new SQLazo_mysqli(DB_SERVER, DB_USER, DB_PASSWORD, DB_DATABASE);
 //$oTest->conectar(DB_SERVER, DB_USER, DB_PASSWORD, DB_DATABASE); //se puede omitir si se han pasado los parametros de conexion al constructor
 
 $oTest->consulta("SELECT * FROM _p_usuarios");
@@ -50,7 +50,7 @@ $oTest->desconectar();
  * @license http://www.gnu.org/copyleft/gpl.html
  * @package SQLazo
  */
-class sqlazo_mysqli extends sqlazo_trazabilidad {
+class SQLazo_mysqli extends SQLazo_trazabilidad {
 
 	/**
 	 * Estado de seleccion de base de datos (true, false)
@@ -104,7 +104,7 @@ class sqlazo_mysqli extends sqlazo_trazabilidad {
 	 * (que existe por defecto)
 	 */
 	function __construct($servidor = 'localhost', $usuario = 'root', $password = '', $ddbb = 'test', $puerto = 3306){
-		parent::sqlazo_trazabilidad($servidor, $usuario, $password, $ddbb, $puerto);
+		parent::SQLazo_trazabilidad($servidor, $usuario, $password, $ddbb, $puerto);
 		//$this->oMysqli = mysqli_init(); //nueva instancia de la clase mysqli (propia de PHP)
 		//$this->oMysqli = & new mysqli(); //nueva instancia de la clase mysqli (propia de PHP) // new por referencia "deprecated" en php 5.3
 
@@ -121,29 +121,29 @@ class sqlazo_mysqli extends sqlazo_trazabilidad {
 		$this->sCollation = $this->codificacion('collation');
 
 		$this->setErrorMensaje(array(
-		'sqlazo_mysqli::aseguraQuery1' => 'Numero de parametros incorrecto',
-		'sqlazo_mysqli::aseguraQuery2' => 'No corresponde el tipo de parametro (%%%s (num. %s)) con el valor proporcionado (%s)',
-		'sqlazo_mysqli::aseguraQuery3' => 'Tipo de parametro desconocido: %%%s',
-		'sqlazo_mysqli::conectar1' => 'No se puede conectar a base de datos. Extension MYSQL para PHP no instalada.',
-		'sqlazo_mysqli::conectar2' => 'No se puede conectar a la base de datos <em>%s</em>, error: [%s] %s',
-		'sqlazo_mysqli::conectar3' => 'No se puede crear una instancia del objeto Mysqli.',
-		'sqlazo_mysqli::consulta1' => 'La consulta <em>%s</em> ha generado el error: [%s] %s',
-		'sqlazo_mysqli::consulta2' => 'Tipo de consulta no soportada: %s',
-		'sqlazo_mysqli::consultaInterna' => 'Error ([%s] %s) en la consulta interna: %s',
-		'sqlazo_mysqli::desconectar1' => 'No se puede cerrar la conexion a la base de datos <em>%s</em>, error: [%s] %s',
-		'sqlazo_mysqli::leeFila1' => 'Ning&uacute;n resultado a devolver.',
-		'sqlazo_mysqli::leeFila2' => 'Intenta obtener un array de resultados de una consulta no "SELECT"',
-		'sqlazo_mysqli::leeFilasTodos1' => 'Ning&uacute;n resultado a devolver.',
-		'sqlazo_mysqli::leeFilasTodos2' => 'Intenta obtener un array de resultados de una consulta no "SELECT"',
-		'sqlazo_mysqli::numResultados1' => 'No es posible contar el numero de registros, no se reconoce el tipo de query: %s',
-		'sqlazo_mysqli::query' => 'Numero de parametros incorrecto',
-		'sqlazo_mysqli::recPuntero1' => 'No se ha podido recolocar el puntero debido al error: [%s] %s',
-		'sqlazo_mysqli::seleccionarDDBB1' => 'No se puede seleccionar la base de datos <em>%s</em>, error: [%s] %s',
-		'sqlazo_mysqli::setCodificacion' => 'Error al cargar el juego de caracteres %s: %s',
-		//'sqlazo_mysqli::setCodificacion' => 'No se pudo cambiar el juego de caracteres usado en la conexión',
-		'sqlazo_mysqli::tipoArrayQuery' => 'El tipo de array (<em>%s</em>) que debe devolverse es desconocido',
-		'sqlazo_mysqli::transaccionFinal' => 'No se ha completado correctamente la transacción.',
-		'sqlazo_mysqli::transaccionInicio' => 'No se ha podido iniciar la transacción.'
+		'SQLazo_mysqli::aseguraQuery1' => 'Numero de parametros incorrecto',
+		'SQLazo_mysqli::aseguraQuery2' => 'No corresponde el tipo de parametro (%%%s (num. %s)) con el valor proporcionado (%s)',
+		'SQLazo_mysqli::aseguraQuery3' => 'Tipo de parametro desconocido: %%%s',
+		'SQLazo_mysqli::conectar1' => 'No se puede conectar a base de datos. Extension MYSQL para PHP no instalada.',
+		'SQLazo_mysqli::conectar2' => 'No se puede conectar a la base de datos <em>%s</em>, error: [%s] %s',
+		'SQLazo_mysqli::conectar3' => 'No se puede crear una instancia del objeto Mysqli.',
+		'SQLazo_mysqli::consulta1' => 'La consulta <em>%s</em> ha generado el error: [%s] %s',
+		'SQLazo_mysqli::consulta2' => 'Tipo de consulta no soportada: %s',
+		'SQLazo_mysqli::consultaInterna' => 'Error ([%s] %s) en la consulta interna: %s',
+		'SQLazo_mysqli::desconectar1' => 'No se puede cerrar la conexion a la base de datos <em>%s</em>, error: [%s] %s',
+		'SQLazo_mysqli::leeFila1' => 'Ning&uacute;n resultado a devolver.',
+		'SQLazo_mysqli::leeFila2' => 'Intenta obtener un array de resultados de una consulta no "SELECT"',
+		'SQLazo_mysqli::leeFilasTodos1' => 'Ning&uacute;n resultado a devolver.',
+		'SQLazo_mysqli::leeFilasTodos2' => 'Intenta obtener un array de resultados de una consulta no "SELECT"',
+		'SQLazo_mysqli::numResultados1' => 'No es posible contar el numero de registros, no se reconoce el tipo de query: %s',
+		'SQLazo_mysqli::query' => 'Numero de parametros incorrecto',
+		'SQLazo_mysqli::recPuntero1' => 'No se ha podido recolocar el puntero debido al error: [%s] %s',
+		'SQLazo_mysqli::seleccionarDDBB1' => 'No se puede seleccionar la base de datos <em>%s</em>, error: [%s] %s',
+		'SQLazo_mysqli::setCodificacion' => 'Error al cargar el juego de caracteres %s: %s',
+		//'SQLazo_mysqli::setCodificacion' => 'No se pudo cambiar el juego de caracteres usado en la conexión',
+		'SQLazo_mysqli::tipoArrayQuery' => 'El tipo de array (<em>%s</em>) que debe devolverse es desconocido',
+		'SQLazo_mysqli::transaccionFinal' => 'No se ha completado correctamente la transacción.',
+		'SQLazo_mysqli::transaccionInicio' => 'No se ha podido iniciar la transacción.'
 		));
 	}
 
@@ -180,10 +180,12 @@ class sqlazo_mysqli extends sqlazo_trazabilidad {
 				case 'f': //flotante (F)
 				case 'u': //entero sin signo
 					if(!is_numeric($valor) || is_null($valor)){
-						if(is_null($valor) || $valor == '')
+						if(is_null($valor) || $valor == ''){
 							$pars[$clave] = NULL;
-						else
-							$this->setError(__METHOD__.'2', $aParams[$i], ($i+1), (is_null($valor)?'null':$valor));
+						}
+						else{
+							$this->setError(__METHOD__ . '2', $aParams[$i], ($i + 1), (is_null($valor) ? 'null' : $valor));
+						}
 						//return(false);
 					}
 					break;
@@ -206,7 +208,7 @@ class sqlazo_mysqli extends sqlazo_trazabilidad {
 					}
 					else{
 						if(!get_magic_quotes_gpc())
-							$pars[$clave] = isset($valor)?addslashes($valor):NULL; //escapado generico
+							$pars[$clave] = isset($valor) ? addslashes($valor) : NULL; //escapado generico
 					}
 					break;
 				default:
@@ -239,7 +241,7 @@ class sqlazo_mysqli extends sqlazo_trazabilidad {
 			return false;
 		}
 
-		sqlazo::instCount(); //contador de instancias
+		SQLazo::instCount(); //contador de instancias
 		if($servidor) $this->sDDBBServidor = $servidor;
 		if($usuario) $this->sDDBBUsuario = $usuario;
 		if($clave) $this->sDDBBPassword = $clave;
@@ -284,7 +286,7 @@ class sqlazo_mysqli extends sqlazo_trazabilidad {
 	}
 
 	/**
-	 * Consulta a la base de datos, (si "SELECT", necesita de "sqlazo::leeFila()" para empezar a devolver resultados).
+	 * Consulta a la base de datos, (si "SELECT", necesita de "SQLazo::leeFila()" para empezar a devolver resultados).
 	 *
 	 * @access public
 	 * @param string $query Query SQL
@@ -417,7 +419,7 @@ class sqlazo_mysqli extends sqlazo_trazabilidad {
 
 	/**
 	 * Metodo para consultas internas de la clase.
-	 * Devuelve el array de resultados completo (como "sqlazo::leeFilasTodos()") o falso si ha habido error.
+	 * Devuelve el array de resultados completo (como "SQLazo::leeFilasTodos()") o falso si ha habido error.
 	 *
 	 * @access protected
 	 * @param string $sql Consulta SQL
@@ -456,7 +458,7 @@ class sqlazo_mysqli extends sqlazo_trazabilidad {
 		if(!empty($this->oResultados))
 			@ $this->oResultados->free(); //fuerza liberacion de memoria, solo sirve para "SELECT" (devuelve booleano) //TODO "Warning: mysqli_result::free() [mysqli-result.free]: Couldn't fetch mysqli_result" en ocasiones
 
-		if(sqlazo::instCount(-1) == 0){
+		if(SQLazo::instCount(-1) == 0){
 			//PHP >= 5.2.9
 			if(!$this->oMysqli->close()){
 				if(!$this->bSeleccion){
@@ -608,7 +610,7 @@ class sqlazo_mysqli extends sqlazo_trazabilidad {
 			else{
 				while($this->aFilaTodos[] = $this->oResultados->fetch_array($this->sQueryTipoArray));
 
-				if(empty($this->aFilaTodos[count($this->aFilaTodos)-1])) //el anterior bucle (si todo es correcto) colocara un false en el ultimo elemento, sobra
+				if(empty($this->aFilaTodos[count($this->aFilaTodos) - 1])) //el anterior bucle (si todo es correcto) colocara un false en el ultimo elemento, sobra
 					array_pop($this->aFilaTodos);
 			}
 
@@ -680,7 +682,7 @@ class sqlazo_mysqli extends sqlazo_trazabilidad {
 		$typeAr[MYSQLI_TYPE_GEOMETRY]    = 'unknown';
 		$typeAr[MYSQLI_TYPE_BIT]         = 'bit';
 
-		for($i=0;$i<$this->oMysqli->field_count;$i++){
+		for($i = 0; $i < $this->oMysqli->field_count; $i++){
 			$this->aCampos[$i]['nombre'] = $this->oResultados->fetch_field_direct($i)->name;
 			$this->aCampos[$this->aCampos[$i]['nombre']]['pos'] = $i;
 			$this->aCampos[$this->aCampos[$i]['nombre']]['tipo'] = $this->aCampos[$i]['tipo'] = $typeAr[$this->oResultados->fetch_field_direct($i)->type];
@@ -767,13 +769,13 @@ class sqlazo_mysqli extends sqlazo_trazabilidad {
 	 * @return void
 	 */
 	public function query($query, $pars = array(), $cantidad = 0, $inicial = 0){
-		$inicial = is_numeric($inicial)?$inicial:0;
-		$cantidad = is_numeric($cantidad)?$cantidad:0;
+		$inicial = is_numeric($inicial) ? $inicial : 0;
+		$cantidad = is_numeric($cantidad) ? $cantidad : 0;
 
 		//elimina tags html y php de los parametros de la consulta
 		//si los parametros no van en el array "pars" no tiene efecto
 		if($this->sTagsPermitidosIns != 'todos'){
-			for($i=0;$i<count($pars);$i++){
+			for($i = 0; $i < count($pars); $i++){
 				if(isset($pars[$i])) $pars[$i] = strip_tags($pars[$i], $this->sTagsPermitidosIns);
 			}
 		}
@@ -852,7 +854,7 @@ class sqlazo_mysqli extends sqlazo_trazabilidad {
 		}
 
 		//codificacion en que se lanzaran las consultas a la base de datos
-		if(sqlazo::instCount(0) == 1 && $this->sCharset != '')
+		if(SQLazo::instCount(0) == 1 && $this->sCharset != '')
 			$this->setCodificacion($this->sCharset, $this->sCollation);
 
 		return $this->bSeleccion;

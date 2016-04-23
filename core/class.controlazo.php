@@ -69,7 +69,8 @@ class Controlazo {
 			//internacionalizacion y localizacion de la pagina
 			include_once D_BASE_DIR . D_DIR_LIBS . 'class.l10n.inc';
 			l10n_sel($sLang, false, 'csv', D_BASE_DIR . 'l10n');
-			_locale($sLang);
+			$sLocale = _locale($sLang);
+			//var_dump($sLocale, date_default_timezone_get());
 			//_trad('clave_test');
 		}
 
@@ -99,7 +100,7 @@ class Controlazo {
 	 * @todo restringir nombres en uso de Dune para valores de $sLib
 	 * @param string $sLib Nombre de la libreria a cargar; corresponde a nombres de clases en el directorio de librerias
 	 * @param array $aParametros Array de parametros a pasar al nuevo constructor
-	 * @param string $sNombre Nombre con que se instanciara la clase para ser usada en siguientes llamadas, por defecto el mismo que $lib
+	 * @param string $sNombre Nombre con que se instanciara la clase para ser usada en siguientes llamadas, por defecto el mismo que $sLib
 	 * @return boolean True si se ha cargado correctamente, false si no
 	 */
 	protected function carga($sLib = null, $aParametros = array(), $sNombre = null){
@@ -182,8 +183,9 @@ class Controlazo {
 		$aSGlobal = array('_POST', '_GET', '_SESSION', '_REQUEST'); //lista de super globales en los que buscar $clave, devuelve el primero que corresponda (en el orden de este array), a no ser que se pida $sglobal
 
 		if(in_array($sGlobal, $aSGlobal)){
-			if(!empty($sGlobal) && isset($GLOBALS["$sGlobal"][$sClave]))
+			if(!empty($sGlobal) && isset($GLOBALS["$sGlobal"][$sClave])){
 				$sRet = $GLOBALS["$sGlobal"][$sClave];
+			}
 		}
 		else{
 			foreach($aSGlobal as $global){
@@ -273,13 +275,13 @@ class Controlazo {
 		if(empty($this->sModulo) && stripos(basename($file), __CLASS__) > 0) $this->sModulo = __CLASS__;
 	}
 
-	 //traduccion de textos
-	protected function trad($cadena = ''){
+	//traduccion de textos
+	protected function trad($sCadena = ''){
 		if(function_exists('_tradR')){
-			$cadena = _tradR($cadena);
+			$sCadena = _tradR($sCadena);
 		}
 
-		return $cadena;
+		return $sCadena;
 	}
 
 }

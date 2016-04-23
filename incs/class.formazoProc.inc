@@ -68,7 +68,7 @@ class FormazoProc {
 	 * Exactamente lo mismo que se use para generarlo/pintarlo, ver class.formazo.inc
 	 *
 	 * @var array
-	 * @see FormazoProc::setCampos($campos)
+	 * @see FormazoProc::setCampos($aCampos)
 	 */
 	private $aCampos;
 
@@ -101,7 +101,7 @@ class FormazoProc {
 	 * En este array se recoge el de GET o POST, segun el que se haya utilizado para llegar a esta pagina; si no se queda con un array vacio
 	 *
 	 * @var array
-	 * @see FormazoProc::getValor($campo),FormazoProc::setRequest()
+	 * @see FormazoProc::getValor($sCampo),FormazoProc::setRequest()
 	 */
 	private $aVariablesRequest;
 
@@ -152,14 +152,16 @@ class FormazoProc {
 	 * Recupera valores de campos, para rellenarlos (por ejemplo)
 	 *
 	 * @since 2015-05-17
-	 * @param string $campo Nombre del campo
+	 * @param string $sCampo Nombre del campo
 	 * @return mixed Si se pide un campo devuelve su valor (null si no se encuentra el nombre del campo), si no se devuelve un array con todos los valores
 	 */
-	public function getValor($campo = null){
-		if(empty($campo))
+	public function getValor($sCampo = null){
+		if(empty($sCampo)){
 			return $this->aVariablesRequest;
-		elseif(!empty($this->aVariablesRequest[$campo])){
-			return $this->aVariablesRequest[$campo];
+		}
+		//elseif(!empty($this->aVariablesRequest[$sCampo])){
+		elseif(isset($this->aVariablesRequest[$sCampo])){
+			return $this->aVariablesRequest[$sCampo];
 		}
 
 		return null;
@@ -213,7 +215,6 @@ class FormazoProc {
 			return false;
 		}
 
-
 		return $this->procesarValores(); //si false ha habido errores en la recuperacion de valores del formulario
 	}
 
@@ -237,8 +238,9 @@ class FormazoProc {
 				case 'select';
 				case 'text':
 				case 'textarea':
-					if(!$this->valida($clave, isset($valor['validacion']) ? $valor['validacion'] : '', isset($valor['obligatorio']) ? $valor['obligatorio'] : 0))
+					if(!$this->valida($clave, isset($valor['validacion']) ? $valor['validacion'] : '', isset($valor['obligatorio']) ? $valor['obligatorio'] : 0)){
 						$bRet = false; //algun problema con la validacion
+					}
 					break;
 				case 'checkbox';
 					/*if(isset($this->aVariablesRequest[$clave]) && strtolower($this->aVariablesRequest[$clave]) == 'on')
@@ -289,7 +291,7 @@ class FormazoProc {
 			preg_match_all('/.*?(\d+)/i', $nombre, $nums, PREG_PATTERN_ORDER);
 			if(count($nums[1])){ //se ha encontrado una cadena numerica, se usara la ultima encontrada para el siguiente sumatorio para hacer diferente el nombre de fichero
 				$num = array_pop($nums[1]);
-				$nums[0][count($nums[0])-1] = str_replace($num, '', $nums[0][count($nums[0])-1]);
+				$nums[0][count($nums[0]) - 1] = str_replace($num, '', $nums[0][count($nums[0]) - 1]);
 				$nombre = implode('', $nums[0]); //nombre del fichero, sin extension y sin el numero final encontrado
 				$num++;
 			}
@@ -305,23 +307,23 @@ class FormazoProc {
 	 * Recoge y prepara los campos que formaran el formulario
 	 *
 	 * @since 2011-07-20
-	 * @param array $campos Array (o texto xml) con los campos que formaran el formulario
+	 * @param array $aCampos Array (o texto xml) con los campos que formaran el formulario
 	 * @return boolean
 	 */
-	public function setCampos($campos = array()){
+	public function setCampos($aCampos = array()){
 		//tipos que se ignoran en procesado (si esta a true)
 		$aIgnorarTipos = array('checkbox' => false, 'file' => false, 'group' => true, 'heading' => true, 'hidden' => false, 'multiple' => false, 'password' => false, 'radio' => false, 'select' => false, 'text' => false, 'textarea' => false);
 
-		if(count($campos)){ //origen array
+		if(count($aCampos)){ //origen array
 			$this->aCampos = array();
-			if(!is_array($campos)){
+			if(!is_array($aCampos)){
 				trigger_error('Matriz de campos NO válida', E_USER_WARNING);
 				return false;
 			}
 
-			foreach($campos as $clave => $valor){
-				if(isset($valor['tipo']) &&  empty($aIgnorarTipos[$valor['tipo']])){ //evita procesar campos dedicados exclusivamente al pintado de listados y aquellos que son solo decorativos
-					$this->aCampos[$clave] = $valor;
+			foreach($aCampos as $sClave => $aValor){
+				if(isset($aValor['tipo']) &&  empty($aIgnorarTipos[$aValor['tipo']])){ //evita procesar campos dedicados exclusivamente al pintado de listados y aquellos que son solo decorativos
+					$this->aCampos[$sClave] = $aValor;
 				}
 			}
 		}
@@ -399,7 +401,7 @@ class FormazoProc {
 	 * @return boolean
 	 */
 	public function setFormNombre($nombre = false){
-		$this->sFormNombre = empty($nombre)?(isset($this->aVariablesRequest['frmFormName']) && $this->aVariablesRequest['frmFormName'] != ''?$this->aVariablesRequest['frmFormName']:false):$nombre;
+		$this->sFormNombre = empty($nombre) ? ((isset($this->aVariablesRequest['frmFormName']) && $this->aVariablesRequest['frmFormName'] != '') ? $this->aVariablesRequest['frmFormName'] : false) : $nombre;
 
 		return true;
 	}
@@ -444,24 +446,25 @@ class FormazoProc {
 	/**
 	 * Sube ficheros
 	 *
-	 * @param string $campo Clave del campo que contiene el fichero a subir
+	 * @param string $sCampo Clave del campo que contiene el fichero a subir
 	 * @param boolean $bTest Si true no sube el fichero realmente, solo comprueba que puede subirse; esto es util para verificar la validacion
 	 * @return boolean
 	 */
-	private function subeArchivo($campo, $bTest = false){
+	private function subeArchivo($sCampo, $bTest = false){
 		$bTest = !empty($bTest);
 
-		if(isset($_FILES[$campo]) && is_uploaded_file($_FILES[$campo]['tmp_name'])){
-			$sRutaFicheros = $this->setRutaFicheros($this->aCampos[$campo]['rutaFichero']);
-			if(empty($sRutaFicheros)) //ruta de subida invalida
+		if(isset($_FILES[$sCampo]) && is_uploaded_file($_FILES[$sCampo]['tmp_name'])){
+			$sRutaFicheros = $this->setRutaFicheros($this->aCampos[$sCampo]['rutaFichero']);
+			if(empty($sRutaFicheros)){ //ruta de subida invalida
 				return false;
+			}
 
-			if(!isset($_FILES[$campo]['error']) || is_array($_FILES[$campo]['error'])){ //indefinido, multiples ficheros en un solo campo, $_FILES Corruption Attack
+			if(!isset($_FILES[$sCampo]['error']) || is_array($_FILES[$sCampo]['error'])){ //indefinido, multiples ficheros en un solo campo, $_FILES Corruption Attack
 				trigger_error('Parametros inválidos', E_USER_ERROR);
 				return false;
 			}
 
-			switch($_FILES[$campo]['error']){
+			switch($_FILES[$sCampo]['error']){
 				case UPLOAD_ERR_OK: //no hay errores
 					break;
 				case UPLOAD_ERR_NO_FILE:
@@ -476,17 +479,17 @@ class FormazoProc {
 					return false;
 			}
 
-			if(!empty($this->aCampos[$campo]['longitud']) && $_FILES[$campo]['size'] > $this->aCampos[$campo]['longitud']) { //tamaño de fichero
+			if(!empty($this->aCampos[$sCampo]['longitud']) && $_FILES[$sCampo]['size'] > $this->aCampos[$sCampo]['longitud']) { //tamaño de fichero
 				trigger_error('Fichero demasiado grande', E_USER_WARNING);
 				return false;
 			}
 
 			//validando tipo de fichero
-			if(isset($_FILES[$campo]) && !empty($this->aCampos[$campo]['validacion']) && $this->aCampos[$campo]['validacion'] == 'fichero' && isset($this->aCampos[$campo]['modo'])){
-				$tipos = ',' . strtolower($this->aCampos[$campo]['modo']) . ',';
-				$fileExt = strrpos($_FILES[$campo]['name'], '.');
+			if(isset($_FILES[$sCampo]) && !empty($this->aCampos[$sCampo]['validacion']) && $this->aCampos[$sCampo]['validacion'] == 'fichero' && isset($this->aCampos[$sCampo]['modo'])){
+				$tipos = ',' . strtolower($this->aCampos[$sCampo]['modo']) . ',';
+				$fileExt = strrpos($_FILES[$sCampo]['name'], '.');
 				if($fileExt === false) $fileExt = '';
-				else $fileExt = strtolower(substr($_FILES[$campo]['name'], $fileExt + 1));
+				else $fileExt = strtolower(substr($_FILES[$sCampo]['name'], $fileExt + 1));
 
 				if(strpos($tipos, ',' . $fileExt . ',') === false){
 					trigger_error('Tipo de fichero no permitido [' . $fileExt . ']', E_USER_WARNING);
@@ -495,24 +498,25 @@ class FormazoProc {
 			}
 
 			//limpiando y preparando nombre
-			$sTempArchNombre = $_FILES[$campo]['name'];
+			$sTempArchNombre = $_FILES[$sCampo]['name'];
 			$sTempArchNombre = $this->limpiarNombreFichero($sTempArchNombre);
 
-			if(empty($this->aCampos[$campo]['sustituir'])){ //si esta opcion esta a true se elimina el fichero anterior, si existe
+			if(empty($this->aCampos[$sCampo]['sustituir'])){ //si esta opcion esta a true se elimina el fichero anterior, si existe
 				$sTempArchNombre = $this->renombraArchivo($sTempArchNombre, $sRutaFicheros);
 			}
 			else{
-				if(!empty($this->aCampos[$campo]['valor'])){
-					$sFicheroBorrar = $sRutaFicheros . basename($this->aCampos[$campo]['valor']); //se utiliza basename ya puede recibirse como valor ruta y nombre
+				if(!empty($this->aCampos[$sCampo]['valor'])){
+					$sFicheroBorrar = $sRutaFicheros . basename($this->aCampos[$sCampo]['valor']); //se utiliza basename ya puede recibirse como valor ruta y nombre
 					if(!is_dir($sFicheroBorrar) && is_writable($sFicheroBorrar))
 						unlink($sFicheroBorrar);
 				}
 			}
 
-			if($bTest) //modo verificacion, no se hace subida real
+			if($bTest){ //modo verificacion, no se hace subida real
 				return true;
+			}
 
-			if(!empty($this->aCampos[$campo]['thumbnail'])){ //si se ha solicitado thumbnail comprueba si se puede crear
+			if(!empty($this->aCampos[$sCampo]['thumbnail'])){ //si se ha solicitado thumbnail comprueba si se puede crear
 				$sClassThumbnails = 'class.thumbnazo.inc';
 
 				@include_once(CLASSES_DIR . '/' . $sClassThumbnails);
@@ -522,9 +526,9 @@ class FormazoProc {
 				}
 
 				//se borra el viejo thumbnail
-				if(!empty($this->aCampos[$campo]['sustituir']) && !empty($this->aCampos[$campo]['valor'])){ //si esta opcion esta a true se intenta eliminar el thumbnail anterior, si existe
+				if(!empty($this->aCampos[$sCampo]['sustituir']) && !empty($this->aCampos[$sCampo]['valor'])){ //si esta opcion esta a true se intenta eliminar el thumbnail anterior, si existe
 					$oThumbnail = new Thumbnazo();
-					$sViejoThumbnail = $oThumbnail->crearNombre(basename($this->aCampos[$campo]['valor']), true);
+					$sViejoThumbnail = $oThumbnail->crearNombre(basename($this->aCampos[$sCampo]['valor']), true);
 
 					if(!is_dir($sRutaFicheros . $sViejoThumbnail) && is_writable($sRutaFicheros . $sViejoThumbnail))
 						unlink($sRutaFicheros . $sViejoThumbnail);
@@ -532,12 +536,12 @@ class FormazoProc {
 			}
 
 			//mover el archivo a su ubicacion definitiva
-			if(@move_uploaded_file($_FILES[$campo]['tmp_name'], $sRutaFicheros . $sTempArchNombre)){
-				$this->aCampos[$campo]['valor'] = $sTempArchNombre; //guardado del nombre del fichero subido
+			if(@move_uploaded_file($_FILES[$sCampo]['tmp_name'], $sRutaFicheros . $sTempArchNombre)){
+				$this->aCampos[$sCampo]['valor'] = $sTempArchNombre; //guardado del nombre del fichero subido
 
 				//TODO thumbnail debe tener como valor ancho y alto del thumbnail (100x120, ej)
-				if(!empty($this->aCampos[$campo]['thumbnail'])){ //se intenta crear thumbnail
-					$aDimensiones = explode('x', $this->aCampos[$campo]['thumbnail']);
+				if(!empty($this->aCampos[$sCampo]['thumbnail'])){ //se intenta crear thumbnail
+					$aDimensiones = explode('x', $this->aCampos[$sCampo]['thumbnail']);
 
 					$oThumbnail = new Thumbnazo();
 					$oThumbnail->crear($sRutaFicheros . $sTempArchNombre, $aDimensiones[0], $aDimensiones[1]);
@@ -556,18 +560,18 @@ class FormazoProc {
 	 * Recoge y valida los datos del formulario
 	 *
 	 * @todo validaciones de "multiple"
-	 * @param string $campo Nombre de campo del formulario
-	 * @param string $validacion Validación
-	 * @param string $obligatorio Obligatorio
+	 * @param string $sCampo Nombre de campo del formulario
+	 * @param string $sValidacion Validación
+	 * @param string $sObligatorio Obligatorio
 	 * @return boolean
 	 */
-	private function valida($campo, $validacion = '-', $obligatorio = 0){
+	private function valida($sCampo, $sValidacion = '-', $sObligatorio = 0){
 		$bRet = true;
 
 		//obligatorio
-		if($obligatorio == 1){
-			if(!isset($this->aVariablesRequest[$campo]) || $this->aVariablesRequest[$campo] == ''){
-				$this->setError(__METHOD__.'_2', $campo);
+		if($sObligatorio == 1){
+			if(!isset($this->aVariablesRequest[$sCampo]) || $this->aVariablesRequest[$sCampo] == ''){
+				$this->setError(__METHOD__.'_2', $sCampo);
 				$bRet = false;
 			}
 		}
@@ -575,13 +579,14 @@ class FormazoProc {
 		//TODO longitud maxima
 
 		//validaciones
-		if(!empty($this->aVariablesRequest[$campo])){ //obligatorio ya se controla mas arriba
-			$sTempPost = $this->aVariablesRequest[$campo];
+		$bCampoTest = isset($this->aVariablesRequest[$sCampo]) ? (is_array($this->aVariablesRequest[$sCampo]) ? !empty($this->aVariablesRequest[$sCampo]) : ((string) $this->aVariablesRequest[$sCampo]) !== '') : false;
+		if($bCampoTest){ //obligatorio ya se controla mas arriba; no vale empty, 0 no se comprobaria
+			$sTempPost = $this->aVariablesRequest[$sCampo];
 
-			switch($validacion){
+			switch($sValidacion){
 				case 'bic': //codigo bancario BIC/SWIFT
 					if(!$this->validaBicSwift($sTempPost)){
-						$this->setError(__METHOD__ . '_' . $validacion, $campo);
+						$this->setError(__METHOD__ . '_' . $sValidacion, $sCampo);
 						$bRet = false;
 					}
 					break;
@@ -589,38 +594,38 @@ class FormazoProc {
 					break;
 				case 'email':
 					if(!$this->validaEmail($sTempPost)){
-						$this->setError(__METHOD__ . '_' . $validacion, $campo);
+						$this->setError(__METHOD__ . '_' . $sValidacion, $sCampo);
 						$bRet = false;
 					}
 					break;
 				case 'entero':
-					if($this->validaNumero($sTempPost, 'int')){
-						$this->setError(__METHOD__ . '_' . $validacion, $campo);
+					if(!$this->validaNumero($sTempPost, 'int')){
+						$this->setError(__METHOD__ . '_' . $sValidacion, $sCampo);
 						$bRet = false;
 					}
 					break;
 				case 'fecha':
-					$formato = 'yyyy-mm-dd';
-					if(!$this->validaFecha($sTempPost, $formato)){
-						$this->setError(__METHOD__ . '_' . $validacion, $campo, $formato);
+					$sFormato = 'yyyy-mm-dd';
+					if(!$this->validaFecha($sTempPost, $sFormato)){
+						$this->setError(__METHOD__ . '_' . $sValidacion, $sCampo, $sFormato);
 						$bRet = false;
 					}
 					break;
 				case 'iban': //codigo bancario IBAN
 					if(!$this->validaIban($sTempPost)){
-						$this->setError(__METHOD__ . '_' . $validacion, $campo);
+						$this->setError(__METHOD__ . '_' . $sValidacion, $sCampo);
 						$bRet = false;
 					}
 					break;
 				case 'nif':
 					if($this->validaNif($sTempPost) <= 0){
-						$this->setError(__METHOD__ . '_' . $validacion, $campo);
+						$this->setError(__METHOD__ . '_' . $sValidacion, $sCampo);
 						$bRet = false;
 					}
 					break;
 				case 'numerico':
-					if($this->validaNumero($sTempPost)){
-						$this->setError(__METHOD__ . '_' . $validacion, $campo);
+					if(!$this->validaNumero($sTempPost)){
+						$this->setError(__METHOD__ . '_' . $sValidacion, $sCampo);
 						$bRet = false;
 					}
 					break;
@@ -628,7 +633,7 @@ class FormazoProc {
 					break;
 				case 'url':
 					if(!$this->validaUrl($sTempPost)){
-						$this->setError(__METHOD__ . '_' . $validacion, $campo);
+						$this->setError(__METHOD__ . '_' . $sValidacion, $sCampo);
 						$bRet = false;
 					}
 					break;
@@ -636,7 +641,7 @@ class FormazoProc {
 					//no se hace validacion
 			}
 
-			$this->aCampos[$campo]['valor'] = $sTempPost;
+			$this->aCampos[$sCampo]['valor'] = $sTempPost;
 		}
 
 		return $bRet;
@@ -652,13 +657,13 @@ The latest edition is ISO 9362:2009 (dated 2009-10-01). The SWIFT code is 8 or 1
 if the second character is "0", then it is typically a test BIC as opposed to a BIC used on the live network. if the second character is "1", then it denotes a passive participant in the SWIFT network if the second character is "2", then it typically indicates a reverse billing BIC, where the recipient pays for the message as opposed to the more usual mode whereby the sender pays for the message. 3 letters or digits: branch code, optional ('XXX' for primary office)
 	 *
 	 * @since 2015-05-31
-	 * @param string $value Valor a evaluar
+	 * @param string $sValor Valor a evaluar
 	 * @return boolean
 	 */
-	private function validaBicSwift($value){
+	private function validaBicSwift($sValor){
 		$bRet = true;
 
-		$bRet = preg_match('/^[a-z]{6}[0-9a-z]{2}([0-9a-z]{3})?$/i', trim($value));
+		$bRet = preg_match('/^[a-z]{6}[0-9a-z]{2}([0-9a-z]{3})?$/i', trim($sValor));
 
 		return $bRet;
 	}
@@ -666,16 +671,18 @@ if the second character is "0", then it is typically a test BIC as opposed to a 
 	/**
 	 * Comprobar la validez de direcciones Email
 	 *
-	 * @param string $value Valor a evaluar
+	 * @param string $sValor Valor a evaluar
 	 * @return boolean
 	 */
-	private function validaEmail($value){
+	private function validaEmail($sValor){
 		$bRet = true;
 
-		if(function_exists('filter_var')) //filtrado PHP (>= 5.2.0) nativo
-			$bRet = filter_var($value, FILTER_VALIDATE_EMAIL);
-		else
-			$bRet = preg_match('/\A([-a-zA-Z0-9_.])+\@(([-a-zA-Z0-9])+\.)+([a-zA-Z0-9]{2,4})+\Z/i', $value);
+		if(function_exists('filter_var')){ //filtrado PHP (>= 5.2.0) nativo
+			$bRet = filter_var($sValor, FILTER_VALIDATE_EMAIL);
+		}
+		else{
+			$bRet = preg_match('/\A([-a-zA-Z0-9_.])+\@(([-a-zA-Z0-9])+\.)+([a-zA-Z0-9]{2,4})+\Z/i', $sValor);
+		}
 
 		return $bRet;
 	}
@@ -693,32 +700,32 @@ if the second character is "0", then it is typically a test BIC as opposed to a 
 	 *
 	 * @todo cambiar el formato del dato si no es el que acepta la base de datos
 	 * @todo incluir la validacion de HH:mm:ss
-	 * @param string $value The variable being evaluated.
-	 * @param string $format Format of the date. Any combination of mm, dd, yyyy with single character separator between.
+	 * @param string $sValor The variable being evaluated.
+	 * @param string $sFormato Format of the date. Any combination of mm, dd, yyyy with single character separator between.
 	 * @return boolean
 	 */
-	private function validaFecha($value, $format = 'yyyy-mm-dd'){
+	private function validaFecha($sValor, $sFormato = 'yyyy-mm-dd'){
 		/*$iFecha = (int) @strtotime($sFecha);
 		if($iFecha < 1){*/
 
-		if(strlen($value) == 10 && strlen($format) == 10){
+		if(strlen($sValor) == 10 && strlen($sFormato) == 10){
 
 			//find separator. Remove all other characters from $format
-			$separator_only = str_replace(array('m','d','y'),'', $format);
-			$separator = $separator_only[0]; // separator is first character
+			$sSeparatorOnly = str_replace(array('m','d','y'),'', $sFormato);
+			$sSeparator = $sSeparatorOnly[0]; // separator is first character
 
-			if($separator && strlen($separator_only) == 2){
+			if($sSeparator && strlen($sSeparatorOnly) == 2){
 				// make regex
-				$regexp = str_replace('mm', '[0-1][0-9]', $value);
-				$regexp = str_replace('dd', '[0-3][0-9]', $value);
-				$regexp = str_replace('yyyy', '[0-9]{4}', $value);
-				$regexp = str_replace($separator, "\\" . $separator, $value);
+				$regexp = str_replace('mm', '[0-1][0-9]', $sValor);
+				$regexp = str_replace('dd', '[0-3][0-9]', $sValor);
+				$regexp = str_replace('yyyy', '[0-9]{4}', $sValor);
+				$regexp = str_replace($sSeparator, "\\" . $sSeparator, $sValor);
 
-				if($regexp != $value && preg_match('/'.$regexp.'/', $value)){
+				if($regexp != $sValor && preg_match('/'.$regexp.'/', $sValor)){
 					// check date
-					$day = substr($value,strpos($format, 'd'),2);
-					$month = substr($value,strpos($format, 'm'),2);
-					$year = substr($value,strpos($format, 'y'),4);
+					$day = substr($sValor,strpos($sFormato, 'd'),2);
+					$month = substr($sValor,strpos($sFormato, 'm'),2);
+					$year = substr($sValor,strpos($sFormato, 'y'),4);
 
 					if(@checkdate($month, $day, $year)) return true;
 				}
@@ -814,23 +821,30 @@ if the second character is "0", then it is typically a test BIC as opposed to a 
 	 * con la condicion de que el autor jamas sera responsable de su uso.
 	 * Returns: 1 = NIF ok, 2 = CIF ok, 3 = NIE ok, -1 = NIF bad, -2 = CIF bad, -3 = NIE bad, false = ??? bad
 	 *
-	 * @param string $cif CIF/NIF/NIE
+	 * @param string $sCif CIF/NIF/NIE
 	 * @return integer
 	 */
-	private function validaNif($cif){
-		$cif = strtoupper($cif);
+	private function validaNif($sCif){ //TODO revisar valores devueltos y en que caso es error
+		$sCif = strtoupper($sCif);
 
-		for($i = 0; $i < 9; $i ++) $num[$i] = substr($cif, $i, 1);
+		for($i = 0; $i < 9; $i ++){
+			$num[$i] = substr($sCif, $i, 1);
+		}
 
 		//si no tiene un formato valido devuelve error
-		if(!ereg('((^[A-Z]{1}[0-9]{7}[A-Z0-9]{1}$|^[T]{1}[A-Z0-9]{8}$)|^[0-9]{8}[A-Z]{1}$)', $cif)) return 0;
+		if(!ereg('((^[A-Z]{1}[0-9]{7}[A-Z0-9]{1}$|^[T]{1}[A-Z0-9]{8}$)|^[0-9]{8}[A-Z]{1}$)', $sCif)){
+			return 0;
+		}
 
 		//comprobacion de NIFs estandar
-		if(ereg('(^[0-9]{8}[A-Z]{1}$)', $cif))
-			if($num[8] == substr('TRWAGMYFPDXBNJZSQVHLCKE', substr($cif, 0, 8) % 23, 1))
-			return 1;
-		else
+		if(ereg('(^[0-9]{8}[A-Z]{1}$)', $sCif)){
+			if($num[8] == substr('TRWAGMYFPDXBNJZSQVHLCKE', substr($sCif, 0, 8) % 23, 1)){
+				return 1;
+			}
+		}
+		else{
 			return -1;
+		}
 
 		//algoritmo para comprobacion de codigos tipo CIF
 		$suma = $num[2] + $num[4] + $num[6];
@@ -838,33 +852,45 @@ if the second character is "0", then it is typically a test BIC as opposed to a 
 		$n = 10 - substr($suma, strlen($suma) - 1, 1);
 
 		//comprobacion de NIFs especiales (se calculan como CIFs)
-		if(ereg('^[KLM]{1}', $cif))
-			if($num[8] == chr(64 + $n))
-			return 1;
-		else
+		if(ereg('^[KLM]{1}', $sCif)){
+			if($num[8] == chr(64 + $n)){
+				return 1;
+			}
+		}
+		else{
 			return -1;
+		}
 
 		//comprobacion de CIFs
-		if(ereg('^[ABCDEFGHJNPQRSUVW]{1}', $cif))
-			if($num[8] == chr(64 + $n) || $num[8] == substr($n, strlen($n) - 1, 1))
-			return 2;
-		else
+		if(ereg('^[ABCDEFGHJNPQRSUVW]{1}', $sCif)){
+			if($num[8] == chr(64 + $n) || $num[8] == substr($n, strlen($n) - 1, 1)){
+				return 2;
+			}
+		}
+		else{
 			return -2;
+		}
 
 		//comprobacion de NIEs
 		//T
-		if(ereg('^[T]{1}', $cif))
-			if($num[8] == ereg('^[T]{1}[A-Z0-9]{8}$', $cif))
-			return 3;
-		else
+		if(ereg('^[T]{1}', $sCif)){
+			if($num[8] == ereg('^[T]{1}[A-Z0-9]{8}$', $sCif)){
+				return 3;
+			}
+		}
+		else{
 			return -3;
+		}
 
 		//XYZ
-		if(ereg('^[XYZ]{1}', $cif))
-			if($num[8] == substr('TRWAGMYFPDXBNJZSQVHLCKE', substr(str_replace(array('X','Y','Z'), array('0','1','2'), $cif), 0, 8) % 23, 1))
-			return 3;
-		else
+		if(ereg('^[XYZ]{1}', $sCif)){
+			if($num[8] == substr('TRWAGMYFPDXBNJZSQVHLCKE', substr(str_replace(array('X','Y','Z'), array('0','1','2'), $sCif), 0, 8) % 23, 1)){
+				return 3;
+			}
+		}
+		else{
 			return -3;
+		}
 
 		//si todavia no se ha verificado devuelve error
 		return 0;
@@ -873,17 +899,17 @@ if the second character is "0", then it is typically a test BIC as opposed to a 
 	/**
 	 * Comprobar la validez de numeros
 	 *
-	 * @param string $value Valor a evaluar
-	 * @param string $value Tipo de valor numerico: bool, float, int, [null - cualquier numero]
+	 * @param string $sValor Valor a evaluar
+	 * @param string $tipo Tipo de valor numerico: bool, float, int, [null - cualquier numero]
 	 * @return boolean
 	 */
-	private function validaNumero($value, $tipo = null){
+	private function validaNumero($sValor, $tipo = null){
 		$bRet = true;
 
 		/*if(function_exists('filter_var')) //filtrado PHP (>= 5.2.0) nativo
-			$bRet = filter_var($value, FILTER_VALIDATE_INT); //FILTER_VALIDATE_BOOLEAN, FILTER_VALIDATE_FLOAT, FILTER_VALIDATE_INT
+			$bRet = filter_var($sValor, FILTER_VALIDATE_INT); //FILTER_VALIDATE_BOOLEAN, FILTER_VALIDATE_FLOAT, FILTER_VALIDATE_INT
 		else*/
-			$bRet = is_numeric($value);
+			$bRet = is_numeric($sValor);
 
 		return $bRet;
 	}
@@ -891,14 +917,14 @@ if the second character is "0", then it is typically a test BIC as opposed to a 
 	/**
 	 * Comprobar la validez de URL's
 	 *
-	 * @param string $value Valor a evaluar
+	 * @param string $sValor Valor a evaluar
 	 * @return boolean
 	 */
-	private function validaUrl($value){
+	private function validaUrl($sValor){
 		$bRet = true;
 
 		if(function_exists('filter_var')) //filtrado PHP (>= 5.2.0) nativo
-			$bRet = filter_var($value, FILTER_VALIDATE_URL);
+			$bRet = filter_var($sValor, FILTER_VALIDATE_URL);
 		else
 			$bRet = preg_match('~\A(?:(?#
 protocolo)(https?\:\/\/|ftps?\:\/\/)?(?#
@@ -907,7 +933,7 @@ puerto)(\:\d{1,5})?(?#
 directorios)(\/[\w;@%=+$\.\-]{1,})*(?#
 fichero)(\/[\w+$\.\-]*\.\w*)?(?#
 get)(\?([a-z0-9+$_\.\-]&?)*)?(?#
-ancla)(#[a-z_\.\-][a-z0-9+$_\.\-]*)?)\Z~i', $value);
+ancla)(#[a-z_\.\-][a-z0-9+$_\.\-]*)?)\Z~i', $sValor);
 
 		return $bRet;
 	}
@@ -915,16 +941,16 @@ ancla)(#[a-z_\.\-][a-z0-9+$_\.\-]*)?)\Z~i', $value);
 	/**
 	 * Verifica el token de seguridad enviado con el formulario
 	 *
-	 * @see Formazo::token($session)
+	 * @see Formazo::token($bSession)
 	 * @param boolean $session Controla datos relacionados con sesion (true) o no
 	 * @return boolean
 	 */
-	private function verificaToken($session = true){
+	private function verificaToken($bSession = true){
 		@include_once CLASSES_DIR . '/class.formazo.inc';
 
 		$sToken = false;
 		if(class_exists('Formazo')){
-			$sToken = Formazo::token($this->sFormNombre, $session);
+			$sToken = Formazo::token($this->sFormNombre, $bSession);
 		}
 
 		return $sToken;

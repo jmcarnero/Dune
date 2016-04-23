@@ -185,7 +185,7 @@ class Formazo {
 	protected function agrupaElementos($elementos){
 		$ret = '';
 
-		foreach($elementos as $clave => $valor){
+		foreach($elementos as $valor){
 			if(isset($valor['g'])){
 				$ret .= $valor[0];
 				$ret .= $this->agrupaElementos($valor['g']);
@@ -209,9 +209,9 @@ class Formazo {
 	private function crc16($data){
 		$crc = 0xFFFF;
 		for ($i = 0; $i < strlen($data); $i++){
-			$x = (($crc >> 8) ^ ord($data[$i])) & 0xFF;
-			$x ^= $x >> 4;
-			$crc = (($crc << 8) ^ ($x << 12) ^ ($x << 5) ^ $x) & 0xFFFF;
+			$iVal = (($crc >> 8) ^ ord($data[$i])) & 0xFF;
+			$iVal ^= $iVal >> 4;
+			$crc = (($crc << 8) ^ ($iVal << 12) ^ ($iVal << 5) ^ $iVal) & 0xFFFF;
 		}
 		return $crc;
 	}
@@ -219,13 +219,13 @@ class Formazo {
 	/**
 	 * Crea el formulario a partir del array de campos que se le pasa
 	 *
-	 * @param array $campos Campos del formulario
+	 * @param array $aCampos Campos del formulario
 	 * @return boolean
 	 */
-	public function crea($campos = array()){
+	public function crea($aCampos = array()){
 		$this->aFormulario = array(); //para crear se limpia el previo //TODO comprobar que mas hay que limpiar antes de crear
 
-		$this->setCampos($campos);
+		$this->setCampos($aCampos);
 		if(empty($this->aCampos)){
 			trigger_error('No hay campos para crear el formulario', E_USER_NOTICE);
 			return false;
@@ -307,11 +307,12 @@ class Formazo {
 		}
 
 		//concluye formulario
-		$this->aFormulario['final']['texto'] = $this->aFormulario['btnSubmit']['campo'];
-		$this->aFormulario['final']['texto'] .= '<input id="formName' . $this->sFormNombre . '" name="formName" type="hidden" value="' . $this->sFormNombre . "\" />\n"; //nombre del formulario se puede utilizar para identificarlo al procesarlo
-		$this->aFormulario['final']['texto'] .= '<input id="tkn' . $this->sFormNombre . '" name="tkn' . $this->sFormNombre . '" type="hidden" value="' . self::token($this->sFormNombre) . "\" />\n"; //token para verificar la integridad del envio
+		$this->aFormulario['final']['campo'] = $this->aFormulario['btnSubmit']['campo'];
+		$this->aFormulario['final']['campo'] .= '<input id="formName' . $this->sFormNombre . '" name="formName" type="hidden" value="' . $this->sFormNombre . "\" />\n"; //nombre del formulario se puede utilizar para identificarlo al procesarlo
+		$this->aFormulario['final']['campo'] .= '<input id="tkn' . $this->sFormNombre . '" name="tkn' . $this->sFormNombre . '" type="hidden" value="' . self::token($this->sFormNombre) . "\" />\n"; //token para verificar la integridad del envio
+		$this->aFormulario['final']['campo'] .= "</form>\n";
 
-		$this->aFormulario['final']['campo'] = "</form>\n";
+		$this->aFormulario['final']['texto'] = '';
 
 		//opcion de aviso antes de salir
 		//TODO avisar que campos han cambiado? y solo avisar si realmente ha habido cambios (depende de tener guardado el valor de inicio)
@@ -323,7 +324,7 @@ class Formazo {
 	 * Devuelve los campos que formaran el formulario
 	 *
 	 * @since 2015-04-30
-	 * @return boolean
+	 * @return array
 	 */
 	public function getCampos(){
 		return $this->aCampos;
@@ -342,72 +343,72 @@ class Formazo {
 	/**
 	 * Pinta el formulario. Recomendable sobreescribirlo en clases hijas destinadas a dar mejor aspecto al formulario
 	 *
-	 * @param array $campos Campos del formulario
-	 * @param boolean $echo Devuelve el formulario (false) o lo escribe (true, por defecto)
+	 * @param array $aCampos Campos del formulario
+	 * @param boolean $bEcho Devuelve el formulario (false) o lo escribe (true, por defecto)
 	 * @return string
 	 */
-	public function pinta($campos = array(), $echo = true){
-		if(count($campos) && !count($this->aFormulario))
-			$this->crea($campos);
+	public function pinta($aCampos = array(), $bEcho = true){
+		if(count($aCampos) && !count($this->aFormulario))
+			$this->crea($aCampos);
 
 		$sEcho = $this->aFormulario['inicio']['campo'] . $this->aFormulario['inicio']['texto'];
-		$i = 0;
+		$iAuxCont = 0;
 		$aEcho = array();
 		$sHidden = ''; //agrupa los campos ocultos al final, para evitar problemas de validacion y dibujado en la pagina
-		foreach($this->aFormulario['elementos'] as $clave => $valor){
-			if($this->aCampos[$clave]['tipo'] != 'hidden'){
+		foreach($this->aFormulario['elementos'] as $sClave => $aValor){
+			if($this->aCampos[$sClave]['tipo'] != 'hidden'){
 				//clases css
-				$css = array();
-				if(!$i) //primera fila
-					$css[] = $this->aCss['primera'];
+				$aCss = array();
+				if(!$iAuxCont) //primera fila
+					$aCss[] = $this->aCss['primera'];
 
-				if($i%2) //fila impar
-					$css[] = $this->aCss['impar'];
-				else //fila par
-					$css[] = $this->aCss['par'];
+				$aCss[] = ($iAuxCont % 2) ? $this->aCss['impar'] : $this->aCss['par']; //fila impar : fila par
 
-				if($i == count($this->aFormulario['elementos']) - 1) //ultima fila
-					$css[] = $this->aCss['ultima'];
+				if($iAuxCont == count($this->aFormulario['elementos']) - 1) //ultima fila
+					$aCss[] = $this->aCss['ultima'];
 
-				if(!empty($css))
-					$css = ' class="' . implode(' ', $css) . '"';
+				if(!empty($aCss))
+					$aCss = ' class="' . implode(' ', $aCss) . '"';
 
 				//guardando en una variable para su posterior dibujado
-				$aEcho[$clave] = '<p' . $css . '>' . (isset($valor['texto']) ? $valor['texto'] : '') . $valor['campo'] . '</p>';
+				$aEcho[$sClave] = '<p' . $aCss . '>' . (isset($aValor['texto']) ? $aValor['texto'] : '') . $aValor['campo'] . '</p>';
 
 				//guardando en una variable para su posterior dibujado
-				if($this->aCampos[$clave]['tipo'] != 'group'){
-					$sApertura = '<p' . $css . '>' . (isset($valor['texto']) ? $valor['texto'] : '') . $valor['campo'];
+				$sApertura = $aValor['texto'];
+				$sCierre = $aValor['campo'];
+				if($this->aCampos[$sClave]['tipo'] != 'group'){
+					$sApertura = '<p' . $aCss . '>' . (isset($aValor['texto']) ? $aValor['texto'] : '') . $aValor['campo'];
 					$sCierre = '</p>';
 				}
+
+				if(!empty($aValor['file'])){
+					$aEcho[$sClave] .= $aValor['file'];
+					$sCierre .= $aValor['file'];
+				}
+
+				$iAuxCont++;
+
+				if(!empty($this->aCampos[$sClave]['group'])){
+					$aEcho[$this->aCampos[$sClave]['group']]['g'][$sClave] = array($sApertura, $sCierre);
+				}
 				else{
-					$sApertura = $valor['texto'];
-					$sCierre = $valor['campo'];
+					$aEcho[$sClave] = array($sApertura, $sCierre);
 				}
-
-				if(!empty($valor['file'])){
-					$aEcho[$clave] .= $valor['file'];
-					$sCierre .= $valor['file'];
-				}
-
-				$i++;
-
-				if(!empty($this->aCampos[$clave]['group'])){
-					$aEcho[$this->aCampos[$clave]['group']]['g'][$clave] = array($sApertura, $sCierre);
-				}
-				else
-					$aEcho[$clave] = array($sApertura, $sCierre);
 			}
-			else $sHidden .= $valor['campo'];
+			else{
+				$sHidden .= $aValor['campo'];
+			}
 		}
 
-		$sEcho .= $this->agrupaElementos($aEcho);
-		$sEcho .= '<p>' . $this->aFormulario['final']['texto'] . $sHidden . '</p>' . $this->aFormulario['final']['campo'];
+		$sEcho .= $this->agrupaElementos($aEcho) . $this->aFormulario['final']['texto'] . $sHidden . $this->aFormulario['final']['campo'];
+		//$sEcho .= implode('', $aEcho) . $this->aFormulario['final']['texto'] . $sHidden . $this->aFormulario['final']['campo'];
 
-		if($echo)
+		if($bEcho){
 			echo $sEcho;
-		else
+		}
+		else{
 			return $sEcho;
+		}
 	}
 
 	/**
@@ -430,8 +431,9 @@ class Formazo {
 	 * @return boolean
 	 */
 	public function setCampos($campos = array()){
-		if(empty($campos))
+		if(empty($campos)){
 			return false;
+		}
 		elseif(count($campos)){ //origen array
 			$this->aCampos = array();
 
@@ -448,17 +450,19 @@ class Formazo {
 
 		//recoge los valores enviados, si es el caso (formulario enviado a la misma pagina, por ejemplo)
 		//recoge GET o POST segun el que se haya utilizado para llegar a esta pagina
-		if($this->sMethod == 'get')
+		$this->aRequest = array();
+		if($this->sMethod == 'get'){
 			$this->aRequest = &$_GET;
-		elseif($this->sMethod == 'post')
+		}
+		elseif($this->sMethod == 'post'){
 			$this->aRequest = &$_POST;
-		else
-			$this->aRequest = array();
+		}
 		//TODO opcion para recogerlos o no
 
 		foreach($this->aCampos as $clave => $valor){
-			if(isset($this->aRequest[$clave]) && $this->aRequest[$clave] != '')
+			if(isset($this->aRequest[$clave]) && $this->aRequest[$clave] != ''){
 				$this->aCampos[$clave]['valor'] = $this->aRequest[$clave];
+			}
 		}
 
 		return true;
@@ -534,13 +538,13 @@ class Formazo {
 	 * @todo comprobar si ip, sesion y user_agent se establecen correctamente cuando se envia por ajax o se redirecciona el procesado
 	 * @since 2012-09-14
 	 * @param string $sFormNombre Nombre del formulario
-	 * @param boolean $session Controla datos relacionados con sesion (true) o no
+	 * @param boolean $bSession Controla datos relacionados con sesion (true) o no
 	 * @return string
 	 */
-	public static function token($sFormNombre, $session = true){
+	public static function token($sFormNombre, $bSession = true){
 		//formulario y procesado deben estar en la misma maquina
 		$sSesion = session_id();
-		if($session && empty($sSesion)){
+		if($bSession && empty($sSesion)){
 			session_start(); //en PHP 4.3.3 o superior puede dar un E_NOTICE si se llama por segunda vez
 			$sSesion = session_id();
 		}

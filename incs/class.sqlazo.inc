@@ -24,18 +24,19 @@ defined('CLASSES_DIR') or define('CLASSES_DIR', dirname(__FILE__));
  *
  * @access public
  * @param string $motor Motor de base de datos
- * @return object Objeto sqlazo
+ * @return object Objeto SQLazo
  */
 function &sqlazo_sel($motor = 'mysql', $servidor = 'localhost', $usuario = 'root', $password = '', $ddbb = false){
 	if($motor == 'mysql' && class_exists('mysqli'))
 		$motor = 'mysqli';
 
-	$class = 'sqlazo_'.$motor;
+	$class = 'SQLazo_'.$motor;
 	include_once CLASSES_DIR . '/class.sqlazo_trazabilidad.inc';
-	include_once CLASSES_DIR . '/class.' . $class . '.inc'; //si no existe el fichero a incluir no se devuelve error, se controla a continuacion
+	include_once CLASSES_DIR . '/class.' . strtolower($class) . '.inc'; //si no existe el fichero a incluir no se devuelve error, se controla a continuacion
 
-	if(!class_exists('sqlazo_trazabilidad') || !class_exists($class)){
-		die('No se puede usar el tipo de base de datos -> '.$class."\n");
+	if(!class_exists('SQLazo_trazabilidad') || !class_exists($class)){
+		//die('No se puede usar el tipo de base de datos -> '.$class."\n");
+		throw new Exception('No se puede usar el tipo de base de datos -> ' . $class);
 		return false;
 	}
 
@@ -77,7 +78,7 @@ $oTest->desconectar();
  * @license http://www.gnu.org/copyleft/gpl.html
  * @package SQLazo
  */
-class sqlazo{
+class SQLazo {
 
 	/**
 	 * Campos de la consulta, en la forma: ('nombre' => nombre, 'tipo' => tipo, 'long' => longitud, 'flags' => flags) (para cada campo de los resultados).
@@ -115,7 +116,7 @@ class sqlazo{
 	 * Puerto del servidor de base de datos.
 	 *
 	 * @var integer
-	 * @see sqlazo::setDDBBPuerto($puerto)
+	 * @see SQLazo::setDDBBPuerto($puerto)
 	 */
 	var $sDDBBPuerto;
 
@@ -137,7 +138,7 @@ class sqlazo{
 	 * Control de errores.
 	 *
 	 * @access private
-	 * @see sqlazo::getError(),sqlazo::setError()
+	 * @see SQLazo::getError(),SQLazo::setError()
 	 * @var array
 	 */
 	var $aError;
@@ -146,7 +147,7 @@ class sqlazo{
 	 * Mensajes de error la clase, a fin de que puedan ser traducidos/modificados; las secuencias %s deben dejarse ya que corresponden a variables que seran luego sustituidas, si es necesario poner un % se pondra como %%
 	 *
 	 * @var array
-	 * @see sqlazo::setErrorMensaje($clave, $valor),sqlazo::getErrorMensaje($clave)
+	 * @see SQLazo::setErrorMensaje($clave, $valor),SQLazo::getErrorMensaje($clave)
 	 */
 	var $aErrorMensajes;
 
@@ -169,7 +170,7 @@ class sqlazo{
 	 *
 	 * @var boolean
 	 * @access private
-	 * @see sqlazo::getMotor()
+	 * @see SQLazo::getMotor()
 	 */
 	var $sMotor;
 
@@ -443,39 +444,37 @@ class sqlazo{
 	/**
 	 * Lanza una modificacion de la consulta antes de lanzar la consulta en si para recuperar algun tipo de valor de forma automatizada (maximo, minimo, etc) //pensada, por ahora, para SQL y consultas "select".
 	 *
-	 * @access public
-	 * @param string $tipo Tipo de modificacion ('max' => maximo valor de $campo)
-	 * @param string $campo Campo sobre el que se operara la modificacion
+	 * @param string $sTipo Tipo de modificacion ('max' => maximo valor de $campo)
+	 * @param string $sCampo Campo sobre el que se operara la modificacion
 	 * @return mixed
 	 */
-	public function operaQuery($tipo = 'max', $campo = false){
-		$ret = false;
-
+	public function operaQuery($sTipo = 'max', $sCampo = false){
 		include_once CLASSES_DIR . '/class.parse_sql.inc';
 
 		if(!class_exists('parse_sql')){
-			$this->setError(__METHOD__.'1');
+			$this->setError(__METHOD__ . '1');
 			return false;
 		}
 
 		$aFragmentos = parse_sql::ParseString($this->sQuery)->getArray();
 
-		switch($tipo){
+		switch($sTipo){
 			/*calcular el maximo de un campo
 			SELECT max(CAST(REPLACE(es.population, '.', '') AS unsigned)) AS peso FROM datos_poblacion_usa es;*/
 			case 'max':
 				if(stripos($aFragmentos['select'], 'select') !== 0){ //solo para consultas select
-					$this->setError(__METHOD__.'2');
+					$this->setError(__METHOD__ . '2');
 					return false;
 				}
-				$aFragmentos['sql'] = 'SELECT MAX('.$campo.') AS valor ';
-				if($this->consulta($aFragmentos['sql'].$aFragmentos['from']) && $this->leeFila()){
-					return $this->aFila['valor'];
-				}
-				else{
-					$this->setError(__METHOD__.'3', $this->sQuery);
+
+				$aFragmentos['sql'] = 'SELECT MAX(' . $sCampo . ') AS valor ';
+
+				if(!$this->consulta($aFragmentos['sql'].$aFragmentos['from']) && $this->leeFila()){
+					$this->setError(__METHOD__ . '3', $this->sQuery);
 					return false;
 				}
+
+				return $this->aFila['valor'];
 				break;
 		}
 
@@ -533,10 +532,12 @@ class sqlazo{
 	 */
 	public function setDDBBPuerto($puerto){
 		$sTemp = $puerto;
+
 		if(strpos($this->sDDBBServidor, ':') !== false){ //limpia la direccion del servidor si ya lleva puerto, y lo recupera para comprobar si es el mismo que se ha pasado
-			$sTemp = substr($this->sDDBBServidor, strpos($this->sDDBBServidor, ':')+1);
+			$sTemp = substr($this->sDDBBServidor, strpos($this->sDDBBServidor, ':') + 1);
 			$this->sDDBBServidor = substr($this->sDDBBServidor, 0, strpos($this->sDDBBServidor, ':'));
 		}
+
 		if($sTemp != $puerto){
 			if(empty($puerto))
 				$puerto = $sTemp;
@@ -546,8 +547,9 @@ class sqlazo{
 			}
 		}
 
-		if($puerto === false)
+		if($puerto === false){
 			return false;
+		}
 
 		$this->sDDBBPuerto = $puerto;
 
@@ -563,12 +565,13 @@ class sqlazo{
 	 */
 	protected function setError(){
 		$argumentos = func_get_args();
-		if(empty($argumentos))
+		if(empty($argumentos)){
 			return false;
+		}
 
 		$clave = array_shift($argumentos);
 
-		$this->aError[] = $clave.' ['.$this->microtimeSeg().'] '.vsprintf($this->aErrorMensajes[$clave], $argumentos);
+		$this->aError[] = $clave.' [' . $this->microtimeSeg() . '] '.vsprintf($this->aErrorMensajes[$clave], $argumentos);
 		//trigger_error($this->aError[count($this->aError)-1]);
 
 		return true;
@@ -588,12 +591,12 @@ class sqlazo{
 		if($clave === false){ //reinicio de mensajes
 			//TODO se pierden los mensajes iniciales de las clases herederas
 			$this->aErrorMensajes = array(//'setErrorMensaje' => 'Se ha solicitado una clave desconocida de la lista de mensajes de error.',
-			'tipoQuery1' => 'sqlazo::tipoQuery() Tipo de consulta no soportada: %s',
-			'valoresEnQuery1' => 'sqlazo::valoresEnQuery() Tipo de parametro desconocido: %%%s',
-			'setDDBBPuerto' => 'sqlazo::setDDBBPuerto() El puerto de la propiedad "sDDBBServidor" [%s] no es el mismo que el proporcionado [%s]; se utilizará %s',
-			'operaQuery1' => 'sqlazo::operaQuery() No se puede acceder a la clase de parseo de consultas.',
-			'operaQuery2' => 'sqlazo::operaQuery() Sólo se puede calcular el valor máximo para consultas tipo "SELECT".',
-			'operaQuery3' => 'sqlazo::operaQuery() Error en la consulta tipo "max"; consulta:"%s".'
+			'tipoQuery1' => 'SQLazo::tipoQuery() Tipo de consulta no soportada: %s',
+			'valoresEnQuery1' => 'SQLazo::valoresEnQuery() Tipo de parametro desconocido: %%%s',
+			'setDDBBPuerto' => 'SQLazo::setDDBBPuerto() El puerto de la propiedad "sDDBBServidor" [%s] no es el mismo que el proporcionado [%s]; se utilizará %s',
+			'operaQuery1' => 'SQLazo::operaQuery() No se puede acceder a la clase de parseo de consultas.',
+			'operaQuery2' => 'SQLazo::operaQuery() Sólo se puede calcular el valor máximo para consultas tipo "SELECT".',
+			'operaQuery3' => 'SQLazo::operaQuery() Error en la consulta tipo "max"; consulta:"%s".'
 			);
 
 			return true;
@@ -644,7 +647,7 @@ class sqlazo{
 	 * Los parametros por defecto conectan a un servidor local,
 	 * con el usuario administrador (sin clave) y a la base de datos "test"
 	 */
-	function sqlazo($servidor = 'localhost', $usuario = 'root', $password = '', $ddbb = 'test', $puerto = ''){
+	function SQLazo($servidor = 'localhost', $usuario = 'root', $password = '', $ddbb = 'test', $puerto = ''){
 		$this->aError = false;
 		$this->setErrorMensaje(); //inicializacion de los mensajes de error
 
@@ -742,13 +745,13 @@ class sqlazo{
 		//reemplaza prefijo donde sea necesario
 		foreach($aPatron as $sPat){
 			if(preg_match_all($sPat, $query, $regs, PREG_PATTERN_ORDER)){
-				for($cont=0;$cont<count($regs[0]);$cont++){
+				for($cont = 0; $cont < count($regs[0]); $cont++){
 					$sTemp = '';
 
 					if(strpos($regs[1][$cont], '.') === false)
 						$sTemp = str_replace($this->sPrefijoId, $this->sPrefijo, $regs[1][$cont]);
 					else
-						$sTemp = str_replace($this->sPrefijoId, $this->sPrefijo, substr($regs[1][$cont], strpos($regs[1][$cont], '.')+1));
+						$sTemp = str_replace($this->sPrefijoId, $this->sPrefijo, substr($regs[1][$cont], strpos($regs[1][$cont], '.') + 1));
 
 					$this->aTablas[$sTemp] = $sTemp;
 
@@ -808,7 +811,7 @@ class sqlazo{
 				case 'f': //flotante
 					//if(isset($pars[$clave]) && is_null($pars[$clave])){ //corrige la query para que acepte nulos
 					if(isset($aVars['pars']) && is_array($aVars['pars']) && key_exists($clave, $aVars['pars']) && is_null($pars[$clave])){ //comprueba si se ha declarado la variable $pars[$clave] como NULL
-						if(substr($query, strlen($query)-1, 1) == "'" || substr($query, strlen($query)-1, 1) == "\x0b"){ //limpia este final de cadena para poner el nulo
+						if(substr($query, strlen($query) - 1, 1) == "'" || substr($query, strlen($query) - 1, 1) == "\x0b"){ //limpia este final de cadena para poner el nulo
 							$query = rtrim($query, "'%\x0b").'NULL';
 						}
 						else

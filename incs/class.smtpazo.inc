@@ -58,6 +58,7 @@ class SMTPazo {
 	/**
 	 * Cada llamada pone un fichero en el email
 	 *
+	 * @todo opcion de incluir contenido del fichero, no la url; para los que se creen en memoria y no se lleguen a guardar
 	 * @param string $fichero Ruta y nombre del fichero
 	 * @return boolean
 	 */
@@ -140,7 +141,6 @@ $headers[] = "Subject: {$subject}";
 		//$aHeaders[] = 'Content-Transfer-Encoding: 7bit';
 		$aHeaders[] = 'Return-Path: ' . $this->sFrom;
 		$aHeaders[] = 'X-Originating-IP: ' . $_SERVER['SERVER_ADDR'];
-
 
 		$this->sHeaders = implode($this->sRetornoCarro, $aHeaders) . $this->sRetornoCarro . $this->sRetornoCarro;
 

@@ -214,21 +214,21 @@ class Thumbnazo {
 				break;
 			default: //'proporcional'
 				//proporcion
-				$x = $aDatos['ancho']/$this->iAnchura;
-				$y = $aDatos['alto']/$this->iAltura;
+				$x = $aDatos['ancho'] / $this->iAnchura;
+				$y = $aDatos['alto'] / $this->iAltura;
 				$escala = 0;
 
 				//escala
-				if($x > $y) $escala = $this->iAnchura/$aDatos['ancho'];
-				if($x < $y) $escala = $this->iAltura/$aDatos['alto'];
+				if($x > $y) $escala = $this->iAnchura / $aDatos['ancho'];
+				if($x < $y) $escala = $this->iAltura / $aDatos['alto'];
 				if($x == $y){
-					if($this->iAnchura > $this->iAltura) $escala = $this->iAltura/$aDatos['alto'];
-					if($this->iAltura > $this->iAnchura) $escala = $this->iAnchura/$aDatos['ancho'];
+					if($this->iAnchura > $this->iAltura) $escala = $this->iAltura / $aDatos['alto'];
+					if($this->iAltura > $this->iAnchura) $escala = $this->iAnchura / $aDatos['ancho'];
 				}
 
 				//Escala la imagen
-				$this->iAnchura = intval($aDatos['ancho']*$escala);
-				$this->iAltura = intval($aDatos['alto']*$escala);
+				$this->iAnchura = intval($aDatos['ancho'] * $escala);
+				$this->iAltura = intval($aDatos['alto'] * $escala);
 		}
 
 		return $aDatos;

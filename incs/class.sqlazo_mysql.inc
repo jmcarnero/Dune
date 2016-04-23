@@ -31,7 +31,7 @@ include_once("./inc/class.sqlazo.inc");
 include_once("./inc/class.sqlazo_trazabilidad.inc");
 include_once("./inc/class.sqlazo_mysql.inc");
 
-$oTest = new sqlazo_mysql(DB_SERVER, DB_USER, DB_PASSWORD, DB_DATABASE);
+$oTest = new SQLazo_mysql(DB_SERVER, DB_USER, DB_PASSWORD, DB_DATABASE);
 //$oTest->conectar(DB_SERVER, DB_USER, DB_PASSWORD, DB_DATABASE); //se puede omitir si se han pasado los parametros de conexion al constructor
 
 $oTest->consulta("SELECT * FROM _p_usuarios");
@@ -51,7 +51,7 @@ $oTest->desconectar();
  * @license http://www.gnu.org/copyleft/gpl.html
  * @package SQLazo
  */
-class sqlazo_mysql extends sqlazo_trazabilidad{
+class SQLazo_mysql extends SQLazo_trazabilidad {
 
 	/**
 	 * Identificador de enlace
@@ -135,7 +135,7 @@ class sqlazo_mysql extends sqlazo_trazabilidad{
 						if(is_null($valor) || $valor == '')
 							$pars[$clave] = NULL;
 						else
-							$this->setError(__METHOD__.'2', $aParams[$i], ($i+1), (is_null($valor)?'null':$valor));
+							$this->setError(__METHOD__ . '2', $aParams[$i], ($i + 1), (is_null($valor) ? 'null' : $valor));
 						//return(false);
 					}
 					break;
@@ -163,7 +163,7 @@ class sqlazo_mysql extends sqlazo_trazabilidad{
 					}
 					else{
 						if(!get_magic_quotes_gpc())
-							$pars[$clave] = isset($valor)?addslashes($valor):NULL; //escapado generico
+							$pars[$clave] = isset($valor) ? addslashes($valor) : NULL; //escapado generico
 					}
 					break;
 				default:
@@ -196,7 +196,7 @@ class sqlazo_mysql extends sqlazo_trazabilidad{
 			return false;
 		}
 
-		sqlazo::instCount(); //contador de instancias
+		SQLazo::instCount(); //contador de instancias
 
 		if($servidor)
 			$this->sDDBBServidor = $servidor;
@@ -232,7 +232,7 @@ class sqlazo_mysql extends sqlazo_trazabilidad{
 	}
 
 	/**
-	 * Consulta a la base de datos, (si "SELECT", necesita de "sqlazo::leeFila()" para empezar a devolver resultados).
+	 * Consulta a la base de datos, (si "SELECT", necesita de "SQLazo::leeFila()" para empezar a devolver resultados).
 	 *
 	 * @access public
 	 * @param string $query Query SQL
@@ -352,7 +352,7 @@ class sqlazo_mysql extends sqlazo_trazabilidad{
 
 	/**
 	 * Metodo para consultas internas de la clase.
-	 * Devuelve el array de resultados completo (como "sqlazo::leeFilasTodos()") o falso si ha habido error.
+	 * Devuelve el array de resultados completo (como "SQLazo::leeFilasTodos()") o falso si ha habido error.
 	 *
 	 * @access protected
 	 * @param string $sql Consulta SQL
@@ -369,7 +369,7 @@ class sqlazo_mysql extends sqlazo_trazabilidad{
 
 		if($rResultados !== true){
 			while($aResultados[] = mysql_fetch_array($rResultados));
-			if($aResultados[count($aResultados)-1] === false)
+			if($aResultados[count($aResultados) - 1] === false)
 				array_pop($aResultados); //el anterior bucle (si todo es correcto) colocara un false en el ultimo elemento, sobra
 		}
 
@@ -384,7 +384,7 @@ class sqlazo_mysql extends sqlazo_trazabilidad{
 	 */
 	public function desconectar(){
 		$bool = @ mysql_free_result($this->rResultados); //fuerza liberacion de memoria, solo sirve para "SELECT" (devuelve booleano)
-		if(sqlazo::instCount(-1) == 0){
+		if(SQLazo::instCount(-1) == 0){
 			$sReturn = mysql_close($this->dConexion);
 			$this->setError(__METHOD__.'1', $this->sDDBB, mysql_errno($this->dConexion), mysql_error($this->dConexion));
 			$this->bConectado = true;
@@ -473,7 +473,7 @@ class sqlazo_mysql extends sqlazo_trazabilidad{
 			$iTiempoIni = $this->microtimeSeg();
 
 			while($this->aFilaTodos[] = mysql_fetch_array($this->rResultados, $this->sQueryTipoArray));
-			if($this->aFilaTodos[count($this->aFilaTodos)-1] === false)
+			if($this->aFilaTodos[count($this->aFilaTodos) - 1] === false)
 				array_pop($this->aFilaTodos); //el anterior bucle (si todo es correcto) colocara un false en el ultimo elemento, sobra
 
 			//elimina tags html y php de los resultados
@@ -507,7 +507,7 @@ class sqlazo_mysql extends sqlazo_trazabilidad{
 	private function listaCampos(){
 		$this->aCampos = array(); //se vacia, por si se vuelve a llamar la funcion
 		if(is_resource($this->rResultados)){
-			for($i=0;$i<mysql_num_fields($this->rResultados);$i++){
+			for($i = 0; $i < mysql_num_fields($this->rResultados); $i++){
 				//$this->aCampos[] = array('nombre' => mysql_field_name($this->rResultados, $i), 'tipo' => mysql_field_type($this->rResultados, $i), 'long' => mysql_field_len($this->rResultados, $i), 'flags' => mysql_field_flags($this->rResultados, $i));
 				$this->aCampos[$i]['nombre'] = mysql_field_name($this->rResultados, $i);
 				$this->aCampos[$this->aCampos[$i]['nombre']]['pos'] = $i;
@@ -583,14 +583,14 @@ class sqlazo_mysql extends sqlazo_trazabilidad{
 	 * @return void
 	 */
 	public function query($query, $pars = array(), $cantidad = 0, $inicial = 0){
-		$inicial = is_numeric($inicial)?$inicial:0;
-		$cantidad = is_numeric($cantidad)?$cantidad:0;
+		$inicial = is_numeric($inicial) ? $inicial : 0;
+		$cantidad = is_numeric($cantidad) ? $cantidad : 0;
 
 		//elimina tags html y php de los parametros de la consulta
 		//si los parametros no van en el array "pars" no tiene efecto
 		//TODO ver mysqli::real_escape_string
 		if($this->sTagsPermitidosIns != 'todos'){
-			for($i=0;$i<count($pars);$i++){
+			for($i = 0; $i < count($pars); $i++){
 				if(isset($pars[$i]))
 					$pars[$i] = strip_tags($pars[$i], $this->sTagsPermitidosIns);
 			}
@@ -674,7 +674,7 @@ class sqlazo_mysql extends sqlazo_trazabilidad{
 		}
 
 		//codificacion en que se lanzaran las consultas a la base de datos
-		if(sqlazo::instCount(0) == 1 && $this->sCharset != '')
+		if(SQLazo::instCount(0) == 1 && $this->sCharset != '')
 			$this->setCodificacion($this->sCharset, $this->sCollation);
 
 		return $this->bSeleccion;
@@ -702,7 +702,7 @@ class sqlazo_mysql extends sqlazo_trazabilidad{
 		/*estas muestran los valores de las anteriores
 		SHOW VARIABLES LIKE 'character_set%';
 		SHOW VARIABLES LIKE 'collation%';*/
-		if(sqlazo::instCount(0) == 1 && $this->sCharset != ''){
+		if(SQLazo::instCount(0) == 1 && $this->sCharset != ''){
 			/*$this->consultaInterna("SET NAMES '$this->sCharset' COLLATE '$this->sCollation'");
 			$this->consultaInterna("SET collation_connection = '".$this->sCollation."'");*/
 			if($this->consultaInterna("SET CHARACTER SET '$this->sCharset'", $this->dConexion) === false){
@@ -719,8 +719,8 @@ class sqlazo_mysql extends sqlazo_trazabilidad{
 	 * con el usuario administrador (sin clave) y a la base de datos "test"
 	 * (que existe por defecto)
 	 */
-	function sqlazo_mysql($servidor = 'localhost', $usuario = 'root', $password = '', $ddbb = 'test', $puerto = 3306){
-		parent::sqlazo_trazabilidad($servidor, $usuario, $password, $ddbb, $puerto);
+	function SQLazo_mysql($servidor = 'localhost', $usuario = 'root', $password = '', $ddbb = 'test', $puerto = 3306){
+		parent::SQLazo_trazabilidad($servidor, $usuario, $password, $ddbb, $puerto);
 
 		$this->sMotor = 'mysql';
 		$this->sQueryTipoArray = 'aso';
@@ -729,27 +729,27 @@ class sqlazo_mysql extends sqlazo_trazabilidad{
 		$this->sCollation = $this->codificacion('collation');
 
 		$this->setErrorMensaje(array(
-		'sqlazo_mysql::aseguraQuery1' => 'Numero de parametros incorrecto',
-		'sqlazo_mysql::aseguraQuery2' => 'No corresponde el tipo de parametro (%%%s (num. %s)) con el valor proporcionado (%s)',
-		'sqlazo_mysql::aseguraQuery3' => 'Tipo de parametro desconocido: %%%s',
-		'sqlazo_mysql::conectar1' => 'No se puede conectar a base de datos. Extension MYSQL para PHP no instalada.',
-		'sqlazo_mysql::conectar2' => 'No se puede conectar a la base de datos <em>%s</em>, error: [%s] %s',
-		'sqlazo_mysql::consulta1' => 'La consulta <em>%s</em> ha generado el error: [%s] %s',
-		'sqlazo_mysql::consulta2' => 'Tipo de consulta no soportada: %s',
-		'sqlazo_mysql::consultaInterna' => 'Error ([%s] %s) en la consulta interna: %s',
-		'sqlazo_mysql::desconectar1' => 'No se puede cerrar la conexion a la base de datos <em>%s</em>, error: [%s] %s',
-		'sqlazo_mysql::leeFila1' => 'Ning&uacute;n resultado a devolver.',
-		'sqlazo_mysql::leeFila2' => 'Intenta obtener un array de resultados de una consulta no "SELECT"',
-		'sqlazo_mysql::leeFilasTodos1' => 'Ning&uacute;n resultado a devolver.',
-		'sqlazo_mysql::leeFilasTodos2' => 'Intenta obtener un array de resultados de una consulta no "SELECT"',
-		'sqlazo_mysql::numResultados1' => 'No es posible contar el numero de registros, no se reconoce el tipo de query: %s',
-		'sqlazo_mysql::query' => 'Numero de parametros incorrecto',
-		'sqlazo_mysql::recPuntero1' => 'No se ha podido recolocar el puntero debido al error: [%s] %s',
-		'sqlazo_mysql::seleccionarDDBB1' => 'No se puede seleccionar la base de datos <em>%s</em>, error: [%s] %s',
-		'sqlazo_mysql::setCodificacion' => 'No se pudo cambiar el juego de caracteres usado en la conexión',
-		'sqlazo_mysql::tipoArrayQuery' => 'El tipo de array (<em>%s</em>) que debe devolverse es desconocido',
-		'sqlazo_mysql::transaccionFinal' => 'No se ha completado correctamente la transacción.',
-		'sqlazo_mysql::transaccionInicio' => 'No se ha podido iniciar la transacción.'
+		'SQLazo_mysql::aseguraQuery1' => 'Numero de parametros incorrecto',
+		'SQLazo_mysql::aseguraQuery2' => 'No corresponde el tipo de parametro (%%%s (num. %s)) con el valor proporcionado (%s)',
+		'SQLazo_mysql::aseguraQuery3' => 'Tipo de parametro desconocido: %%%s',
+		'SQLazo_mysql::conectar1' => 'No se puede conectar a base de datos. Extension MYSQL para PHP no instalada.',
+		'SQLazo_mysql::conectar2' => 'No se puede conectar a la base de datos <em>%s</em>, error: [%s] %s',
+		'SQLazo_mysql::consulta1' => 'La consulta <em>%s</em> ha generado el error: [%s] %s',
+		'SQLazo_mysql::consulta2' => 'Tipo de consulta no soportada: %s',
+		'SQLazo_mysql::consultaInterna' => 'Error ([%s] %s) en la consulta interna: %s',
+		'SQLazo_mysql::desconectar1' => 'No se puede cerrar la conexion a la base de datos <em>%s</em>, error: [%s] %s',
+		'SQLazo_mysql::leeFila1' => 'Ning&uacute;n resultado a devolver.',
+		'SQLazo_mysql::leeFila2' => 'Intenta obtener un array de resultados de una consulta no "SELECT"',
+		'SQLazo_mysql::leeFilasTodos1' => 'Ning&uacute;n resultado a devolver.',
+		'SQLazo_mysql::leeFilasTodos2' => 'Intenta obtener un array de resultados de una consulta no "SELECT"',
+		'SQLazo_mysql::numResultados1' => 'No es posible contar el numero de registros, no se reconoce el tipo de query: %s',
+		'SQLazo_mysql::query' => 'Numero de parametros incorrecto',
+		'SQLazo_mysql::recPuntero1' => 'No se ha podido recolocar el puntero debido al error: [%s] %s',
+		'SQLazo_mysql::seleccionarDDBB1' => 'No se puede seleccionar la base de datos <em>%s</em>, error: [%s] %s',
+		'SQLazo_mysql::setCodificacion' => 'No se pudo cambiar el juego de caracteres usado en la conexión',
+		'SQLazo_mysql::tipoArrayQuery' => 'El tipo de array (<em>%s</em>) que debe devolverse es desconocido',
+		'SQLazo_mysql::transaccionFinal' => 'No se ha completado correctamente la transacción.',
+		'SQLazo_mysql::transaccionInicio' => 'No se ha podido iniciar la transacción.'
 		));
 	}
 

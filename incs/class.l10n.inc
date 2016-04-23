@@ -31,43 +31,48 @@ defined('CLASSES_DIR') or define('CLASSES_DIR', dirname(__FILE__));
 /**
  * Instanciador (singleton) de la clase de traducciones
  *
- * @param string $lang Lengua en la que se recuperan las traducciones (false detecta el lenguaje del navegador)
- * @param string $class Clase que solicita traducciones
- * @param string $classdatos Sufijo de la clase de recuperación de datos (por ahora: csv, ddbb)
- * @param string $dirTrads Directorio donde encontrar las traducciones ('l10n' por defecto)
- * @param array $datosconsulta Parametros para la clase de recuperación de datos
+ * @param string $sLang Lengua en la que se recuperan las traducciones (false detecta el lenguaje del navegador)
+ * @param string $sClass Clase que solicita traducciones
+ * @param string $sClassDatos Sufijo de la clase de recuperación de datos (por ahora: csv, ddbb)
+ * @param string $sDirTrads Directorio donde encontrar las traducciones ('l10n' por defecto)
+ * @param array $aDatosConsulta Parametros para la clase de recuperación de datos
+ * @param boolean $bVerTiempos Ver los tiempos empleados
  */
-function &l10n_sel($lang = false, $class = false, $classdatos = 'csv', $dirTrads = false, $datosconsulta = array(), $verTiempos = false){
-	static $obj = null;
+function &l10n_sel($sLang = false, $sClass = false, $sClassDatos = 'csv', $sDirTrads = false, $aDatosConsulta = array(), $bVerTiempos = false){
+	static $oObj = null;
 
-	if($obj === null){
+	if($oObj === null){
 		require_once(CLASSES_DIR.'/class.redatazo.inc'); //sistema de adquisicion de datos
 		if(!class_exists('Redatazo')){
-			die('No se puede usar el tipo de adquisición de datos -> redatazo' . "\n");
+			//die('No se puede usar el tipo de adquisición de datos -> redatazo' . "\n");
+			throw new Exception('No se puede usar el tipo de adquisición de datos -> redatazo');
 			return false;
 		}
 
-		if(!$dirTrads) $dirTrads = CLASSES_DIR.'/l10n/';
-		//$datosconsulta = array('campos' => 'clave, valor', 'filaTitulos' => 0, 'separadorCampos' => '|', 'cercoCampos' => '', 'fichero' => CLASSES_DIR.'/l10n/es.l10n');
-		$datosconsulta = array('campos' => 'clave, valor', 'filaTitulos' => 0, 'separadorCampos' => '|');
-		$obj = new L10n($class, $classdatos, $dirTrads, $datosconsulta, $lang);
+		if(!$sDirTrads){
+			$sDirTrads = CLASSES_DIR.'/l10n/';
+		}
+		//$aDatosConsulta = array('campos' => 'clave, valor', 'filaTitulos' => 0, 'separadorCampos' => '|', 'cercoCampos' => '', 'fichero' => CLASSES_DIR.'/l10n/es.l10n');
+		$aDatosConsulta = array('campos' => 'clave, valor', 'filaTitulos' => 0, 'separadorCampos' => '|');
+		$oObj = new L10n($sClass, $sClassDatos, $sDirTrads, $aDatosConsulta, $sLang);
 	}
-	elseif(!empty($lang) || !empty($class) || !empty($dirTrads) || !empty($datosconsulta)){
-		$obj->l10n_ini($class, $classdatos, $dirTrads, $datosconsulta, $lang);
+	elseif(!empty($sLang) || !empty($sClass) || !empty($sDirTrads) || !empty($aDatosConsulta)){
+		$oObj->l10n_ini($sClass, $sClassDatos, $sDirTrads, $aDatosConsulta, $sLang);
 	}
 
-	$obj->setVerTiempos($verTiempos);
+	$oObj->setVerTiempos($bVerTiempos);
 
 	/*$aError = $obj->getError();
-	if(DEBUG && !empty($aError)) var_dump('l10n_sel:', $aError);/**/
+	if(DEBUG && !empty($aError)){
+		var_dump('l10n_sel:', $aError);
+	}/**/
 
-	return $obj;
+	return $oObj;
 }
 
 /**
  * Pone "locales" al idioma seleccionado
  *
- * @access public
  * @param string $idm Idioma con el que se pondran los "locales" (al idioma automaticamente seleccionado si no se pasa ninguno)
  * @return array
  */
@@ -78,46 +83,43 @@ function _locale($idm = ''){
 }
 
 /**
- * Devuelve (echo) el termino "traducido"
+ * Devuelve (echo/return) el termino "traducido"
  *
- * @access public
  * @param numero de parametros variable, el primero es la clave a buscar y el resto los argumentos (%s) que precise
  * @return string
  */
 function _trad(){
-	$argumentos = func_get_args();
-	//$clave = $argumentos[0];
+	$aArgumentos = func_get_args();
+	//$sClave = $aArgumentos[0];
 
 	$oTrad = l10n_sel(); //objeto traductor
 
-	echo(call_user_func_array(array($oTrad, 'getTrad'), $argumentos));
+	echo call_user_func_array(array($oTrad, 'getTrad'), $aArgumentos);
 }
 
 /**
  * Devuelve (return) el termino "traducido"
  *
- * @access public
  * @param numero de parametros variable, el primero es la clave a buscar y el resto los argumentos (%s) que precise
  * @return array
  */
 function _tradR(){
-	$argumentos = func_get_args();
-	//$clave = $argumentos[0];
+	$aArgumentos = func_get_args();
+	//$sClave = $aArgumentos[0];
 
 	$oTrad = l10n_sel(); //objeto traductor
 
-	return call_user_func_array(array($oTrad, 'getTrad'), $argumentos);
+	return call_user_func_array(array($oTrad, 'getTrad'), $aArgumentos);
 }
 
 /**
  * Guarda las traducciones que no encuentre en los ficheros (o bases de datos) de traduccion, como: huerfana|huerfana
  *
- * @access public
  * @return void
  */
 function _tradGuardaHuerfanas(){
 	$oTrad = l10n_sel(); //objeto traductor
-	$oTrad->bGuardaHuerfanas = true;
+	$oTrad->setGuardaHuerfanas(true);
 	//if($oTrad->getError()) var_dump($oTrad->getError());
 }
 
@@ -205,9 +207,18 @@ class L10n {
 	 *
 	 * @access private
 	 * @var array
-	 * @see l10n::setErrorMensaje($clave, $valor),l10n::getErrorMensaje($clave)
+	 * @see l10n::getErrorMensaje($clave), l10n::setErrorMensaje($clave, $valor)
 	 */
 	var $aErrorMensajes;
+
+	/**
+	 * Si true pone en los ficheros de traduccion las que no se encuentren en el
+	 *
+	 * @access public
+	 * @var boolean
+	 * @see l10n::setGuardaHuerfanas($bGuarda)
+	 */
+	var $bGuardaHuerfanas;
 
 	/**
 	 * Lengua en la que se recuperan los textos, si no se asigna ninguna comprueba cual es la que acepta el navegador
@@ -225,14 +236,6 @@ class L10n {
 	 * @var string
 	 */
 	var $aLangDefecto;
-
-	/**
-	 * Si true pone en los ficheros de traduccion las que no se encuentren en el
-	 *
-	 * @access public
-	 * @var boolean
-	 */
-	var $bGuardaHuerfanas;
 
 	/**
 	 * Array con los textos en el idioma solicitado (traducciones)
@@ -273,7 +276,6 @@ class L10n {
 	/**
 	 * Comprueba los datos para la consulta
 	 *
-	 * @access private
 	 * @param array $datosconsulta Datos que requiera la consulta
 	 * @return float
 	 */
@@ -290,7 +292,9 @@ class L10n {
 			'fichero' => $this->sDirTrads.$this->sClass.'-'.$this->aLang[0].'.err',
 			);
 		}*/
-		if($this->debug) var_dump(array('{$this->datosConsulta()} $this->aDatosConsulta [antes]: ' => $this->aDatosConsulta));
+		if($this->debug){
+			var_dump(array('{$this->datosConsulta()} $this->aDatosConsulta [antes]: ' => $this->aDatosConsulta));
+		}
 
 		if(!$this->instCount()){
 			$this->aDatosConsulta['campos'] = empty($datosconsulta['campos']) ? (empty($this->aDatosConsulta['campos']) ? 'clave, valor' : $this->aDatosConsulta['campos']) : $datosconsulta['campos'];
@@ -298,10 +302,16 @@ class L10n {
 			$this->aDatosConsulta['separadorCampos'] = empty($datosconsulta['separadorCampos']) ? (empty($this->aDatosConsulta['separadorCampos']) ? '|' : $this->aDatosConsulta['separadorCampos']) : $datosconsulta['separadorCampos'];
 
 			//if(empty($datosconsulta['sFichero'])) $this->aDatosConsulta['sFichero'] = empty($this->aDatosConsulta['sFichero'])?$this->sDirTrads.$this->aLang[0].'.l10n':$this->aDatosConsulta['sFichero'];
-			if(empty($datosconsulta['fichero'])) $this->aDatosConsulta['fichero'] = $this->sDirTrads . $this->aLang[0] .'.l10n';
+			if(empty($datosconsulta['fichero'])){
+				$this->aDatosConsulta['fichero'] = $this->sDirTrads . $this->aLang[0] .'.l10n';
+			}
 			else{
-				if(is_readable($datosconsulta['fichero'])) $this->aDatosConsulta['fichero'] = $datosconsulta['fichero'];
-				elseif(is_readable(dirname(__FILE__) . '/' . ltrim($datosconsulta['fichero'], ' /\\'))) $this->aDatosConsulta['fichero'] = dirname(__FILE__) . '/' . ltrim($datosconsulta['fichero'], ' /\\');
+				if(is_readable($datosconsulta['fichero'])){
+					$this->aDatosConsulta['fichero'] = $datosconsulta['fichero'];
+				}
+				elseif(is_readable(dirname(__FILE__) . '/' . ltrim($datosconsulta['fichero'], ' /\\'))){
+					$this->aDatosConsulta['fichero'] = dirname(__FILE__) . '/' . ltrim($datosconsulta['fichero'], ' /\\');
+				}
 				else{
 					$this->setError(__METHOD__ . '_1', $datosconsulta['fichero']);
 					return false;
@@ -309,7 +319,9 @@ class L10n {
 			}
 		}
 
-		if($this->debug) var_dump(array('{$this->datosConsulta()} $this->aDatosConsulta [despues]: ' => $this->aDatosConsulta, $this->sDirTrads));
+		if($this->debug){
+			var_dump(array('{$this->datosConsulta()} $this->aDatosConsulta [despues]: ' => $this->aDatosConsulta, $this->sDirTrads));
+		}
 
 		return true;
 	}
@@ -318,7 +330,6 @@ class L10n {
 	 * Muestra informacion de depuracion
 	 *
 	 * @since 2012-02-10
-	 * @access private
 	 */
 	private function debug(){
 		if(!$this->debug) return false;
@@ -353,7 +364,6 @@ class L10n {
 	/**
 	 * Devuelve los errores que se hayan producido.
 	 *
-	 * @access public
 	 * @return string
 	 */
 	public function getError(){
@@ -365,7 +375,6 @@ class L10n {
 	 * Si no se pasa ninguna clave se muestran todos
 	 *
 	 * @todo mostrar la clave de un texto de mensaje de error (invirtiendo el array y un foreach para buscar coincidencia de texto)
-	 * @access public
 	 * @param string $clave Clave del mensaje de error
 	 * @return string
 	 */
@@ -377,7 +386,6 @@ class L10n {
 	/**
 	 * Devuelve el codigo de idioma usado actualmente
 	 *
-	 * @access public
 	 * @param boolean $codCorto Si true devuelve el formato corto (dos primeros caracteres)
 	 * @return string
 	 */
@@ -391,7 +399,6 @@ class L10n {
 	/**
 	 * Busca la clave pasada en el array de traducciones y devuelve la traduccion con parametros.
 	 *
-	 * @access public
 	 * @param numero de parametros variable, el primero es la clave a buscar y el resto los argumentos (%s) que precise
 	 * @return string
 	 */
@@ -399,42 +406,45 @@ class L10n {
 		$argumentos = func_get_args();
 		$clave = array_shift($argumentos);
 
-		if(empty($this->aTraduccion[$clave])) $cadTemp = $clave; //si no se encuentra traduccion se devuelve simplemente la clave pasada
-		else{
+		$sCadena = $clave; //si no se encuentra traduccion se devuelve la clave pasada
+		if(!empty($this->aTraduccion[$clave])){
 			//limpia la cadena para evitar problemas con "*printf"
-			$cadTemp = str_replace('%s', '\s|', str_replace('%%', '\%|', $this->aTraduccion[$clave]));
+			$sCadena = str_replace('%s', '\s|', str_replace('%%', '\%|', $this->aTraduccion[$clave]));
 
 			//comprueba que el numero de argumentos sean los mismos en el mensaje que los pasados
-			$aTemp = explode('\s|', $cadTemp);
-			if(count($argumentos) != (count($aTemp)-1)){
+			$aTemp = explode('\s|', $sCadena);
+			if(count($argumentos) != (count($aTemp) - 1)){
 				$this->setError(__METHOD__, $clave);
 				return false;
 			}
 
 			//limpia y recompone la cadena para evitar problemas con "*sprintf"
-			$cadTemp = str_replace('\%|', '%%', str_replace('\s|', '%s', str_replace('%', '\~|', $cadTemp)));
-			if($this->bVerTiempos) $cadTemp = '[' . $this->microtimeSeg() . '] ' . vsprintf($cadTemp, $argumentos);
-			else $cadTemp = vsprintf($cadTemp, $argumentos);
-			$cadTemp = str_replace('\~|', '%', $cadTemp);
+			$sCadena = str_replace('\%|', '%%', str_replace('\s|', '%s', str_replace('%', '\~|', $sCadena)));
+			$sCadena = vsprintf($sCadena, $argumentos);
+			if($this->bVerTiempos){
+				$sCadena = '[' . $this->microtimeSeg() . '] ' . $sCadena;
+			}
+			$sCadena = str_replace('\~|', '%', $sCadena);
 		}
 
 		if(!isset($this->aTraduccion[$clave])){ //no se encuentra en los archivos de traduccion
-			if($this->bGuardaHuerfanas){ //pone clave|clave en los archivos de traduccion
-				if($this->guardaHuerfanas($clave)) $this->aTraduccionUso[$clave] = 1;
-				else $this->aTraduccionUso[$clave] = -1; //no se ha podido guardar la clave de traduccion
-			}
-			else $this->aTraduccionUso[$clave] = -1; //no existe la clave de traduccion
-		}
-		else $this->aTraduccionUso[$clave] = empty($this->aTraduccionUso[$clave]) ? 1 : $this->aTraduccionUso[$clave] + 1;
+			$this->aTraduccionUso[$clave] = -1; //no existe la clave de traduccion
 
-		return $cadTemp;
+			if($this->bGuardaHuerfanas){
+				$this->aTraduccionUso[$clave] = !$this->guardaHuerfanas($clave) ? 1 : -1; //intenta poner clave|clave en los archivos de traduccion
+			}
+		}
+		else{
+			$this->aTraduccionUso[$clave] = empty($this->aTraduccionUso[$clave]) ? 1 : $this->aTraduccionUso[$clave] + 1;
+		}
+
+		return $sCadena;
 	}
 
 
 	/**
 	 * Devuelve el recuento de traducciones usadas.
 	 *
-	 * @access public
 	 * @since 2012-02-09
 	 * @param integer $filtro = -1 devuelve solo las que no se encuentren en el archivo de traducciones, = n devuelve aquellas que se usen n o mas veces; = false devuelve todas
 	 * @return array
@@ -460,13 +470,14 @@ class L10n {
 	 * Guarda claves huerfanas en ficheros de traduccion
 	 * de momento solo en el fichero de traduccion del idioma activo
 	 *
-	 * @access private
 	 * @since 2012-06-22
-	 * @param string $clave Clave huerfana
+	 * @param string $sClave Clave huerfana
 	 * @return boolean
 	 */
-	private function guardaHuerfanas($clave = false){
-		if(!$this->bGuardaHuerfanas || empty($clave)) return false;
+	private function guardaHuerfanas($sClave = false){
+		if(!$this->bGuardaHuerfanas || empty($sClave)){
+			return false;
+		}
 
 		if(!is_writable($this->aDatosConsulta['fichero'])){
 			$this->setError(__METHOD__ . '_1', $this->aDatosConsulta['fichero']);
@@ -476,12 +487,13 @@ class L10n {
 			$this->setError(__METHOD__ . '_2', $this->aDatosConsulta['fichero']);
 			return false;
 		}
-		$sTraduccion = $clave.$this->aDatosConsulta['separadorCampos'] . $clave . "\n";
+		$sTraduccion = $sClave . $this->aDatosConsulta['separadorCampos'] . $sClave . "\n";
 		if(fwrite($fichero, $sTraduccion) === FALSE){
-			$this->setError(__METHOD__ . '_3', $contenido, $this->aDatosConsulta['fichero']);
+			$this->setError(__METHOD__ . '_3', $sClave, $this->aDatosConsulta['fichero']);
 			return false;
 		}
 		fclose($fichero);
+
 		return true;
 	}
 
@@ -489,7 +501,6 @@ class L10n {
 	/**
 	 * Contador de (intentos de) instancias de la clase;
 	 *
-	 * @access private
 	 * @return integer
 	 */
 	protected function instCount(){
@@ -506,14 +517,13 @@ class L10n {
 	/**
 	 * Constructor
 	 *
-	 * @access public
-	 * @param string $class Clase que solicita traducciones
-	 * @param string $classdatos Sufijo de la clase de recuperación de datos
-	 * @param string $dirTrads Directorio donde encontrar las traducciones ('l10n' por defecto)
-	 * @param array $datosconsulta Parametros para la clase de recuperación de datos
-	 * @param string $lang Lengua en la que se recuperan los textos
+	 * @param string $sClass Clase que solicita traducciones
+	 * @param string $sClassDatos Sufijo de la clase de recuperación de datos
+	 * @param string $sDirTrads Directorio donde encontrar las traducciones ('l10n' por defecto)
+	 * @param array $aDatosConsulta Parametros para la clase de recuperación de datos
+	 * @param string $sLang Lengua en la que se recuperan los textos
 	 */
-	function l10n($class = false, $classdatos = false, $dirTrads = false, $datosconsulta = array(), $lang = false){
+	function L10n($sClass = false, $sClassDatos = false, $sDirTrads = false, $aDatosConsulta = array(), $sLang = false){
 		$this->aError = array();
 		$this->aErrorMensajes = array();
 		$this->setErrorMensaje(); //inicializacion de los mensajes de error
@@ -521,35 +531,36 @@ class L10n {
 		$this->bGuardaHuerfanas = false;
 		$this->aLangDefecto = 'es_es';
 		$this->aTraduccion = $this->aTraduccionUso = array();
-		$lang = ($lang === false) ? '' : $lang; //esto permite la deteccion automatica de idioma (si se pasa false no asigna lenguaje ni lo busca)
+		$sLang = ($sLang === false) ? '' : $sLang; //esto permite la deteccion automatica de idioma (si se pasa false no asigna lenguaje ni lo busca)
 
 		$this->setVerTiempos();
 
-		$this->l10n_ini($class, $classdatos, $dirTrads, $datosconsulta, $lang);
+		$this->l10n_ini($sClass, $sClassDatos, $sDirTrads, $aDatosConsulta, $sLang);
 	}
 
 	/**
 	 * Inicializador de la clase; no deberia instanciarse directamente, sino con l10n_sel() (al principio de este archivo), que llamara a este o al constructor, segun sea necesario; php4 dificulta patrones singleton ya que no permite propiedades estaticas
 	 *
-	 * @access public
-	 * @param string $class Clase que solicita errores
-	 * @param string $classdatos Sufijo de la clase de recuperación de datos
-	 * @param string $dirTrads Directorio donde encontrar las traducciones ('l10n' por defecto)
-	 * @param array $datosconsulta Parametros para la clase de recuperación de datos
-	 * @param string $lang Lengua en la que se recuperan los mensajes error
+	 * @param string $sClass Clase que solicita errores
+	 * @param string $sClassDatos Sufijo de la clase de recuperación de datos
+	 * @param string $sDirTrads Directorio donde encontrar las traducciones ('l10n' por defecto)
+	 * @param array $aDatosConsulta Parametros para la clase de recuperación de datos
+	 * @param string $sLang Lengua en la que se recuperan los mensajes error
 	 * @return boolean
 	 */
-	public function l10n_ini($class = false, $classdatos = false, $dirTrads = false, $datosconsulta = array(), $lang = false){
-		$this->sClass = empty($class) ? '' : $class;
+	public function l10n_ini($sClass = false, $sClassDatos = false, $sDirTrads = false, $aDatosConsulta = array(), $sLang = false){
+		$this->sClass = empty($sClass) ? '' : $sClass;
 
-		$this->setLang($lang);
+		$this->setLang($sLang);
 
-		$this->setDirTrads($dirTrads);
+		$this->setDirTrads($sDirTrads);
 
-		if($this->debug) var_dump(array('{$this->l10_ini}()} $datosconsulta: ' => $datosconsulta));
+		if($this->debug){
+			var_dump(array('{$this->l10_ini}()} $aDatosConsulta: ' => $aDatosConsulta));
+		}
 
-		$this->sClassDatos = $classdatos;
-		$this->datosConsulta($datosconsulta);
+		$this->sClassDatos = $sClassDatos;
+		$this->datosConsulta($aDatosConsulta);
 
 		$this->recuperaDatos(); //recupera los datos de errores
 
@@ -562,20 +573,19 @@ class L10n {
 	 * De momento solo se usan los dos primeros caracteres; no se contemplan codigos regionales
 	 *
 	 * @todo gestionar variantes; por ahora solo se gestiona el lenguaje principal "es", no la variante "es_ar"
-	 * @access private
-	 * @param string $lang Codigo de idioma (ISO 3166) a comprobar
-	 * @param boolean $locale Asignar (true), o no (false) el locale; si true devolvera el "locale" que se haya asignado o false si no se ha conseguido asignar, si false devolvera el codigo de idioma que corresponda al proporcionado en parametro
+	 * @param string $sLang Codigo de idioma (ISO 3166) a comprobar
+	 * @param boolean $bLocale Asignar (true), o no (false) el locale; si true devolvera el "locale" que se haya asignado o false si no se ha conseguido asignar, si false devolvera el codigo de idioma que corresponda al proporcionado en parametro
 	 * @return boolean
 	 */
-	private function locale($lang = false, $locale = false){
+	private function locale($sLang = false, $bLocale = false){
 		$this->debug();
 
 		$sLocale = false; //queda con false si no se asigna (o no se consigue asignar) el locale
 		$sTemp = false;
 
-		$lang = ($lang) ? str_replace('-', '_', strtolower($lang)) : $lang;
+		$sLang = ($sLang) ? str_replace('-', '_', strtolower($sLang)) : $sLang;
 
-		switch($lang){ //TODO revisar grupos de idiomas
+		switch($sLang){ //TODO revisar grupos de idiomas
 			case 'ar': //Arabe
 			case 'ar_ae': //Árabe (Emiratos árabes unidos)
 			case 'ar_bh': //Árabe (Bahrein)
@@ -596,10 +606,10 @@ class L10n {
 				$sTemp = 'ar';
 				break;
 			case 'da': //Danés
-				if($locale) $sLocale = empty($sLocale) ? setlocale(LC_ALL, 'da_DK.ISO-8859-15', 'da_DK.iso885915') : false;
+				if($bLocale) $sLocale = empty($sLocale) ? setlocale(LC_ALL, 'da_DK.ISO-8859-15', 'da_DK.iso885915') : false;
 				break;
 			case 'de': //Alemán
-				if($locale) $sLocale = empty($sLocale) ? setlocale(LC_ALL, 'de_DE@euro', 'de_DE', 'de', 'ge','deu_deu') : false;
+				if($bLocale) $sLocale = empty($sLocale) ? setlocale(LC_ALL, 'de_DE@euro', 'de_DE', 'de', 'ge','deu_deu') : false;
 			case 'de_at': //Alemán (Austria)
 			case 'de_ch': //Alemán (Suiza)
 			case 'de_li': //Alemán (Liechtenstein)
@@ -607,8 +617,10 @@ class L10n {
 				$sTemp = 'de';
 				break;
 			case 'en': //Inglés
-				if($locale) $sLocale = empty($sLocale) ? setlocale(LC_ALL, 'en_EN', 'ENG', 'English') : false;
-				//date_default_timezone_set('Europe/London');
+				if($bLocale){
+					date_default_timezone_set('Europe/London');
+					$sLocale = empty($sLocale) ? setlocale(LC_ALL, 'en_EN', 'ENG', 'English') : false;
+				}
 			case 'en_au': //Australiano
 			case 'en_bz': //Inglés (Bélize)
 			case 'en_ca': //Canadiense
@@ -617,16 +629,20 @@ class L10n {
 			case 'en_jm': //Jamaicano
 			case 'en_nz': //Neocelandes
 			case 'en_us': //Inglés (USA)
-				if($locale) $sLocale = empty($sLocale) ? setlocale(LC_ALL, 'en_US', 'en_US.utf8', 'en_US.UTF8', 'en_US.UTF-8', 'en_US.8859-1', 'en_US', 'American') : false;
-				//date_default_timezone_set('Europe/London');America/New_York
+				if($bLocale){
+					date_default_timezone_set('America/New_York');
+					$sLocale = empty($sLocale) ? setlocale(LC_ALL, 'en_US', 'en_US.utf8', 'en_US.UTF8', 'en_US.UTF-8', 'en_US.8859-1', 'en_US', 'American') : false;
+				}
 			case 'en_za': //Inglés (Africa del sur)
 				$sTemp = 'en';
 				break;
 			case 'es': //Español
 			case 'es_es': //Español (España)
 				//localizacion del entorno
-				if($locale) $sLocale = empty($sLocale) ? setlocale(LC_ALL, 'es_ES', 'es_ES.UTF-8', 'es_ES@euro', 'spanish', 'Spanish_Spain.1252', 'Spanish_Spain.28605') : false;
-				//date_default_timezone_set('Europe/Madrid');
+				if($bLocale){
+					date_default_timezone_set('Europe/Madrid');
+					$sLocale = empty($sLocale) ? setlocale(LC_ALL, 'es_ES', 'es_ES.UTF-8', 'es_ES@euro', 'spanish', 'Spanish_Spain.1252', 'Spanish_Spain.28605') : false;
+				}
 			case 'es_ar': //Español (Argentina)
 			case 'es_bo': //Español (Bolivia)
 			case 'es_cl': //Español (Chile)
@@ -648,27 +664,33 @@ class L10n {
 				$sTemp = 'es';
 				break;
 			case 'fi': //Finlandés
-				if($locale) $sLocale = empty($sLocale) ? setlocale(LC_ALL, 'fi_FI.UTF-8','fi_FI@euro','fi_FI','finnish') : false;
-				//date_default_timezone_set('Europe/Helsinki');
+				if($bLocale){
+					date_default_timezone_set('Europe/Helsinki');
+					$sLocale = empty($sLocale) ? setlocale(LC_ALL, 'fi_FI.UTF-8','fi_FI@euro','fi_FI','finnish') : false;
+				}
 				break;
 			case 'fr': //Français
-				if($locale) $sLocale = empty($sLocale) ? setlocale(LC_ALL, 'fr_FR','fr.UTF8', 'fr.UTF-8') : false;
-				//date_default_timezone_set('Europe/Paris');
+				if($bLocale){
+					date_default_timezone_set('Europe/Paris');
+					$sLocale = empty($sLocale) ? setlocale(LC_ALL, 'fr_FR','fr.UTF8', 'fr.UTF-8') : false;
+				}
 			case 'fr_be': //Français (Belgique)
 			case 'fr_ca': //Français (Canada)
-				if($locale) $sLocale = empty($sLocale) ? setlocale(LC_ALL, 'fr_CA') : false;
+				if($bLocale) $sLocale = empty($sLocale) ? setlocale(LC_ALL, 'fr_CA') : false;
 			case 'fr_ch': //Français (Suisse)
 			case 'fr_fr': //Français
-				if($locale) $sLocale = empty($sLocale) ? setlocale(LC_ALL, 'fr_FR', 'fr_FR.UTF8', 'fr_FR.UTF-8') : false;
-				//date_default_timezone_set('Europe/Paris');
+				if($bLocale){
+					date_default_timezone_set('Europe/Paris');
+					$sLocale = empty($sLocale) ? setlocale(LC_ALL, 'fr_FR', 'fr_FR.UTF8', 'fr_FR.UTF-8') : false;
+				}
 			case 'fr_lu': //Français (Luxembourg)
 				$sTemp = 'fr';
 				break;
 			case 'in': //Indonesio
-				if($locale) $sLocale = empty($sLocale) ? setlocale(LC_ALL, 'id_ID.UTF8', 'id_ID.UTF-8', 'id_ID.8859-1', 'id_ID', 'IND.UTF8', 'IND.UTF-8', 'IND.8859-1', 'IND', 'Indonesian.UTF8', 'Indonesian.UTF-8', 'Indonesian.8859-1', 'Indonesian', 'Indonesia', 'id', 'ID', 'en_US.UTF8', 'en_US.UTF-8', 'en_US.8859-1', 'en_US', 'American', 'ENG', 'English') : false;
+				if($bLocale) $sLocale = empty($sLocale) ? setlocale(LC_ALL, 'id_ID.UTF8', 'id_ID.UTF-8', 'id_ID.8859-1', 'id_ID', 'IND.UTF8', 'IND.UTF-8', 'IND.8859-1', 'IND', 'Indonesian.UTF8', 'Indonesian.UTF-8', 'Indonesian.8859-1', 'Indonesian', 'Indonesia', 'id', 'ID', 'en_US.UTF8', 'en_US.UTF-8', 'en_US.8859-1', 'en_US', 'American', 'ENG', 'English') : false;
 				break;
 			case 'it': //Italiano
-				if($locale) $sLocale = empty($sLocale) ? setlocale(LC_ALL, 'it_IT') : false;
+				if($bLocale) $sLocale = empty($sLocale) ? setlocale(LC_ALL, 'it_IT') : false;
 			case 'it_ch': //Italiano (Suiza)
 				$sTemp = 'it';
 				break;
@@ -677,9 +699,9 @@ class L10n {
 				$sTemp = 'nl';
 				break;
 			case 'pt': //Portugués
-				if($locale) $sLocale = empty($sLocale) ? setlocale(LC_ALL, 'pt_PT', 'pt_PT.iso-8859-1', 'pt_PT.utf-8', 'portuguese') : false;
+				if($bLocale) $sLocale = empty($sLocale) ? setlocale(LC_ALL, 'pt_PT', 'pt_PT.iso-8859-1', 'pt_PT.utf-8', 'portuguese') : false;
 			case 'pt_br': //Portugués (Brasil)
-				if($locale) $sLocale = empty($sLocale) ? setlocale(LC_ALL, 'pt_BR', 'pt_BR.iso-8859-1', 'pt_BR.utf-8', 'portuguese', 'pt_PT') : false;
+				if($bLocale) $sLocale = empty($sLocale) ? setlocale(LC_ALL, 'pt_BR', 'pt_BR.iso-8859-1', 'pt_BR.utf-8', 'portuguese', 'pt_PT') : false;
 				$sTemp = 'pt';
 				break;
 			case 'ro': //Roumain (Moldavie)
@@ -745,13 +767,15 @@ class L10n {
 			case 'vi': //Vietnamita
 			case 'xh': //Xhosa (Afrique)
 			case 'zu': //Zulú (Afrique)
-				$sTemp = $lang;
+				$sTemp = $sLang;
 				break;
 			default:
 				//idioma que se usara en caso de no estar soportado el proporcionado
 		}
 
-		if($locale) return $sLocale;
+		if($bLocale){
+			return $sLocale;
+		}
 		//return($sTemp.'_'.strtoupper($sTemp));
 		return $sTemp;
 	}
@@ -759,21 +783,24 @@ class L10n {
 	/**
 	 * Devuelve microtime en segundos
 	 *
-	 * @access private
-	 * @param boolean $float Si true devuelve un numero flotante, si false devuelve formateado "legible para humanos" (parecido a ISO 8601)
+	 * @param boolean $bFloat Si true devuelve un numero flotante, si false devuelve formateado "legible para humanos" (parecido a ISO 8601)
 	 * @return float
 	 */
-	private function microtimeSeg($float = false){
+	private function microtimeSeg($bFloat = false){
 		list($mseg, $seg) = explode(" ", microtime());
 
-		if($float) return ((float)$mseg + (float)$seg);
-		else return (date('Y-m-d H:i:s', $seg) . substr($mseg, 1));
+		$fRet = (date('Y-m-d H:i:s', $seg) . substr($mseg, 1));
+
+		if($bFloat){
+			$fRet = ((float)$mseg + (float)$seg);
+		}
+
+		return $fRet;
 	}
 
 	/**
 	 * Crea instancia de la clase de recuperacion de datos y recupera los datos de traducciones
 	 *
-	 * @access private
 	 * @return float
 	 */
 	private function recuperaDatos(){
@@ -797,12 +824,17 @@ class L10n {
 		foreach($aTemp as $valor){
 			$valor = array_values($valor); //evita problemas con nombres de columas personalizados
 
-			if(strpos($valor[0], '##') === 0) continue; //ignora los comentarios (cualquier linea que empiece con ##)
+			if(strpos($valor[0], '##') === 0){
+				continue; //ignora los comentarios (cualquier linea que empiece con ##)
+			}
 			elseif((empty($valor[0]) && !empty($valor[1])) || (!empty($valor[0]) && empty($valor[1]))){ //error, clave sin valor o valor sin clave
 				$this->setError(__METHOD__ . '_2', (isset($valor[0]) ? $valor[0] : ''), (isset($valor[1]) ? $valor[1] : ''));
 				//return false;
 			}
-			if(!empty($valor[0]) && !empty($valor[1])) $this->aTraduccion[$valor[0]] = $valor[1]; //ignora las lineas vacias
+
+			if(!empty($valor[0]) && !empty($valor[1])){
+				$this->aTraduccion[$valor[0]] = $valor[1]; //ignora las lineas vacias
+			}
 		}
 
 		return true;
@@ -813,52 +845,55 @@ class L10n {
 	 * Asigna el nivel de debug (false inactivo, true activo). Devuelve el actual nivel de debug
 	 *
 	 * @since 2012-02-10
-	 * @access public
 	 * @return boolean
 	 */
 	public function setDebug($debug){
-		$this->debug = empty($debug)?false:true;
+		$this->debug = empty($debug) ? false : true;
+
 		return $this->debug;
 	}
 
 	/**
 	 * Asigna el directorio donde encontrar los ficheros de traduccion y comprueba si existe el fichero de traduccion (alguno de ellos).
 	 *
-	 * @access public
-	 * @param string $dir Directorio donde encontrar las traducciones
+	 * @param string $sDir Directorio donde encontrar las traducciones
 	 * @return boolean
 	 */
-	public function setDirTrads($dir = false){
-		if($dir === false) return false;
+	public function setDirTrads($sDir = false){
+		if($sDir === false){
+			return false;
+		}
 
-		if(realpath($dir) === false) $dir = realpath(dirname(__FILE__));
-		$dir = rtrim($dir, ' /\\') . '/';
+		if(realpath($sDir) === false){
+			$sDir = realpath(dirname(__FILE__));
+		}
+		$sDir = rtrim($sDir, ' /\\') . '/';
 
 		$ret = array();
 
-		if($rDir = @opendir($dir)){
-			while(($file = readdir($rDir)) !== false) {
-				foreach($this->aLang as $clave => $valor){
-					if(is_readable($dir . $file) && strpos($file, $valor) !== false){ //idioma válido //TODO comprobar que se ajusta al tipo de fichero buscado (errores, traducciones, ...)
-						$ret[$clave] = $valor;
-						//break;
-					}
-				}
-			}
-			closedir($rDir);
-			$this->sDirTrads = $dir;
-		}
-		else{
+		if(!($rDir = @opendir($sDir))){
 			$this->sDirTrads = false;
-			$this->setError(__METHOD__ . '_1', $dir);
+			$this->setError(__METHOD__ . '_1', $sDir);
 			return false;
 		}
 
+		while(($file = readdir($rDir)) !== false){
+			foreach($this->aLang as $clave => $valor){
+				if(is_readable($sDir . $file) && strpos($file, $valor) !== false){ //idioma válido //TODO comprobar que se ajusta al tipo de fichero buscado (errores, traducciones, ...)
+					$ret[$clave] = $valor;
+					//break;
+				}
+			}
+		}
+		closedir($rDir);
+		$this->sDirTrads = $sDir;
+
 		if(empty($ret)){
-			$this->setError(__METHOD__ . '_2', $dir, implode(',', $this->aLang));
+			$this->setError(__METHOD__ . '_2', $sDir, implode(',', $this->aLang));
 			return false;
 		}
-		else $this->aLang = $ret; //confirma de entre los lenguajes detectados cuales tienen ficheros de traduccion
+
+		$this->aLang = $ret; //confirma de entre los lenguajes detectados cuales tienen ficheros de traduccion
 
 		return true;
 	}
@@ -866,15 +901,16 @@ class L10n {
 	/**
 	 * Guarda los errores que se hayan producido.
 	 *
-	 * @access private
 	 * @return string
 	 */
 	private function setError(){
-		$argumentos = func_get_args();
-		if(empty($argumentos)) return false;
-		$clave = array_shift($argumentos);
+		$aArgs = func_get_args();
+		if(empty($aArgs)){
+			return false;
+		}
+		$clave = array_shift($aArgs);
 
-		$this->aError[] = '[' . $this->microtimeSeg() . '] ' . vsprintf($this->aErrorMensajes[$clave], $argumentos);
+		$this->aError[] = '[' . $this->microtimeSeg() . '] ' . vsprintf($this->aErrorMensajes[$clave], $aArgs);
 		//trigger_error($this->aError[count($this->aError)-1]);
 
 		return true;
@@ -885,15 +921,14 @@ class L10n {
 	 * Util, por ejemplo, para traducciones
 	 * Si clave igual a false se reinicializan los mensajes
 	 *
-	 * @access public
-	 * @param mixed $clave Clave del mensaje de error, o un array con todos los mensajes de error (array('clave' => 'mensaje de error',[...]);); si no existe se genera un error
-	 * @param mixed $valor Nuevo texto para el mensaje de error
+	 * @param mixed $sClave Clave del mensaje de error, o un array con todos los mensajes de error (array('clave' => 'mensaje de error',[...]);); si no existe se genera un error
+	 * @param mixed $sValor Nuevo texto para el mensaje de error
 	 * @return boolean
 	 */
-	public function setErrorMensaje($clave = false, $valor = false){
+	public function setErrorMensaje($sClave = false, $sValor = false){
 		$aMensajes = array();
 
-		if($clave === false){ //reinicio de mensajes
+		if($sClave === false){ //reinicio de mensajes
 			//TODO definir constantes de tipos de error para usar trigger_error() ademas de esto
 			//TODO se pierden los mensajes iniciales de las clases herederas
 			$aMensajes = array(
@@ -911,29 +946,49 @@ class L10n {
 			);
 			//return true;
 		}
-		elseif(is_array($clave)) $aMensajes = $clave;
-		else $aMensajes[$clave] = $valor;
+		elseif(is_array($sClave)){
+			$aMensajes = $sClave;
+		}
+		else{
+			$aMensajes[$sClave] = $sValor;
+		}
 
 		foreach($aMensajes as $c => $v){
 			$this->aErrorMensajes[$c] = '{' . $c . '} ' . $v;
 		}
+
 		return true;
+	}
+
+	/**
+	 * Si true pone en los ficheros de traduccion las que no se encuentren en el
+	 *
+	 * @param boolean $bGuarda True para guardar en los ficheros de traduccion, false para no hacerlo
+	 * @return boolean
+	 */
+	public function setGuardaHuerfanas($bGuarda = false){
+		$this->bGuardaHuerfanas = (boolean) $bGuarda;
+
+		return $this->bGuardaHuerfanas;
 	}
 
 	/**
 	 * Asigna o busca los codigos de lenguaje que se usaran
 	 *
-	 * @access public
-	 * @param string $lang Codigo de lenguaje forzado, o (false) buscar los que usa el navegador del usuario
+	 * @param string $sLang Codigo de lenguaje forzado, o (false) buscar los que usa el navegador del usuario
 	 * @return boolean
 	 */
-	public function setLang($lang = false){
-		if($lang === false) return false;
+	public function setLang($sLang = false){
+		if($sLang === false){
+			return false;
+		}
 
-		$aIdm = array();
+		$aIdm = array($this->locale($sLang));
 
 		//deteccion automatica de idioma
-		if(empty($lang)){
+		if(empty($sLang)){
+			$aIdm = array();
+
 			//pruebas con servidor REST devuelven la cadena 'null' como lenguaje
 			$sAcceptLanguage = empty($_SERVER["HTTP_ACCEPT_LANGUAGE"]) || $_SERVER["HTTP_ACCEPT_LANGUAGE"] === 'null' ? $this->aLangDefecto : $_SERVER["HTTP_ACCEPT_LANGUAGE"]; //fuerza un lenguaje por defecto si no detecta ninguno (file_get_contents() no envia cabecera con codigos de lenguaje)
 
@@ -944,13 +999,12 @@ class L10n {
 				$aIdm[] = $this->locale($temp);
 			}
 		}
-		else $aIdm = array($this->locale($lang));
 
 		$this->aLang = array_unique($aIdm);
 		$_SESSION['l10n'] = substr($this->aLang[0], 0, 2);
 
 		if($aIdm[0] == false){
-			$this->setError(__METHOD__ . '_1', $lang);
+			$this->setError(__METHOD__ . '_1', $sLang);
 			return false;
 		}
 
@@ -960,26 +1014,24 @@ class L10n {
 	/**
 	 * Asigna "locale" al primer idioma valido
 	 *
-	 * @access public
-	 * @param string $idm Codigo de idioma (ISO 3166) con el que se pondran los "locales" (al idioma automaticamente seleccionado si no se pasa ninguno)
+	 * @param string $sIdm Codigo de idioma (ISO 3166) con el que se pondran los "locales" (al idioma automaticamente seleccionado si no se pasa ninguno)
 	 * @return boolean
 	 */
-	public function setLocale($idm = ''){
-		$idm = empty($idm) ? $this->aLang[0] : $idm;
+	public function setLocale($sIdm = ''){
+		$sIdm = empty($sIdm) ? $this->aLang[0] : $sIdm;
 
-		return $this->locale($idm, true);
+		return $this->locale($sIdm, true);
 	}
 
 	/**
 	 * Pone los tiempos de cada traduccion, mensaje de debug, etc
 	 * Al principio de cada linea
 	 *
-	 * @access public
-	 * @param string $ver Si true muestra los tiempos
+	 * @param string $bVer Si true muestra los tiempos
 	 * @return boolean
 	 */
-	public function setVerTiempos($ver = false){
-		$this->bVerTiempos = $ver;
+	public function setVerTiempos($bVer = false){
+		$this->bVerTiempos = $bVer;
 		return true;
 	}
 

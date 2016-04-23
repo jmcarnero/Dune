@@ -31,7 +31,7 @@ defined('CLASSES_DIR') or define('CLASSES_DIR', dirname(__FILE__));
  * @license http://www.gnu.org/copyleft/gpl.html
  * @package SQLazo
  */
-class sqlazo_oracle extends sqlazo {
+class SQLazo_oracle extends SQLazo {
 
 	/**
 	 * Recurso de resultados
@@ -54,7 +54,7 @@ class sqlazo_oracle extends sqlazo {
 	 * (que existe por defecto)
 	 */
 	function __construct($servidor = 'localhost', $usuario = 'root', $password = '', $ddbb = 'dual', $puerto = 1502){
-		parent::sqlazo($servidor, $usuario, $password, $ddbb, $puerto);
+		parent::SQLazo($servidor, $usuario, $password, $ddbb, $puerto);
 	}
 
 	/**
@@ -70,7 +70,7 @@ class sqlazo_oracle extends sqlazo {
 	 * @return boolean
 	 */
 	public function conectar($servidor = false, $usuario = false, $clave = false, $db = false, $puerto = false){
-		sqlazo::instCount(); //contador de instancias
+		SQLazo::instCount(); //contador de instancias
 
 		if($servidor)
 			$this->sDDBBServidor = $servidor;
@@ -93,7 +93,7 @@ class sqlazo_oracle extends sqlazo {
 	}
 
 	/**
-	 * Consulta a la base de datos, (si "SELECT", necesita de "sqlazo::leeFila()" para empezar a devolver resultados).
+	 * Consulta a la base de datos, (si "SELECT", necesita de "SQLazo::leeFila()" para empezar a devolver resultados).
 	 *
 	 * @param string $query Query SQL
 	 * @param array $pars Parametros de la query

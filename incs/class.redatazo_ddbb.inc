@@ -522,9 +522,9 @@ class Redatazo_ddbb implements iRedatazo {
 	public function where($campo, $valor = null){
 		$sAux = '';
 
-		if(!empty($valor)){
+		if(isset($valor)){
 			if(is_array($valor)){ //si se pasa un array de valores
-				if(empty($this->aConsulta['where_p'])){
+				if(empty($this->aConsulta['where_p'])){ //TODO detectar cada tipo de valor
 					$this->aConsulta['where_p'] = array();
 				}
 				$this->aConsulta['where_p'] = array_merge($this->aConsulta['where_p'], $valor);

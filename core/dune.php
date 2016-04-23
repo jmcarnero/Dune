@@ -137,7 +137,7 @@ class Dune {
 			$cadBase = array_pop($aBaseDir);
 			$phpSelf = trim(dirname($_SERVER['PHP_SELF']), '/');
 			$cadBase = substr($phpSelf, strpos($phpSelf, $cadBase) + strlen($cadBase));
-			$cadBase = $cadBase === false?array():explode('/', trim($cadBase, '/'));
+			$cadBase = ($cadBase === false) ? array() : explode('/', trim($cadBase, '/'));
 			define('D_BASE_URL', str_repeat('../', count($cadBase)));
 		}
 
@@ -326,9 +326,15 @@ class Dune {
 			$sTempDir = realpath(sys_get_temp_dir());
 		}
 		else{
-			if($temp=getenv('TMP')) return $temp;
-			if($temp=getenv('TEMP')) return $temp;
-			if($temp=getenv('TMPDIR')) return $temp;
+			if($temp = getenv('TMP')){
+				return $temp;
+			}
+			if($temp = getenv('TEMP')){
+				return $temp;
+			}
+			if($temp = getenv('TMPDIR')){
+				return $temp;
+			}
 			$temp = tempnam(__FILE__, '');
 			if(file_exists($temp)){
 				unlink($temp);
