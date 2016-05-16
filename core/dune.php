@@ -77,8 +77,12 @@ class Dune {
 
 	private $sModulo = 'error'; //nombre del modulo a cargar
 
-	//TODO controlar la existencia y contenido de las constantes (D_BASE_DIR, ...)
-	function __construct(){
+	/**
+	 * Constructor
+	 *
+	 * @todo controlar la existencia y contenido de las constantes (D_BASE_DIR, ...)
+	 */
+	public function __construct(){
 		spl_autoload_register(array('Dune', 'autoload')); //autocarga de clases en demanda
 
 		Dune::baseDir();
@@ -97,14 +101,18 @@ class Dune {
 		$this->ipCliente();
 		$this->tempDir();
 
-		define('LOGOUT', D_BASE_URL.'?logout');
+		define('LOGOUT', D_BASE_URL . '?logout');
 
 		/* final */
 		$this->pintaPagina();
 	}
 
-	//carga automaticamente clases de core
-	//se usa, por ejemplo, para cargar class.restazo.php
+	/**
+	 * Carga automaticamente clases de core; se usa, por ejemplo, para cargar class.restazo.php
+	 *
+	 * @param string $sClass Clase a cargar
+	 * @return boolean
+	 */
 	public static function autoload($sClass){
 		$bLeido = false;
 		$sClass = strtolower($sClass); //por ahora los nombres de las clases van en minusculas
@@ -127,10 +135,10 @@ class Dune {
 	 * Crea las constantes BASE_DIR y BASE_URL,
 	 * por esto la clase init debe estar en el directorio raiz
 	 *
-	 * @param string $ret Devuelve la URL (si se pasa 'url') o directorio base (si se pasa 'dir'); si no devuelve null
+	 * @param string $sRet Devuelve la URL (si se pasa 'url') o directorio base (si se pasa 'dir'); si no devuelve null
 	 * @return string
 	 */
-	public static function baseDir($ret = null){
+	public static function baseDir($sRet = null){
 		if(!defined('D_BASE_DIR')) define('D_BASE_DIR', str_replace('\\', '/', realpath(dirname(__FILE__).'/..')).'/');
 		if(!defined('D_BASE_URL')){
 			$aBaseDir = explode('/', trim(D_BASE_DIR, '/'));
@@ -141,7 +149,7 @@ class Dune {
 			define('D_BASE_URL', str_repeat('../', count($cadBase)));
 		}
 
-		switch($ret){
+		switch($sRet){
 			case 'dir':
 				return D_BASE_DIR;
 				break;
@@ -159,6 +167,7 @@ class Dune {
 	 * si tampoco existe avisa con un mensaje
 	 *
 	 * @todo verificar orden de busqueda y operaciones de lectura de disco, quizas pueda hacerse todo con el array_map de glob, comprobando antes que modulo se ha pedido (y quizas el de error tambien)
+	 * @return void
 	 */
 	private function buscaModulo(){
 		//seleccion de modulo, portada por defecto
@@ -192,10 +201,11 @@ class Dune {
 	}
 
 	/**
-	 * Carga el controlador relacionado con el modulo,
-	 * deja una instancia del controlador en $this->oControlazo
+	 * Carga el controlador relacionado con el modulo, deja una instancia del controlador en $this->oControlazo
 	 *
 	 * Si el valor del parametro modulo es un metodo intenta cargarse y ejecutarse
+	 *
+	 * @return void
 	 */
 	private function cargaControlador(){
 		//clases base de controlador y modelo
@@ -263,6 +273,8 @@ class Dune {
 
 	/**
 	 * Guarda la IP del cliente actual
+	 *
+	 * @return void
 	 */
 	private function ipCliente(){
 		//redes privadas ("10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16");
@@ -278,6 +290,8 @@ class Dune {
 
 	/**
 	 * Compone la pagina y la envia al navegador
+	 *
+	 * @return void
 	 */
 	private function pintaPagina(){
 		if(!headers_sent($file, $line)){
@@ -299,7 +313,10 @@ class Dune {
 
 	/**
 	 * Pone la aplicacion en modo debug o no
-	 * en modo debug se muestran errores
+	 *
+	 * En modo debug se muestran errores
+	 *
+	 * @return void
 	 */
 	private function setDebug(){
 		if(defined('D_DEBUG') && D_DEBUG){
@@ -318,6 +335,8 @@ class Dune {
 
 	/**
 	 * Busca la ruta del directorio temporal
+	 *
+	 * @return void
 	 */
 	private function tempDir(){
 		$sTempDir = null;

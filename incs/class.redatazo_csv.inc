@@ -1,20 +1,20 @@
 <?php
-# Copyright (C) 2009 José M. Carnero <jm_carnero@sargazos.net>
-#
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License along
-# with this program; if not, write to the Free Software Foundation, Inc.,
-# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-# http://www.gnu.org/copyleft/gpl.html
+/*Copyright (C) 2009 José M. Carnero <jm_carnero@sargazos.net>
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along
+with this program; if not, write to the Free Software Foundation, Inc.,
+51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+http://www.gnu.org/copyleft/gpl.html*/
 
 //Constante con el directorio donde se encuentran las clases derivadas y/o dependientes de esta
 defined('CLASSES_DIR') or define('CLASSES_DIR', dirname(__FILE__));
@@ -34,6 +34,7 @@ include_once CLASSES_DIR . '/class.importarCsv.inc';
  * @package REdAtazo
  */
 class Redatazo_csv implements iRedatazo {
+
 	/**
 	 * Campos a importar del CSV, en el mismo orden que aparezcan; los campos "--" provocan que se ignore la columna que corresponda
 	 *
@@ -86,14 +87,16 @@ class Redatazo_csv implements iRedatazo {
 	 * Total de filas, sin limit
 	 *
 	 * @var integer
-	 * @see rdatazo_csv::totalFilas($limit)
+	 * @see Redatazo_csv::totalFilas($limit)
 	 */
-	public $iTotalFilas;
+	private $iTotalFilas;
 
 	/**
 	 * Constructor
+	 *
+	 * @param array $aDatos Lista de parametros
 	 */
-	function __construct($aDatos = array()){
+	public function __construct($aDatos = array()){
 		$this->setParametros($aDatos);
 
 		$this->iFilasPag = $this->iFilasCant = false;
@@ -113,7 +116,6 @@ class Redatazo_csv implements iRedatazo {
 	 * Conectar con la clase CSV
 	 *
 	 * @todo eliminar esta conexion y hacer una nueva si cambian parametros, $this->setParametros
-	 * @access private
 	 * @return boolean
 	 */
 	private function conectar(){
@@ -135,7 +137,10 @@ class Redatazo_csv implements iRedatazo {
 	 * del archivo CSV
 	 *
 	 * @todo pasar $numFilas y $numPagina a $this->limit; teniendo en cuenta no pisar si no se pasa nada
-	 * @access public
+	 * @param string $consulta Consulta a lanzar
+	 * @param string $parametros Parametros de la consulta
+	 * @param string $numFilas Numero de filas a recuperar
+	 * @param string $numPagina Numero de pagina en la que empezar la recuperacion
 	 * @return array
 	 */
 	public function consulta($consulta = null, $parametros = array(), $numFilas = null, $numPagina = null){
@@ -168,7 +173,6 @@ class Redatazo_csv implements iRedatazo {
 	/**
 	 * Borra una o mas filas
 	 *
-	 * @access public
 	 * @param string $fichero Fichero en el que se hara el borrado
 	 * @param array $condicion Condicion de borrado, array asociativo ('campo' => valor)
 	 * @return boolean
@@ -180,7 +184,6 @@ class Redatazo_csv implements iRedatazo {
 	/**
 	 * Fichero del que recuperar resultados (cuando CSV, XML, etc.)
 	 *
-	 * @access public
 	 * @param string $fichero Fichero del que recuperar datos, ruta/nombre_de_fichero.csv
 	 * @return boolean
 	 */
@@ -194,7 +197,6 @@ class Redatazo_csv implements iRedatazo {
 	/**
 	 * Devuelve la consulta lanzada
 	 *
-	 * @access public
 	 * @param string $posicion Que consulta mostrar, por defecto la ultima lanzada
 	 * @return string
 	 */
@@ -205,7 +207,6 @@ class Redatazo_csv implements iRedatazo {
 	/**
 	 * Devuelve las filas recuperadas en la consulta
 	 *
-	 * @access public
 	 * @return array
 	 */
 	public function getFilas(){
@@ -215,7 +216,6 @@ class Redatazo_csv implements iRedatazo {
 	/**
 	 * Opciones de agrupacion
 	 *
-	 * @access public
 	 * @param string $campo Campo por el que se agruparan los resultados
 	 * @return boolean
 	 */
@@ -226,7 +226,6 @@ class Redatazo_csv implements iRedatazo {
 	/**
 	 * Inserta una fila
 	 *
-	 * @access public
 	 * @param string $fichero Fichero en el que se hara la insercion
 	 * @param array $datos Datos a insertar, array asociativo ('campo' => valor)
 	 * @return boolean
@@ -238,7 +237,6 @@ class Redatazo_csv implements iRedatazo {
 	/**
 	 * Ficheros con los que hacer join del principal
 	 *
-	 * @access public
 	 * @param string $fichero Fichero y seguido de condicion (si no se pone en el segundo parametro)
 	 * @param string $condicion Condicion del join (-opcional-)
 	 * @param string $tipo Tipo de join: inner, left, right
@@ -251,7 +249,6 @@ class Redatazo_csv implements iRedatazo {
 	/**
 	 * Limita el numero de filas devuelto
 	 *
-	 * @access public
 	 * @param integer $cantidad Cantidad de filas a devolver
 	 * @param integer $offset Numero de fila desde la cual empezar a devolver
 	 * @return boolean
@@ -263,6 +260,11 @@ class Redatazo_csv implements iRedatazo {
 		return false;
 	}
 
+	/**
+	 * Limpia la consulta y sus datos, para comenzar en limpio la siguiente
+	 *
+	 * @return void
+	 */
 	private function limpiaConsulta(){
 		$this->sFichero = '';
 		$this->aCampos = array();
@@ -272,7 +274,6 @@ class Redatazo_csv implements iRedatazo {
 	 * Opciones de ordenacion
 	 *
 	 * @todo poner nombre de tabla y campos entre ` (tildes graves); decidir si el usuario puede enviar las palabras clave "order by"
-	 * @access public
 	 * @param string $campo Campo por el que se ordenaran los resultados; sin orden por defecto
 	 * @param string $sentido Sentido de la ordenacion: asc(endente) o desc(endente)
 	 * @return boolean
@@ -284,7 +285,6 @@ class Redatazo_csv implements iRedatazo {
 	/**
 	 * Campos a devolver
 	 *
-	 * @access public
 	 * @param string $campos Campos a devolver, separados por comas
 	 * @return boolean
 	 */
@@ -307,7 +307,6 @@ class Redatazo_csv implements iRedatazo {
 	 * 'aTraducciones' => array de traducciones, donde las claves son los terminos que deban aparecer en el CSV y sus valores las traducciones; si esta vacio se ignora la traduccion; si una clave apunta a un array, la clave sera el nombre del campo al que afectan las traducciones (exclusivamente)
 	 * 'sFichero' => nombre del fichero que contiene los datos CSV, ruta completa
 	 *
-	 * @access public
 	 * @param array $aDatos Asociativo con los datos requeridos por la clase
 	 * @return boolean
 	 */
@@ -331,7 +330,6 @@ class Redatazo_csv implements iRedatazo {
 	/**
 	 * Devuelve el total de filas recuperadas, con y sin limit.
 	 *
-	 * @access public
 	 * @param boolean $limit Reales (true) o sin limit (false, por defecto)
 	 * @return integer
 	 */
@@ -346,7 +344,6 @@ class Redatazo_csv implements iRedatazo {
 	/**
 	 * Actualiza una o mas filas
 	 *
-	 * @access public
 	 * @param string $fichero Fichero en el que se hara la actualizacion
 	 * @param array $datos Datos a insertar, array asociativo ('campo' => valor)
 	 * @param array $condicion Condicion de actualizacion, array asociativo ('campo' => valor)
@@ -360,7 +357,6 @@ class Redatazo_csv implements iRedatazo {
 	 * Condiciones de la consulta
 	 * $campo puede ser un nombre de campo, o una condicion con indicaciones de los valores a comparar: "campo1 = %s AND campo2 IN (%u, %u)" (en cuyo caso $valor sera un array con los valores a sustituir)
 	 *
-	 * @access public
 	 * @param string $campo Nombre del campo
 	 * @param string $valor Valor o valores (array) con el que comparar el campo
 	 * @return boolean

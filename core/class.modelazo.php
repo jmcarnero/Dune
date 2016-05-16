@@ -31,6 +31,7 @@
 abstract class Modelazo {
 
 	private $sBaseDir;
+
 	private $aDatos = array(
 			'tipo' => 'motor',
 			//sql
@@ -47,23 +48,34 @@ abstract class Modelazo {
 
 	protected $oDB = null; //objeto sqlazo
 
-	function __construct($sLibs = ''){
-		if(defined('D_BASE_DIR') && defined('D_DIR_LIBS')){
-			$this->sBaseDir = D_BASE_DIR.D_DIR_LIBS;
-		}
-		else{
+	/**
+	 * Constructor
+	 *
+	 * @throws ErrorException
+	 */
+	public function __construct(){
+		if(!defined('D_BASE_DIR') || !defined('D_DIR_LIBS')){
 			throw new ErrorException('Error fatal: No se puede acceder a las librerias, faltan constantes de directorios.');
 		}
+
+		$this->sBaseDir = D_BASE_DIR . D_DIR_LIBS;
 
 		$this->getConfig();
 		$this->conectar();
 	}
 
-	function __destruct(){
+	/**
+	 * Destructor
+	 */
+	public function __destruct(){
 		//$this->oDDBB->desconectar();
 	}
 
-	/*conexion a la fuente de datos*/
+	/**
+	 * Conexion a la fuente de datos
+	 *
+	 * @return void
+	 */
 	private function conectar(){
 		/*require($this->sBaseDir.'class.sqlazo.inc'); //parametrizar nombre del fichero?
 		$this->oDB = sqlazo_sel($this->aDatabase['tipo']);
@@ -72,7 +84,7 @@ abstract class Modelazo {
 		$this->oDB->bTrazabilidad = $this->aDatabase['trazabilidad'];
 		$this->oDB->setIdUsuario(empty($_SESSION['idUsuario'])?0:$_SESSION['idUsuario']);/**/
 
-		require_once $this->sBaseDir.'class.redatazo.inc';
+		require_once $this->sBaseDir . 'class.redatazo.inc';
 		$this->oDB = new Redatazo(array(
 				'motor' => $this->aDatos['tipo'],
 				//sql
@@ -86,7 +98,11 @@ abstract class Modelazo {
 			));
 	}
 
-	/*coge los parametros de configuracion de la fuente de datos*/
+	/**
+	 * Coge los parametros de configuracion de la fuente de datos
+	 *
+	 * @return void
+	 */
 	private function getConfig(){
 		if(defined('D_DATOS_MOTOR')) $this->aDatos['tipo'] = D_DATOS_MOTOR; //motor de datos: mysql, csv, xml, ...
 

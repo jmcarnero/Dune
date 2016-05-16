@@ -1,20 +1,20 @@
 <?php
-# Copyright (C) 2009 José M. Carnero <jm_carnero@sargazos.net>
-#
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License along
-# with this program; if not, write to the Free Software Foundation, Inc.,
-# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-# http://www.gnu.org/copyleft/gpl.html
+/*Copyright (C) 2009 José M. Carnero <jm_carnero@sargazos.net>
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along
+with this program; if not, write to the Free Software Foundation, Inc.,
+51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+http://www.gnu.org/copyleft/gpl.html*/
 
 //Constante con el directorio donde se encuentran las clases derivadas y/o dependientes de esta
 defined('CLASSES_DIR') or define('CLASSES_DIR', dirname(__FILE__));
@@ -101,42 +101,46 @@ class SQLazo_mysql extends SQLazo_trazabilidad {
 	/**
 	 * Comprueba que los tipos de parametros proporcionados correspondan y los limpia si no (evita inyeccion sql)
 	 *
-	 * @access protected
-	 * @param string $query Query SQL
-	 * @param array $pars Parametros de la query
-	 * @return void
+	 * @param string $sQuery Query SQL
+	 * @param array $aPars Parametros de la query
+	 * @return array
 	 */
-	protected function aseguraQuery($query, $pars){
+	protected function aseguraQuery($sQuery, $aPars){
 		//extrae los codigos de parametros de la SQL
-		$query = str_replace('%%', '', $query);
-		$aParams = explode('%', $query);
+		$sQuery = str_replace('%%', '', $sQuery);
+		$aParams = explode('%', $sQuery);
 		array_shift($aParams);
 		$aTemp = $aParams;
 		$aParams = array();
 
 		foreach($aTemp as $valor){
-			if(substr($valor, 0, 1) != "%")
+			if(substr($valor, 0, 1) != "%"){
 				$aParams[] = substr($valor, 0, 1);
+			}
 		}
 
-		if(!is_array($pars)) $pars = array($pars); //se ha pasado un solo parametro y no como array
-		if(count($aParams) != count($pars)){
+		if(!is_array($aPars)){
+			$aPars = array($aPars); //se ha pasado un solo parametro y no como array
+		}
+		if(count($aParams) != count($aPars)){
 			$this->setError(__METHOD__.'1');
 			return false;
 		}
 
 		$i = 0;
-		foreach($pars as $clave => $valor){
-			switch(strtolower($aParams[$i])){ //los indices del array $aParams y $pars no siempre coinciden
+		foreach($aPars as $clave => $valor){
+			switch(strtolower($aParams[$i])){ //los indices del array $aParams y $aPars no siempre coinciden
 				case 'd': //entero con signo
 				case 'f': //flotante (F)
 				case 'u': //entero sin signo
 					if(!is_numeric($valor) || is_null($valor)){
-						if(is_null($valor) || $valor == '')
-							$pars[$clave] = NULL;
-						else
+						if(is_null($valor) || $valor == ''){
+							$aPars[$clave] = null;
+						}
+						else{
 							$this->setError(__METHOD__ . '2', $aParams[$i], ($i + 1), (is_null($valor) ? 'null' : $valor));
-						//return(false);
+							//return(false);
+						}
 					}
 					break;
 				case 's': //cadena de caracteres
@@ -146,24 +150,28 @@ class SQLazo_mysql extends SQLazo_trazabilidad {
 					if(isset($valor)){
 						$encoding = mb_detect_encoding($valor, mb_list_encodings(), true);
 
-						if($encoding !== 'UTF-8')
+						if($encoding !== 'UTF-8'){
 							$valor = mb_convert_encoding($valor, 'UTF-8', $encoding);
+						}
 					}
 
 					//TODO ambas opciones son vulnerables a inyeccion SQL (addslashes mas)
 					if(function_exists('mysql_real_escape_string')){ //PHP >= 4.3
 						if(isset($valor)){
-							if(get_magic_quotes_gpc())
+							if(get_magic_quotes_gpc()){
 								$valor = stripslashes($valor);
+							}
 
-							$pars[$clave] = mysql_real_escape_string($valor, $this->dConexion);
+							$aPars[$clave] = mysql_real_escape_string($valor, $this->dConexion);
 						}
-						else
-							$pars[$clave] = NULL;
+						else{
+							$aPars[$clave] = null;
+						}
 					}
 					else{
-						if(!get_magic_quotes_gpc())
-							$pars[$clave] = isset($valor) ? addslashes($valor) : NULL; //escapado generico
+						if(!get_magic_quotes_gpc()){
+							$aPars[$clave] = isset($valor) ? addslashes($valor) : null; //escapado generico
+						}
 					}
 					break;
 				default:
@@ -173,7 +181,7 @@ class SQLazo_mysql extends SQLazo_trazabilidad {
 			$i++;
 		}
 
-		return $pars;
+		return $aPars;
 	}
 
 	/**
@@ -182,14 +190,14 @@ class SQLazo_mysql extends SQLazo_trazabilidad {
 	 * llamar a "seleccionarDDBB()" cambiando la propiedad "$this->sDDBB"
 	 * para usar otra base de datos con esta misma conexion.
 	 *
-	 * @access public
-	 * @param string $servidor Servidor
-	 * @param string $usuario Usuario
-	 * @param string $clave Clave
-	 * @param string $db Schema (base de datos)
+	 * @param string $sServidor Servidor
+	 * @param string $sUsuario Usuario
+	 * @param string $sClave Clave
+	 * @param string $sDb Schema (base de datos)
+	 * @param integer $iPuerto Puerto
 	 * @return boolean
 	 */
-	public function conectar($servidor = false, $usuario = false, $clave = false, $db = false, $puerto = false){
+	public function conectar($sServidor = false, $sUsuario = false, $sClave = false, $sDb = false, $iPuerto = false){
 		if(!function_exists('mysql_connect')){
 			$this->setError(__METHOD__.'1');
 			$this->bConectado = false;
@@ -198,16 +206,19 @@ class SQLazo_mysql extends SQLazo_trazabilidad {
 
 		SQLazo::instCount(); //contador de instancias
 
-		if($servidor)
-			$this->sDDBBServidor = $servidor;
+		if($sServidor){
+			$this->sDDBBServidor = $sServidor;
+		}
 
-		if($usuario)
-			$this->sDDBBUsuario = $usuario;
+		if($sUsuario){
+			$this->sDDBBUsuario = $sUsuario;
+		}
 
-		if($clave)
-			$this->sDDBBPassword = $clave;
+		if($sClave){
+			$this->sDDBBPassword = $sClave;
+		}
 
-		$this->setDDBBPuerto($puerto);
+		$this->setDDBBPuerto($iPuerto);
 
 		//medicion de tiempo
 		$iTiempoIni = $this->microtimeSeg();
@@ -225,33 +236,36 @@ class SQLazo_mysql extends SQLazo_trazabilidad {
 		}
 
 		$this->bConectado = true;
-		if($db === false)
+
+		if($sDb === false){
 			return $this->bConectado;
-		else
-			return $this->seleccionarDDBB($db);
+		}
+
+		return $this->seleccionarDDBB($sDb);
 	}
 
 	/**
 	 * Consulta a la base de datos, (si "SELECT", necesita de "SQLazo::leeFila()" para empezar a devolver resultados).
 	 *
-	 * @access public
-	 * @param string $query Query SQL
-	 * @param array $pars Parametros de la query
-	 * @param integer $cantidad Numero de registros a devolver
-	 * @param integer $inicial Registro inicial a devolver
+	 * @param string $sQuery Query SQL
+	 * @param array $aPars Parametros de la query
+	 * @param integer $iCantidad Numero de registros a devolver
+	 * @param integer $iInicial Registro inicial a devolver
 	 * @return boolean
 	 * @abstract
 	 */
-	public function consulta($query = false, $pars = array(), $cantidad = 0, $inicial = 0){
+	public function consulta($sQuery = false, $aPars = array(), $iCantidad = 0, $iInicial = 0){
 		$iRet = true;
 
 		if(!$this->bConectado){
-			if(!$this->conectar($this->sDDBBServidor, $this->sDDBBUsuario, $this->sDDBBPassword, $this->sDDBB))
+			if(!$this->conectar($this->sDDBBServidor, $this->sDDBBUsuario, $this->sDDBBPassword, $this->sDDBB)){
 				return false;
+			}
 		}
 
-		if($query)
-			$this->query($query, $pars, $cantidad, $inicial);
+		if($sQuery){
+			$this->query($sQuery, $aPars, $iCantidad, $iInicial);
+		}
 
 		//limpia los arrays de resultados, para evitar "datos fantasma"
 		$this->aFila = array();
@@ -260,8 +274,9 @@ class SQLazo_mysql extends SQLazo_trazabilidad {
 		//medicion de tiempo
 		$iTiempoIni = $this->microtimeSeg();
 
-		if($this->bTrazabilidad)
+		if($this->bTrazabilidad){
 			$this->transaccionInicio(); //se inicia el guardado de trazas
+		}
 
 		$sTempUltIns = 0; //id de la ultima insercion, se guarda temporalmente para evitar que la pise el fin de la transaccion
 		//if($this->sCharset) $this->set_charset($this->sCharset); //codificacion en que se lanzan las consultas //si se lanza despues de mysqli::init casca
@@ -269,25 +284,29 @@ class SQLazo_mysql extends SQLazo_trazabilidad {
 		/*nota: mysql_unbuffered_query Envia una consulta SQL a MySQL, sin recuperar ni colocar en bufer las filas de resultado*/
 		$this->rResultados = mysql_query($this->sQuery); //recurso de resultados
 
-		if($this->sTipoQuery == 'insert')
+		if($this->sTipoQuery == 'insert'){
 			$sTempUltIns = mysql_insert_id();
+		}
 
 		//seleccionar una base de datos despues de crearla
 		//TODO, revisar como se selecciona una base de datos despues de su creacion
-		if($this->sTipoQuery == 'create' && $this->sSubTipoQuery == 'database')
+		if($this->sTipoQuery == 'create' && $this->sSubTipoQuery == 'database'){
 			$this->seleccionarDDBB($this->aTablas[0]); //despues de crear una base de datos la selecciona para las siguientes sentencias
+		}
 
-		if($this->sTipoQuery == 'use')
+		if($this->sTipoQuery == 'use'){
 			$this->seleccionarDDBB($this->aTablas[0]); //use `database`
+		}
 
 		if($this->rResultados === false){
 			$this->setError(__METHOD__.'1', $this->sQuery, mysql_errno($this->dConexion), mysql_error($this->dConexion));
 
-			if($cantidad){
+			if($iCantidad){
 				$this->sQuery = str_replace('SQL_CALC_FOUND_ROWS ', '', $this->sQuery); //no es necesario en caso de error y no es algo puesto por el usuario
 			}
-			if($this->bTrazabilidad)
+			if($this->bTrazabilidad){
 				$this->transaccionFinal(); //finaliza el guardado de trazas
+			}
 
 			return false;
 		}
@@ -301,7 +320,7 @@ class SQLazo_mysql extends SQLazo_trazabilidad {
 			case 'explain':
 			case 'select':
 			case 'show':
-				if($cantidad){
+				if($iCantidad){
 					//medicion de tiempo
 					$iTiempoIni = $this->microtimeSeg();
 
@@ -317,8 +336,9 @@ class SQLazo_mysql extends SQLazo_trazabilidad {
 					$this->aTiempos['totalLimit'] = number_format($iTiempoFin - $iTiempoIni, 6);
 					$this->aTiempos['total'] += ($iTiempoFin - $iTiempoIni);
 				}
-				else
+				else{
 					$this->numResultados(); //calculo del total de resultados
+				}
 
 				$this->listaCampos(); //lista de campos de la consulta
 				break;
@@ -344,8 +364,9 @@ class SQLazo_mysql extends SQLazo_trazabilidad {
 				$iRet = false;
 		}
 
-		if($this->bTrazabilidad)
+		if($this->bTrazabilidad){
 			$this->transaccionFinal(); //finaliza el guardado de trazas; no puede estar antes del recuento, ya que este devolveria valores incorrectos al sustituir la traza a la que interesaba como ultima consulta
+		}
 
 		return $iRet;
 	}
@@ -354,23 +375,24 @@ class SQLazo_mysql extends SQLazo_trazabilidad {
 	 * Metodo para consultas internas de la clase.
 	 * Devuelve el array de resultados completo (como "SQLazo::leeFilasTodos()") o falso si ha habido error.
 	 *
-	 * @access protected
-	 * @param string $sql Consulta SQL
+	 * @param string $sSql Consulta SQL
 	 * @return array
 	 */
-	protected function consultaInterna($sql){
+	protected function consultaInterna($sSql){
 		//TODO debe devolver al menos la id en caso de insert (tambien para udate/delete?)
-		$rResultados = mysql_query($sql, $this->dConexion);
+		$rResultados = mysql_query($sSql, $this->dConexion);
 		if(!$rResultados){
-			$this->setError(__METHOD__, mysql_errno(), mysql_error(), $sql);
+			$this->setError(__METHOD__, mysql_errno(), mysql_error(), $sSql);
 			return false;
 		}
 		$aResultados = array();
 
 		if($rResultados !== true){
-			while($aResultados[] = mysql_fetch_array($rResultados));
-			if($aResultados[count($aResultados) - 1] === false)
+			while($aResultados[] = mysql_fetch_array($rResultados)); //no necesita instrucciones internas
+
+			if($aResultados[count($aResultados) - 1] === false){
 				array_pop($aResultados); //el anterior bucle (si todo es correcto) colocara un false en el ultimo elemento, sobra
+			}
 		}
 
 		return $aResultados;
@@ -379,7 +401,6 @@ class SQLazo_mysql extends SQLazo_trazabilidad {
 	/**
 	 * Desconexion del servidor.
 	 *
-	 * @access public
 	 * @return boolean
 	 */
 	public function desconectar(){
@@ -400,7 +421,6 @@ class SQLazo_mysql extends SQLazo_trazabilidad {
 	/**
 	 * Lee una fila de resultados.
 	 *
-	 * @access public
 	 * @return boolean
 	 */
 	public function leeFila(){
@@ -450,7 +470,6 @@ class SQLazo_mysql extends SQLazo_trazabilidad {
 	/**
 	 * Crea un array con todas las filas de resultados.
 	 *
-	 * @access public
 	 * @return boolean
 	 */
 	public function leeFilasTodos(){
@@ -499,13 +518,14 @@ class SQLazo_mysql extends SQLazo_trazabilidad {
 
 	/**
 	 * Lista de los campos de la consulta
+	 *
 	 * Devuelve tanto por posicion en el recordset de resultados como por nombre de campo.
 	 *
-	 * @access private
 	 * @return boolean
 	 */
 	private function listaCampos(){
 		$this->aCampos = array(); //se vacia, por si se vuelve a llamar la funcion
+
 		if(is_resource($this->rResultados)){
 			for($i = 0; $i < mysql_num_fields($this->rResultados); $i++){
 				//$this->aCampos[] = array('nombre' => mysql_field_name($this->rResultados, $i), 'tipo' => mysql_field_type($this->rResultados, $i), 'long' => mysql_field_len($this->rResultados, $i), 'flags' => mysql_field_flags($this->rResultados, $i));
@@ -515,8 +535,10 @@ class SQLazo_mysql extends SQLazo_trazabilidad {
 				$this->aCampos[$this->aCampos[$i]['nombre']]['long'] = $this->aCampos[$i]['long'] = mysql_field_len($this->rResultados, $i);
 				$this->aCampos[$this->aCampos[$i]['nombre']]['flags'] = $this->aCampos[$i]['flags'] = mysql_field_flags($this->rResultados, $i);
 			}
+
 			return true;
 		}
+
 		return false;
 	}
 
@@ -524,7 +546,6 @@ class SQLazo_mysql extends SQLazo_trazabilidad {
 	 * Calcular el numero de filas devueltas o afectadas por la query.
 	 *
 	 * @todo Ver informacion de las dos funciones usadas, pueden dar resultados erroneos
-	 * @access private
 	 * @return boolean
 	 */
 	private function numResultados(){
@@ -545,8 +566,9 @@ class SQLazo_mysql extends SQLazo_trazabilidad {
 			case 'insert':
 			case 'update':
 				$this->iTotalFilas = mysql_affected_rows($this->dConexion);
-				if($this->iTotalFilas < 1)
+				if($this->iTotalFilas < 1){
 					$this->iTotalFilas = false;
+				}
 
 				return true;
 				/*TODO If the last query was a DELETE query with no WHERE clause, all of the records will have been deleted from the table but this function will return zero with MySQL versions prior to 4.1.2.*/
@@ -565,8 +587,9 @@ class SQLazo_mysql extends SQLazo_trazabilidad {
 	}
 
 	/**
-	 * Construir query.
-	 * si ya se ha asignado una query mediante la propiedad "sQuery" y no se desea cambiar NO llamar a esta funcion y llamar al metodo "consulta" sin parametros
+	 * Construir query
+	 *
+	 * Si ya se ha asignado una query mediante la propiedad "sQuery" y no se desea cambiar NO llamar a esta funcion y llamar al metodo "consulta" sin parametros
 	 * ej: $obj->fQuery("SELECT * FROM tabla WHERE campo=%s AND b=%s", array('1', '2'))
 	 * cuando se requiera el comodin SQL "%" escribirlo doble "%%"; ej: $obj->consulta("SELECT * FROM tabla WHERE campo='%%%s%%'", array('hola')) ->producira la salida: "SELECT * FROM tabla WHERE campo='%hola%'"
 	 *
@@ -575,68 +598,71 @@ class SQLazo_mysql extends SQLazo_trazabilidad {
 	 * %u -> entero sin signo
 	 * %F -> flotante (PHP>4.3)
 	 *
-	 * @access public
-	 * @param string $query Query SQL
-	 * @param array $pars Parametros de la query
-	 * @param integer $cantidad Numero de registros a devolver
-	 * @param integer $inicial Registro inicial a devolver
-	 * @return void
+	 * @param string $sQuery Query SQL
+	 * @param array $aPars Parametros de la query
+	 * @param integer $iCantidad Numero de registros a devolver
+	 * @param integer $iInicial Registro inicial a devolver
+	 * @return boolean
 	 */
-	public function query($query, $pars = array(), $cantidad = 0, $inicial = 0){
-		$inicial = is_numeric($inicial) ? $inicial : 0;
-		$cantidad = is_numeric($cantidad) ? $cantidad : 0;
+	public function query($sQuery, $aPars = array(), $iCantidad = 0, $iInicial = 0){
+		$iInicial = is_numeric($iInicial) ? $iInicial : 0;
+		$iCantidad = is_numeric($iCantidad) ? $iCantidad : 0;
 
 		//elimina tags html y php de los parametros de la consulta
-		//si los parametros no van en el array "pars" no tiene efecto
+		//si los parametros no van en $aPars no tiene efecto
 		//TODO ver mysqli::real_escape_string
 		if($this->sTagsPermitidosIns != 'todos'){
-			for($i = 0; $i < count($pars); $i++){
-				if(isset($pars[$i]))
-					$pars[$i] = strip_tags($pars[$i], $this->sTagsPermitidosIns);
+			for($i = 0; $i < count($aPars); $i++){
+				if(isset($aPars[$i])){
+					$aPars[$i] = strip_tags($aPars[$i], $this->sTagsPermitidosIns);
+				}
 			}
 		}
 
 		//preparar parametros para que no den problemas SQL
 		//if(!get_magic_quotes_gpc()){
-			//$pars = array_map('addslashes', $pars);
-			if(count($pars))
-				$pars = $this->aseguraQuery($query, $pars);
+		//$aPars = array_map('addslashes', $aPars);
+		if(count($aPars)){
+			$aPars = $this->aseguraQuery($sQuery, $aPars);
+		}
 		//}
 
-		$this->tipoQuery($query); //comprueba el tipo de query
+		$this->tipoQuery($sQuery); //comprueba el tipo de query
 
-		//$this->sQuery = @vsprintf($this->sQuery, $pars);
-		$this->sQuery = $this->valoresEnQuery($this->sQuery, $pars);
+		//$this->sQuery = @vsprintf($this->sQuery, $aPars);
+		$this->sQuery = $this->valoresEnQuery($this->sQuery, $aPars);
 		if($this->sQuery === false){
 			$this->setError(__METHOD__);
 			return false;
 		}
 
 		//suma a la consulta "SQL_CALC_FOUND_ROWS", permite tener el total de filas en consultas limitadas con "SELECT FOUND_ROWS()", sin volver a lanzar la consulta
-		if($cantidad){
-				$iSelectPos = strpos(strtoupper($this->sQuery), 'SELECT ');
-				if($iSelectPos !== false && strpos($this->sQuery, 'SQL_CALC_FOUND_ROWS') === false)
-					$this->sQuery = substr($this->sQuery, 0, $iSelectPos + 7).'SQL_CALC_FOUND_ROWS '.substr($this->sQuery, $iSelectPos + 7);
+		if($iCantidad){
+			$iSelectPos = strpos(strtoupper($this->sQuery), 'SELECT ');
+			if($iSelectPos !== false && strpos($this->sQuery, 'SQL_CALC_FOUND_ROWS') === false){
+				$this->sQuery = substr($this->sQuery, 0, $iSelectPos + 7) . 'SQL_CALC_FOUND_ROWS ' . substr($this->sQuery, $iSelectPos + 7);
+			}
 
-				//si "$inicial=0" devuelve "$cantidad" de registros desde el primero
-				//si se quieren devolver todos los que haya desde un "$inicial=x", dar como "$cantidad" un valor mayor al total de registros que pueda devolver la consulta (un numero al azar suficientemente grande, por ejemplo 123456789123456789123456789)
-				$this->sQuery .= ' LIMIT '.$inicial.','.$cantidad;
+			//si "$iInicial = 0" devuelve "$iCantidad" de registros desde el primero
+			//si se quieren devolver todos los que haya desde un "$iInicial = x", dar como "$iCantidad" un valor mayor al total de registros que pueda devolver la consulta (un numero al azar suficientemente grande, por ejemplo 123456789123456789123456789)
+			$this->sQuery .= ' LIMIT ' . $iInicial . ',' . $iCantidad;
 		}
 	}
 
 	/**
 	 * Recolocar puntero en el array de resultados (solo para SELECT).
 	 *
-	 * @access public
-	 * @param integer $pos Posicion puntero
+	 * @param integer $iPos Posicion puntero
 	 * @return boolean
 	 * @abstract
 	 */
-	public function recPuntero($pos = 0){
-		if($this->iTotalFilas)
-			$bReturn = mysql_data_seek($this->rResultados, $pos); //falla con E_WARNING y devuelve FALSE si el result set esta vacio
-		else
+	public function recPuntero($iPos = 0){
+		if($this->iTotalFilas){
+			$bReturn = mysql_data_seek($this->rResultados, $iPos); //falla con E_WARNING y devuelve FALSE si el result set esta vacio
+		}
+		else{
 			$bReturn = false;
+		}
 
 		if(!$bReturn){
 			$this->setError(__METHOD__.'1', mysql_errno($this->dConexion), mysql_error($this->dConexion));
@@ -648,14 +674,13 @@ class SQLazo_mysql extends SQLazo_trazabilidad {
 	/**
 	 * Seleccion de base de datos.
 	 *
-	 * @access public
-	 * @param string $db Base de datos
+	 * @param string $sDb Base de datos
 	 * @return boolean
 	 */
-	public function seleccionarDDBB($db = false){
-		if(!empty($db)){
+	public function seleccionarDDBB($sDb = false){
+		if(!empty($sDb)){
 			//if($this->sDDBB == $db) return(true); //sale con cierto si ya esta seleccionada la base de datos
-			$this->sDDBB = $db;
+			$this->sDDBB = $sDb;
 		}
 		elseif($this->bSeleccion)
 			return true; //devuelve cierto si no se requiere seleccionar una base de datos concreta, como cuando se desee crear una
@@ -685,12 +710,11 @@ class SQLazo_mysql extends SQLazo_trazabilidad {
 	 * Devuelve falso si no se ha podido cambiar
 	 *
 	 * @since 2010-09-09
-	 * @access public
-	 * @param string $charset Juego de caracteres, reconocible por MYSQL
-	 * @param string $collation reconocible por MYSQL
+	 * @param string $sCharset Juego de caracteres, reconocible por MYSQL
+	 * @param string $sCollation reconocible por MYSQL
 	 * @return boolean
 	 */
-	public function setCodificacion($charset = '', $collation = ''){
+	public function setCodificacion($sCharset = '', $sCollation = ''){
 		//TODO deberia detectarse en que codificacion funciona el servidor y adecuar la conversion a eso (si el usuario no solicita una explicitamente)
 
 		//codificacion en que se lanzaran las consultas a la base de datos
@@ -715,12 +739,20 @@ class SQLazo_mysql extends SQLazo_trazabilidad {
 
 	/**
 	 * Constructor
+	 *
 	 * Los parametros por defecto conectan a un servidor de MYSQL local,
 	 * con el usuario administrador (sin clave) y a la base de datos "test"
 	 * (que existe por defecto)
+	 *
+	 * @param string $sServidor Servidor
+	 * @param string $sUsuario Usuario
+	 * @param string $sPassword Clave
+	 * @param string $sDdbb Base de datos
+	 * @param string $iPuerto Puerto
+	 * @return void
 	 */
-	function SQLazo_mysql($servidor = 'localhost', $usuario = 'root', $password = '', $ddbb = 'test', $puerto = 3306){
-		parent::SQLazo_trazabilidad($servidor, $usuario, $password, $ddbb, $puerto);
+	public function SQLazo_mysql($sServidor = 'localhost', $sUsuario = 'root', $sPassword = '', $sDdbb = 'test', $iPuerto = 3306){
+		parent::SQLazo_trazabilidad($sServidor, $sUsuario, $sPassword, $sDdbb, $iPuerto);
 
 		$this->sMotor = 'mysql';
 		$this->sQueryTipoArray = 'aso';
@@ -756,13 +788,13 @@ class SQLazo_mysql extends SQLazo_trazabilidad {
 	/**
 	 * Tipo de array que devolvera la query.
 	 *
-	 * @access private
-	 * @param string $tipo Tipo de array que devolvera la consulta
+	 * @param string $sTipo Tipo de array que devolvera la consulta
 	 * @return boolean
 	 */
-	private function tipoArrayQuery($tipo = ''){
-		if(!empty($tipo))
-			$this->sQueryTipoArray = $tipo;
+	private function tipoArrayQuery($sTipo = ''){
+		if(!empty($sTipo)){
+			$this->sQueryTipoArray = $sTipo;
+		}
 
 		//tambien admite las constantes de mysql (no i)
 		switch($this->sQueryTipoArray){
@@ -791,7 +823,6 @@ class SQLazo_mysql extends SQLazo_trazabilidad {
 	 * Sobreescribir en la clase hija si interesa; por ejemplo "mysqli" tiene funciones propias para controlar transacciones.
 	 * Nota: en mysql solo funcionara con tablas transaccionales (como innodb)
 	 *
-	 * @access protected
 	 * @return boolean
 	 */
 	protected function transaccionFinal(){
@@ -819,7 +850,6 @@ class SQLazo_mysql extends SQLazo_trazabilidad {
 	 * Sobreescribir en la clase hija si interesa; por ejemplo "mysqli" tiene funciones propias para controlar transacciones.
 	 * Nota: en mysql solo funcionara con tablas transaccionales (como innodb)
 	 *
-	 * @access protected
 	 * @return boolean
 	 */
 	protected function transaccionInicio(){
@@ -827,6 +857,7 @@ class SQLazo_mysql extends SQLazo_trazabilidad {
 			$this->setError(__METHOD__);
 			return false;
 		}
+
 		return true;
 	}
 

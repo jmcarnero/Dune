@@ -1,20 +1,20 @@
 <?php
-# Copyright (C) 2009 José M. Carnero <jm_carnero@sargazos.net>
-#
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License along
-# with this program; if not, write to the Free Software Foundation, Inc.,
-# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-# http://www.gnu.org/copyleft/gpl.html
+/*Copyright (C) 2009 José M. Carnero <jm_carnero@sargazos.net>
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along
+with this program; if not, write to the Free Software Foundation, Inc.,
+51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+http://www.gnu.org/copyleft/gpl.html*/
 
 //Constante con el directorio donde se encuentran las clases derivadas y/o dependientes de esta
 defined('CLASSES_DIR') or define('CLASSES_DIR', dirname(__FILE__));
@@ -94,7 +94,6 @@ class SQLazo_trazabilidad extends SQLazo {
 	/**
 	 * Identificador del usuario que haya lanzado la consulta
 	 *
-	 * @access private
 	 * @var boolean
 	 * @see SQLazo_trazabilidad::getIdUsuario(),SQLazo_trazabilidad::setIdUsuario($id)
 	 */
@@ -104,7 +103,6 @@ class SQLazo_trazabilidad extends SQLazo {
 	 * Metodo para consultas internas de la clase.
 	 * Devuelve el array de resultados completo (como "SQLazo::leeFilasTodos()") o falso si ha habido error.
 	 *
-	 * @access protected
 	 * @param string $sql Consulta SQL
 	 * @return array
 	 * @abstract
@@ -128,7 +126,6 @@ class SQLazo_trazabilidad extends SQLazo {
 	 * Crea las tablas necesarias si no existen.
 	 *
 	 * @todo Comprobar si el usuario que conecta a la base de datos tiene permiso para crear las tablas
-	 * @access private
 	 * @return boolean
 	 */
 	private function creaTablas(){
@@ -199,7 +196,6 @@ class SQLazo_trazabilidad extends SQLazo {
 	 * Devuelve el identificador de usuario que se guardara en las consultas de trazabilidad
 	 *
 	 * @since 2012-05-17
-	 * @access public
 	 * @return mixed
 	 */
 	public function getIdUsuario(){
@@ -210,7 +206,6 @@ class SQLazo_trazabilidad extends SQLazo {
 	 * Guarda las consultas (y sus datos).
 	 * Los parametros de la query del usuario se limpian en el proceso normal, pero la query en si puede llevar caracteres indeseados, por eso addslashes($this->sQuery) (importante a la hora de recuperar las consultas)
 	 *
-	 * @access protected
 	 * @return boolean
 	 */
 	protected function guardaTraza(){
@@ -266,15 +261,14 @@ class SQLazo_trazabilidad extends SQLazo {
 	 * Intenta devolver la IP del usuario remoto
 	 *
 	 * @since 2012-10-09
-	 * @access private
 	 * @return string
 	 */
 	private function ipCliente(){
-		if(isset($_SERVER['HTTP_X_FORWARDED_FOR']) AND $_SERVER['HTTP_X_FORWARDED_FOR'] != ""){
+		if(isset($_SERVER['HTTP_X_FORWARDED_FOR']) and $_SERVER['HTTP_X_FORWARDED_FOR'] != ""){
 			return $_SERVER['HTTP_X_FORWARDED_FOR'];
 		}
 		else{
-			if(isset($_SERVER['REMOTE_ADDR']) AND $_SERVER['REMOTE_ADDR'] != ""){
+			if(isset($_SERVER['REMOTE_ADDR']) and $_SERVER['REMOTE_ADDR'] != ""){
 				return $_SERVER['REMOTE_ADDR'];
 			}
 			else{
@@ -288,8 +282,7 @@ class SQLazo_trazabilidad extends SQLazo {
 	 * Asigna el identificador de usuario que se guardara en las consultas de trazabilidad
 	 *
 	 * @since 2012-05-17
-	 * @access public
-	 * @param mixed $clave Identificador de usuario
+	 * @param mixed $id Identificador de usuario
 	 * @return boolean
 	 */
 	public function setIdUsuario($id = false){
@@ -308,9 +301,16 @@ class SQLazo_trazabilidad extends SQLazo {
 
 	/**
 	 * Constructor
+	 *
+	 * @param string $servidor Servidor
+	 * @param string $usuario Usuario
+	 * @param string $sClave Clave
+	 * @param string $sDb Schema (base de datos)
+	 * @param integer $iPuerto Puerto
+	 * @return void
 	 */
-	function SQLazo_trazabilidad($servidor = 'localhost', $usuario = 'root', $password = '', $ddbb = 'test', $puerto = ''){
-		parent::SQLazo($servidor, $usuario, $password, $ddbb, $puerto);
+	public function SQLazo_trazabilidad($servidor = 'localhost', $usuario = 'root', $sClave = '', $sDb = 'test', $iPuerto = ''){
+		parent::SQLazo($servidor, $usuario, $sClave, $sDb, $iPuerto);
 
 		$this->aQuerySolicitada = array('query' => false, 'datos' => array(), 'cantidad' => 0, 'inicial' => 0);
 
@@ -333,7 +333,6 @@ class SQLazo_trazabilidad extends SQLazo {
 	 * Sobreescribir en la clase hija si interesa; por ejemplo "mysqli" tiene funciones propias para controlar transacciones.
 	 * Nota: en mysql solo funcionara con tablas transaccionales (como innodb)
 	 *
-	 * @access protected
 	 * @return boolean
 	 * @abstract
 	 */
@@ -350,7 +349,6 @@ class SQLazo_trazabilidad extends SQLazo {
 	 * Sobreescribir en la clase hija si interesa; por ejemplo "mysqli" tiene funciones propias para controlar transacciones.
 	 * Nota: en mysql solo funcionara con tablas transaccionales (como innodb)
 	 *
-	 * @access protected
 	 * @return boolean
 	 * @abstract
 	 */

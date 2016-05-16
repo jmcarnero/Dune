@@ -1,20 +1,20 @@
 <?php
-# Copyright (C) 2009 José M. Carnero <jm_carnero@sargazos.net>
-#
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License along
-# with this program; if not, write to the Free Software Foundation, Inc.,
-# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-# http://www.gnu.org/copyleft/gpl.html
+/*Copyright (C) 2009 José M. Carnero <jm_carnero@sargazos.net>
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along
+with this program; if not, write to the Free Software Foundation, Inc.,
+51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+http://www.gnu.org/copyleft/gpl.html*/
 
 /**
  * Generacion de thumbnails (de momento libreria GD)
@@ -45,8 +45,14 @@ class Thumbnazo {
 	private $sSufijo; //sufijo del thumb
 	private $sTipoEscalado; //tipo de escalado de la imagen: 'proporcional' (por defecto, encajara la imagen en el cuadro pasado como ancho y alto, sin deformarla), 'fijo' (ajustara la imagen al ancho y alto pasado, deformandola si no corresponde)
 
-	//constructor
-	function __construct($sImagen = '', $iAncho = 100, $iAlto = 100){
+	/**
+	 * Constructor
+	 *
+	 * @param string $sImagen Imagen
+	 * @param integer $iAncho Ancho
+	 * @param integer $iAlto Alto
+	 */
+	public function __construct($sImagen = '', $iAncho = 100, $iAlto = 100){
 		$this->libreria();
 		$this->setSufijos();
 		$this->setRutas($sImagen);
@@ -60,6 +66,10 @@ class Thumbnazo {
 	 * Creacion del thumbnail, la ruta y nombre del archivo original se deben pasar antes (bien a la propiedad o a los distintos metodos
 	 *
 	 * @todo comprobar tamaño de la imagen original y verificar si hay espacio en memoria para completar el proceso, llamar solo a este procedimiento para todo el proceso (sin incluir dar valores a propiedades)
+	 * @param string $sImagen Imagen
+	 * @param integer $iAncho Ancho
+	 * @param integer $iAlto Alto
+	 * @return boolean
 	 */
 	public function crear($sImagen = null, $iAncho = false, $iAlto = false){
 		if(!empty($sImagen)){
@@ -142,7 +152,7 @@ class Thumbnazo {
 	 * @todo mejorar la deteccion de extension y creacion de nombre
 	 * @param string $sNombreFichero Nombre del fichero, omitir para tomar el ya asignado a la propiedad
 	 * @param boolean $bPisar Crea el nombre sin tener en cuenta si ya existe (a true)
-	 * return string
+	 * @return string
 	 */
 	public function crearNombre($sNombreFichero = null, $bPisar = false){
 		if(!empty($sNombreFichero)){
@@ -238,24 +248,25 @@ class Thumbnazo {
 	 * Librerias graficas soportadas
 	 *
 	 * @todo de momento solo GD
+	 * @return void
 	 */
 	private function libreria(){
 		//obtener version de libreria GD (pone propiedad a falso si no hay libreria, condicionales con ===)
 		if(extension_loaded('gd')){
-/*
-'GD Version' => string '2.0.36' (length=6)
-'FreeType Support' => boolean true
-'FreeType Linkage' => string 'with freetype' (length=13)
-'T1Lib Support' => boolean false
-'GIF Read Support' => boolean true
-'GIF Create Support' => boolean true
-'JPEG Support' => boolean true
-'PNG Support' => boolean true
-'WBMP Support' => boolean true
-'XPM Support' => boolean false
-'XBM Support' => boolean false
-'JIS-mapped Japanese Font Support' => boolean false
-*/
+			/*
+			'GD Version' => string '2.0.36' (length=6)
+			'FreeType Support' => boolean true
+			'FreeType Linkage' => string 'with freetype' (length=13)
+			'T1Lib Support' => boolean false
+			'GIF Read Support' => boolean true
+			'GIF Create Support' => boolean true
+			'JPEG Support' => boolean true
+			'PNG Support' => boolean true
+			'WBMP Support' => boolean true
+			'XPM Support' => boolean false
+			'XBM Support' => boolean false
+			'JIS-mapped Japanese Font Support' => boolean false
+			*/
 			$aGDinfo = gd_info();
 			//$this->aLibreria['version'] = substr(ereg_replace('[[:alpha:][:space:]()]+', '', $aGDinfo['GD Version']), 0, 1);
 
@@ -283,16 +294,19 @@ class Thumbnazo {
 	 *
 	 * @param integer $iAncho Ancho del thumbnail en pixels
 	 * @param integer $iAlto Alto del thumbnail en pixels
+	 * @return void
 	 */
 	public function setDimensiones($iAncho = 100, $iAlto = 100){
 		$iAncho = (int) $iAncho;
 		$iAlto = (int) $iAlto;
 
-		if(!empty($iAncho))
+		if(!empty($iAncho)){
 			$this->iAnchura = $iAncho;
+		}
 
-		if(!empty($iAlto))
+		if(!empty($iAlto)){
 			$this->iAltura = $iAlto;
+		}
 	}
 
 	/**
@@ -301,6 +315,7 @@ class Thumbnazo {
 	 *
 	 * @param string $sImagen Imagen original, ruta y nombre
 	 * @param string $sRuta Ruta donde guardar el thumbnail
+	 * @return void
 	 */
 	public function setRutas($sImagen = '', $sRuta = null){
 		$this->sImagen = $sImagen;
@@ -309,7 +324,12 @@ class Thumbnazo {
 
 	/**
 	 * Asigna prefijo y sufijo que se añadiran al nombre de la imagen original para crear el nombre del thumbnail
+	 *
 	 * Si se omiten ambos se sustituye la imagen original (en caso de tener la misma extension)
+	 *
+	 * @param string $sPrefijo Prefijo que se sumara al nombre
+	 * @param string $sSufijo Sufijo que se sumara al nombre
+	 * @return void
 	 */
 	public function setSufijos($sPrefijo = '', $sSufijo = '_thb'){
 		$this->sPrefijo = empty($sPrefijo) ? '' : $sPrefijo;

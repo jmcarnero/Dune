@@ -1,20 +1,20 @@
 <?php
-# Copyright (C) 2009 José M. Carnero <jm_carnero@sargazos.net>
-#
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License along
-# with this program; if not, write to the Free Software Foundation, Inc.,
-# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-# http://www.gnu.org/copyleft/gpl.html
+/*Copyright (C) 2009 José M. Carnero <jm_carnero@sargazos.net>
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along
+with this program; if not, write to the Free Software Foundation, Inc.,
+51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+http://www.gnu.org/copyleft/gpl.html*/
 
 //Constante con el directorio donde se encuentran las clases derivadas y/o dependientes de esta
 defined('CLASSES_DIR') or define('CLASSES_DIR', dirname(__FILE__));
@@ -52,9 +52,15 @@ class SQLazo_oracle extends SQLazo {
 	 * Los parametros por defecto conectan a un servidor de Oracle local,
 	 * con el usuario administrador (sin clave) y a la base de datos "dual"
 	 * (que existe por defecto)
+	 *
+	 * @param string $servidor Servidor
+	 * @param string $usuario Usuario
+	 * @param string $sClave Clave
+	 * @param string $ddbb Schema (base de datos)
+	 * @param integer $iPuerto Puerto
 	 */
-	function __construct($servidor = 'localhost', $usuario = 'root', $password = '', $ddbb = 'dual', $puerto = 1502){
-		parent::SQLazo($servidor, $usuario, $password, $ddbb, $puerto);
+	public function __construct($servidor = 'localhost', $usuario = 'root', $sClave = '', $ddbb = 'dual', $iPuerto = 1502){
+		parent::SQLazo($servidor, $usuario, $sClave, $ddbb, $iPuerto);
 	}
 
 	/**
@@ -65,23 +71,27 @@ class SQLazo_oracle extends SQLazo {
 	 *
 	 * @param string $servidor Servidor
 	 * @param string $usuario Usuario
-	 * @param string $clave Clave
+	 * @param string $sClave Clave
 	 * @param string $db Schema (base de datos)
+	 * @param integer $iPuerto Puerto
 	 * @return boolean
 	 */
-	public function conectar($servidor = false, $usuario = false, $clave = false, $db = false, $puerto = false){
+	public function conectar($servidor = false, $usuario = false, $sClave = false, $db = false, $iPuerto = false){
 		SQLazo::instCount(); //contador de instancias
 
-		if($servidor)
+		if($servidor){
 			$this->sDDBBServidor = $servidor;
+		}
 
-		if($usuario)
+		if($usuario){
 			$this->sDDBBUsuario = $usuario;
+		}
 
-		if($clave)
-			$this->sDDBBPassword = $clave;
+		if($sClave){
+			$this->sDDBBPassword = $sClave;
+		}
 
-		$this->setDDBBPuerto($puerto);
+		$this->setDDBBPuerto($iPuerto);
 
 		//Conecta al servicio $db (esto es, una base de datos) en la máquina "localhost"
 		$this->rOracle = oci_connect($this->sDDBBUsuario, $this->sDDBBPassword, $this->sDDBBServidor . '/' . $db);
@@ -120,6 +130,8 @@ class SQLazo_oracle extends SQLazo {
 
 	/**
 	 * Lee una fila de resultados.
+	 *
+	 * @return void
 	 */
 	public function leeFila(){
 	}

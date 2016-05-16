@@ -1,20 +1,20 @@
 <?php
-# Copyright (C) 2009 José M. Carnero <jm_carnero@sargazos.net>
-#
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License along
-# with this program; if not, write to the Free Software Foundation, Inc.,
-# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-# http://www.gnu.org/copyleft/gpl.html
+/*Copyright (C) 2009 José M. Carnero <jm_carnero@sargazos.net>
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along
+with this program; if not, write to the Free Software Foundation, Inc.,
+51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+http://www.gnu.org/copyleft/gpl.html*/
 
 //Constante con el directorio donde se encuentran las clases derivadas y/o dependientes de esta
 defined('CLASSES_DIR') or define('CLASSES_DIR', dirname(__FILE__));
@@ -23,24 +23,31 @@ defined('CLASSES_DIR') or define('CLASSES_DIR', dirname(__FILE__));
  * Selector de tipo de base de datos con la que conectar.
  *
  * @access public
- * @param string $motor Motor de base de datos
+ * @param string $sMotor Motor de base de datos
+ * @param string $sServidor Servidor
+ * @param string $sUsuario Usuario
+ * @param string $sPassword Clave
+ * @param string $sDdbb Base de datos
+
+
  * @return object Objeto SQLazo
  */
-function &sqlazo_sel($motor = 'mysql', $servidor = 'localhost', $usuario = 'root', $password = '', $ddbb = false){
-	if($motor == 'mysql' && class_exists('mysqli'))
-		$motor = 'mysqli';
+function &sqlazo_sel($sMotor = 'mysql', $sServidor = 'localhost', $sUsuario = 'root', $sPassword = '', $sDdbb = false){
+	if($sMotor == 'mysql' && class_exists('mysqli')){
+		$sMotor = 'mysqli';
+	}
 
-	$class = 'SQLazo_'.$motor;
+	$sClass = 'SQLazo_' . $sMotor;
 	include_once CLASSES_DIR . '/class.sqlazo_trazabilidad.inc';
-	include_once CLASSES_DIR . '/class.' . strtolower($class) . '.inc'; //si no existe el fichero a incluir no se devuelve error, se controla a continuacion
+	include_once CLASSES_DIR . '/class.' . strtolower($sClass) . '.inc'; //si no existe el fichero a incluir no se devuelve error, se controla a continuacion
 
-	if(!class_exists('SQLazo_trazabilidad') || !class_exists($class)){
+	if(!class_exists('SQLazo_trazabilidad') || !class_exists($sClass)){
 		//die('No se puede usar el tipo de base de datos -> '.$class."\n");
-		throw new Exception('No se puede usar el tipo de base de datos -> ' . $class);
+		throw new Exception('No se puede usar el tipo de base de datos -> ' . $sClass);
 		return false;
 	}
 
-	$obj = new $class($servidor, $usuario, $password, $ddbb);
+	$obj = new $sClass($sServidor, $sUsuario, $sPassword, $sDdbb);
 	return $obj;
 }
 
@@ -315,7 +322,6 @@ class SQLazo {
 	 * llamar a "seleccionarDDBB()" cambiando la propiedad "$this->sDDBB"
 	 * para usar otra base de datos con esta misma conexion.
 	 *
-	 * @access public
 	 * @param string $servidor Servidor
 	 * @param string $usuario Usuario
 	 * @param string $clave Clave
@@ -362,11 +368,9 @@ class SQLazo {
 	 * Si no se pasa ninguna clave se muestran todos.
 	 *
 	 * @todo mostrar la clave de un texto de mensaje de error (invirtiendo el array y un foreach para buscar coincidencia de texto)
-	 * @access public
 	 * @param string $clave Clave del mensaje de error
 	 * @return string
 	 */
-	//TODO mostrar la clave de un texto de mensaje de error (invirtiendo el array y un foreach para buscar coincidencia de texto)
 	public function getErrorMensaje($clave = false){
 		if($clave === false)
 			return $this->aErrorMensajes;
@@ -646,18 +650,25 @@ class SQLazo {
 	 * Constructor
 	 * Los parametros por defecto conectan a un servidor local,
 	 * con el usuario administrador (sin clave) y a la base de datos "test"
+	 *
+	 * @param string $sServidor Servidor
+	 * @param string $sUsuario Usuario
+	 * @param string $sPassword Clave
+	 * @param string $sDdbb Base de datos
+	 * @param string $iPuerto Puerto
+	 * @return void
 	 */
-	function SQLazo($servidor = 'localhost', $usuario = 'root', $password = '', $ddbb = 'test', $puerto = ''){
+	public function SQLazo($sServidor = 'localhost', $sUsuario = 'root', $sPassword = '', $sDdbb = 'test', $iPuerto = ''){
 		$this->aError = false;
 		$this->setErrorMensaje(); //inicializacion de los mensajes de error
 
 		$this->bConectado = false;
 		//$this->sMotor = 'mysql';
-		$this->sDDBBServidor = $servidor;
-		$this->setDDBBPuerto($puerto);
-		$this->sDDBBUsuario = $usuario;
-		$this->sDDBBPassword = $password;
-		$this->sDDBB = $ddbb;
+		$this->sDDBBServidor = $sServidor;
+		$this->setDDBBPuerto($iPuerto);
+		$this->sDDBBUsuario = $sUsuario;
+		$this->sDDBBPassword = $sPassword;
+		$this->sDDBB = $sDdbb;
 		$this->aResultados = array();
 		$this->aFila = array();
 		$this->aFilaTodos = array();

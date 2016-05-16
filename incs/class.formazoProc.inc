@@ -1,20 +1,20 @@
 <?php
-# Copyright (C) 2009 José M. Carnero <jm_carnero@sargazos.net>
-#
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License along
-# with this program; if not, write to the Free Software Foundation, Inc.,
-# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-# http://www.gnu.org/copyleft/gpl.html
+/*Copyright (C) 2009 José M. Carnero <jm_carnero@sargazos.net>
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along
+with this program; if not, write to the Free Software Foundation, Inc.,
+51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+http://www.gnu.org/copyleft/gpl.html*/
 
 //Constante con el directorio donde se encuentran las clases derivadas y/o dependientes de esta
 defined('CLASSES_DIR') or define('CLASSES_DIR', dirname(__FILE__));
@@ -23,7 +23,7 @@ defined('CLASSES_DIR') or define('CLASSES_DIR', dirname(__FILE__));
  * Clase procesadora de formularios HTML
  * Tanto GET como POST
  *
- * depende de class.formazo.inc para la generacion del token de seguridad: Formazo::token($session)
+ * Depende de class.formazo.inc para la generacion del token de seguridad: Formazo::token($session)
  *
  * Ejemplo de uso:
  * \code{.php}
@@ -107,8 +107,10 @@ class FormazoProc {
 
 	/**
 	 * Constructor
+	 *
+	 * @param array $aCampos Campos del formulario
 	 */
-	function __construct($aCampos = array()){
+	public function __construct($aCampos = array()){
 		$this->aError = array();
 		$this->setErrorMensaje(); //inicializacion de los mensajes de error
 
@@ -174,7 +176,7 @@ class FormazoProc {
 	 *
 	 * @todo cortar el resultado (255 caracteres?) segun sistema operativo pueden dar problemas los nombres largos
 	 * @todo opcion para convertir el nombre a camelCase
-	 * @param $nombreFichero Nombre del fichero a limpiar
+	 * @param string $nombreFichero Nombre del fichero a limpiar
 	 * @return string
 	 */
 	private function limpiarNombreFichero($nombreFichero){
@@ -219,9 +221,8 @@ class FormazoProc {
 	}
 
 	/**
-	 * Procesar los datos del formulario
+	 * Procesar los valores del formulario
 	 *
-	 * @param string $nombreForm Nombre del formulario
 	 * @return boolean
 	 */
 	private function procesarValores(){
@@ -248,7 +249,7 @@ class FormazoProc {
 					else
 						$this->aCampos[$clave]['valor'] = 0;*/
 
-					$this->aCampos[$clave]['valor'] = (int) !empty($this->aVariablesRequest[$clave]);
+					$this->aCampos[$clave]['valor'] = (int) isset($this->aVariablesRequest[$clave]); //TODO considerar si recoger value
 					break;
 				case 'file':
 					//aqui no se hacen subidas reales, solo se testea la validacion
@@ -280,6 +281,7 @@ class FormazoProc {
 	 * Comprueba si existe el nombre del fichero pasado y construye un nombre que no exista
 	 *
 	 * @param string $fichero Nombre del fichero
+	 * @param string $sRutaFicheros Ruta del fichero
 	 * @return string
 	 */
 	private function renombraArchivo($fichero, $sRutaFicheros){
@@ -407,9 +409,8 @@ class FormazoProc {
 	}
 
 	/**
-	 * Procesar los datos del formulario
+	 * Recoge los datos enviados por get o post
 	 *
-	 * @param string $nombreForm Nombre del formulario
 	 * @return boolean
 	 */
 	private function setRequest(){
@@ -848,7 +849,9 @@ if the second character is "0", then it is typically a test BIC as opposed to a 
 
 		//algoritmo para comprobacion de codigos tipo CIF
 		$suma = $num[2] + $num[4] + $num[6];
-		for($i = 1; $i < 8; $i += 2) $suma += substr((2 * $num[$i]),0,1) + substr((2 * $num[$i]),1,1);
+		for($i = 1; $i < 8; $i += 2){
+			$suma += substr((2 * $num[$i]),0,1) + substr((2 * $num[$i]),1,1);
+		}
 		$n = 10 - substr($suma, strlen($suma) - 1, 1);
 
 		//comprobacion de NIFs especiales (se calculan como CIFs)
@@ -942,7 +945,7 @@ ancla)(#[a-z_\.\-][a-z0-9+$_\.\-]*)?)\Z~i', $sValor);
 	 * Verifica el token de seguridad enviado con el formulario
 	 *
 	 * @see Formazo::token($bSession)
-	 * @param boolean $session Controla datos relacionados con sesion (true) o no
+	 * @param boolean $bSession Controla datos relacionados con sesion (true) o no
 	 * @return boolean
 	 */
 	private function verificaToken($bSession = true){

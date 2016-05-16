@@ -1,20 +1,20 @@
 <?php
-# Copyright (C) 2009 José M. Carnero <jm_carnero@sargazos.net>
-#
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License along
-# with this program; if not, write to the Free Software Foundation, Inc.,
-# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-# http://www.gnu.org/copyleft/gpl.html
+/*Copyright (C) 2009 José M. Carnero <jm_carnero@sargazos.net>
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along
+with this program; if not, write to the Free Software Foundation, Inc.,
+51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+http://www.gnu.org/copyleft/gpl.html*/
 
 /**
  * Envio de correo SMTP
@@ -45,13 +45,13 @@ class SMTPazo {
 	/**
 	 * Constructor
 	 */
-	function __construct(){
+	public function __construct(){
 	}
 
 	/**
 	 * Destructor
 	 */
-	function __destruct(){
+	public function __destruct(){
 		//parent::__destruct();
 	}
 
@@ -59,75 +59,76 @@ class SMTPazo {
 	 * Cada llamada pone un fichero en el email
 	 *
 	 * @todo opcion de incluir contenido del fichero, no la url; para los que se creen en memoria y no se lleguen a guardar
-	 * @param string $fichero Ruta y nombre del fichero
+	 * @param string $sFichero Ruta y nombre del fichero
 	 * @return boolean
 	 */
-	private function attachment($fichero){
-		if(is_readable($fichero)){
+	private function attachment($sFichero){
+		if(is_readable($sFichero)){
 			$finfo = finfo_open(FILEINFO_MIME_TYPE);
-			$ftype = finfo_file($finfo, $fichero);
-			$file = fopen($fichero, "r");
-			$attachment = fread($file, filesize($fichero));
+			$ftype = finfo_file($finfo, $sFichero);
+			$file = fopen($sFichero, "r");
+			$attachment = fread($file, filesize($sFichero));
 			$attachment = chunk_split(base64_encode($attachment));
 			fclose($file);
 
-			$msg = 'Content-Type: \'' . $ftype . '\'; name="' . basename($fichero) . '"' . $this->sRetornoCarro;
+			$msg = 'Content-Type: \'' . $ftype . '\'; name="' . basename($sFichero) . '"' . $this->sRetornoCarro;
 			$msg .= "Content-Transfer-Encoding: base64" . $this->sRetornoCarro;
-			$msg .= 'Content-ID: <' . basename($fichero) . '>' . $$this->sRetornoCarro;
-			//            $msg .= 'X-Attachment-Id: ebf7a33f5a2ffca7_0.1' . $rn;
+			$msg .= 'Content-ID: <' . basename($sFichero) . '>' . $$this->sRetornoCarro;
+			//$msg .= 'X-Attachment-Id: ebf7a33f5a2ffca7_0.1' . $rn;
 			$msg .= $this->sRetornoCarro . $attachment . $this->sRetornoCarro . $$this->sRetornoCarro;
 
 			$this->aAttachment[] = $msg;
 			return true;
 		}
-		else{ //no existe el fichero o es inaccesible
-			return false;
-		}
+
+		return false; //no existe el fichero o es inaccesible
 	}
 
 	/**
 	 * Direccion oculta que recibe copia del correo, Blind Carbon Copy
 	 *
-	 * Mismos formatos que SMTPazo::to($to)
+	 * Mismos formatos que SMTPazo::to($sTo)
 	 *
-	 * @param string $bcc Direccion o direcciones separadas por comas
+	 * @param string $sBcc Direccion o direcciones separadas por comas
+	 * @return void
 	 */
-	function bcc($bcc){
+	public function bcc($sBcc){
 		//$bcc_name = "=?UTF-8?B?".base64_encode($bcc_name)."?= <bcc_mail@email.mail>";
 
-		$this->sBcc = strip_tags($bcc);
+		$this->sBcc = strip_tags($sBcc);
 	}
 
 	/**
 	 * Direccion que recibe copia del correo, Carbon Copy
 	 *
-	 * Mismos formatos que SMTPazo::to($to)
+	 * Mismos formatos que SMTPazo::to($sTo)
 	 *
-	 * @param string $cc Direccion o direcciones separadas por comas
+	 * @param string $sCc Direccion o direcciones separadas por comas
+	 * @return void
 	 */
-	function cc($cc){
+	public function cc($sCc){
 		//$cc_name = "=?UTF-8?B?".base64_encode($cc_name)."?= <cc_mail@email.mail>";
 
-		$this->sCc = strip_tags($cc);
+		$this->sCc = strip_tags($sCc);
 	}
 
 	/**
 	 * Compone el mensaje, sus cabeceras, antes de enviarlo
+	 *
+	 * @return void
 	 */
 	private function componer(){
 		$sLimite = md5(microtime());
 		$sLimiteContenido = md5(microtime());
 
-/*
-$headers .= "Sensitivity: Personal\n";
-Possible Options:
-Sensitivity: Normal, Personal, Private and Company-Confidential
-These will be recognised and handled in Outlook, Thunderbird and others.
+		/*$headers .= "Sensitivity: Personal\n";
+		Possible Options:
+		Sensitivity: Normal, Personal, Private and Company-Confidential
+		These will be recognised and handled in Outlook, Thunderbird and others.
 
-$headers[] = "From: Sender Name <sender@domain.com>";
-$headers[] = "Reply-To: Recipient Name <receiver@domain3.com>";
-$headers[] = "Subject: {$subject}";
-*/
+		$headers[] = "From: Sender Name <sender@domain.com>";
+		$headers[] = "Reply-To: Recipient Name <receiver@domain3.com>";
+		$headers[] = "Subject: {$subject}";*/
 
 		$aHeaders[] = 'Message-ID: <' . $_SERVER['REQUEST_TIME'] . md5($_SERVER['REQUEST_TIME']) . '@' . $_SERVER['SERVER_NAME'] . '>';
 		$aHeaders[] = 'From: ' . $this->sFrom;
@@ -197,50 +198,53 @@ $headers[] = "Subject: {$subject}";
 	 *
 	 * Mismos formatos que SMTPazo::to($to)
 	 *
-	 * @param string $from Direccion o direcciones separadas por comas
+	 * @param string $sFrom Direccion o direcciones separadas por comas
+	 * @return void
 	 */
-	function from($from){
+	public function from($sFrom){
 		//$from_name = "=?UTF-8?B?".base64_encode($from_name)."?= <from_mail@email.mail>";
 
-		$this->sFrom = strip_tags($from);
+		$this->sFrom = strip_tags($sFrom);
 	}
 
 	/**
 	 * Texto del mensaje de correo
 	 *
-	 * equal sign are email special characters. =3D is the = sign
+	 * Equal sign are email special characters. =3D is the = sign
 	 *
 	 * Each line should be separated with a CRLF (\r\n). Lines should not be larger than 70 characters.
 	 * Caution (Windows only) When PHP is talking to a SMTP server directly, if a full stop is found on the start of a line, it is removed. To counter-act this, replace these occurrences with a double dot.
 	 * $text = str_replace("\n.", "\n..", $text);
 	 *
 	 * @todo //TODO limpiar XSS
-	 * @param string $message Texto del correo
-	 * @param boolean $isHTML Texto HTML del correo
+	 * @param string $sMensaje Texto del correo
+	 * @param boolean $bIHtml Es HTML
+	 * @return void
 	 */
-	function message($message, $isHTML = false){
-		$message = str_replace("=", "=3D", $message);
-		$message = wordwrap($message, 70, $this->sRetornoCarro);
+	public function message($sMensaje, $bIHtml = false){
+		$sMensaje = str_replace("=", "=3D", $sMensaje);
+		$sMensaje = wordwrap($sMensaje, 70, $this->sRetornoCarro);
 
-		if(!$isHTML){
+		if(!$bIHtml){
 			//In case any of our lines are larger than 70 characters, we should use wordwrap()
-			$message = strip_tags($message); //TODO decidir que etiquetas se permiten y limpiar XSS
-			$this->sMessageHTML = $message;
+			$sMensaje = strip_tags($sMensaje); //TODO decidir que etiquetas se permiten y limpiar XSS
+			$this->sMessageHTML = $sMensaje;
 		}
 		else{
-			$this->sMessage = $message;
+			$this->sMessage = $sMensaje;
 		}
 	}
 
 	/**
 	 * Direccion de replica, unica
 	 *
-	 * @param string $reply Direccion
+	 * @param string $sReply Direccion
+	 * @return void
 	 */
-	function reply($reply){
-		//$reply_name = "=?UTF-8?B?".base64_encode($reply_name)."?= <reply_mail@email.mail>";
+	public function reply($sReply){
+		//$reply_name = "=?UTF-8?B?" . base64_encode($reply_name) . "?= <reply_mail@email.mail>";
 
-		$this->sReply = strip_tags($reply);
+		$this->sReply = strip_tags($sReply);
 	}
 
 	/**
@@ -250,7 +254,7 @@ $headers[] = "Subject: {$subject}";
 	 *
 	 * @return boolean
 	 */
-	function send(){
+	public function send(){
 		$this->componer();
 
 		$bMail = mail($this->sTo, $this->sSubject, $this->sMensaje, $this->sHeaders);
@@ -272,13 +276,14 @@ $headers[] = "Subject: {$subject}";
 	/**
 	 * Subject del mensaje de correo
 	 *
-	 * @param string $subject Subject
+	 * @param string $sSubject Subject
+	 * @return void
 	 */
-	function subject($subject){
-		$subject = strip_tags($subject);
-		//$subject = "=?UTF-8?B?".base64_encode($subject)."?=";
+	public function subject($sSubject){
+		$sSubject = strip_tags($sSubject);
+		//$sSubject = "=?UTF-8?B?".base64_encode($sSubject)."?=";
 
-		$this->sSubject = $subject;
+		$this->sSubject = $sSubject;
 	}
 
 	/**
@@ -295,11 +300,12 @@ $headers[] = "Subject: {$subject}";
 	 * Second, the custom headers like From:, Cc:, Bcc: and Date: are not interpreted by the MTA in the first place, but are parsed by PHP.
 	 * As such, the to parameter should not be an address in the form of "Something <someone@example.com>". The mail command may not parse this properly while talking with the MTA.
 	 *
-	 * @param string $to Direccion o direcciones separadas por comas
+	 * @param string $sTo Direccion o direcciones separadas por comas
+	 * @return void
 	 */
-	function to($to){
-		//$to_name = "=?UTF-8?B?".base64_encode($to_name)."?= <to_mail@email.mail>";
-		$this->sTo = strip_tags($to);
+	public function to($sTo){
+		//$to_name = "=?UTF-8?B?" . base64_encode($to_name) . "?= <to_mail@email.mail>";
+		$this->sTo = strip_tags($sTo);
 	}
 
 }

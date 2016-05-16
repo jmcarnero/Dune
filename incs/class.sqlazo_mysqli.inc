@@ -1,20 +1,20 @@
 <?php
-# Copyright (C) 2009 José M. Carnero <jm_carnero@sargazos.net>
-#
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License along
-# with this program; if not, write to the Free Software Foundation, Inc.,
-# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-# http://www.gnu.org/copyleft/gpl.html
+/*Copyright (C) 2009 José M. Carnero <jm_carnero@sargazos.net>
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along
+with this program; if not, write to the Free Software Foundation, Inc.,
+51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+http://www.gnu.org/copyleft/gpl.html*/
 
 //Constante con el directorio donde se encuentran las clases derivadas y/o dependientes de esta
 defined('CLASSES_DIR') or define('CLASSES_DIR', dirname(__FILE__));
@@ -99,11 +99,18 @@ class SQLazo_mysqli extends SQLazo_trazabilidad {
 
 	/**
 	 * Constructor
+	 *
 	 * Los parametros por defecto conectan a un servidor de MYSQL local,
 	 * con el usuario administrador (sin clave) y a la base de datos "test"
 	 * (que existe por defecto)
+	 *
+	 * @param string $servidor Servidor
+	 * @param string $usuario Usuario
+	 * @param string $password Clave
+	 * @param string $ddbb Base de datos
+	 * @param integer $puerto Puerto
 	 */
-	function __construct($servidor = 'localhost', $usuario = 'root', $password = '', $ddbb = 'test', $puerto = 3306){
+	public function __construct($servidor = 'localhost', $usuario = 'root', $password = '', $ddbb = 'test', $puerto = 3306){
 		parent::SQLazo_trazabilidad($servidor, $usuario, $password, $ddbb, $puerto);
 		//$this->oMysqli = mysqli_init(); //nueva instancia de la clase mysqli (propia de PHP)
 		//$this->oMysqli = & new mysqli(); //nueva instancia de la clase mysqli (propia de PHP) // new por referencia "deprecated" en php 5.3
@@ -150,7 +157,6 @@ class SQLazo_mysqli extends SQLazo_trazabilidad {
 	/**
 	 * Comprueba que los tipos de parametros proporcionados correspondan y los limpia si no (evita inyeccion sql)
 	 *
-	 * @access protected
 	 * @param string $query Query SQL
 	 * @param array $pars Parametros de la query
 	 * @return void
@@ -181,7 +187,7 @@ class SQLazo_mysqli extends SQLazo_trazabilidad {
 				case 'u': //entero sin signo
 					if(!is_numeric($valor) || is_null($valor)){
 						if(is_null($valor) || $valor == ''){
-							$pars[$clave] = NULL;
+							$pars[$clave] = null;
 						}
 						else{
 							$this->setError(__METHOD__ . '2', $aParams[$i], ($i + 1), (is_null($valor) ? 'null' : $valor));
@@ -204,11 +210,11 @@ class SQLazo_mysqli extends SQLazo_trazabilidad {
 							if(get_magic_quotes_gpc()) $valor = stripslashes($valor);
 							$pars[$clave] = $this->oMysqli->real_escape_string($valor);
 						}
-						else $pars[$clave] = NULL;
+						else $pars[$clave] = null;
 					}
 					else{
 						if(!get_magic_quotes_gpc())
-							$pars[$clave] = isset($valor) ? addslashes($valor) : NULL; //escapado generico
+							$pars[$clave] = isset($valor) ? addslashes($valor) : null; //escapado generico
 					}
 					break;
 				default:
@@ -227,11 +233,11 @@ class SQLazo_mysqli extends SQLazo_trazabilidad {
 	 * llamar a "seleccionarDDBB()" cambiando la propiedad "$this->sDDBB"
 	 * para usar otra base de datos con esta misma conexion.
 	 *
-	 * @access public
 	 * @param string $servidor Servidor
 	 * @param string $usuario Usuario
 	 * @param string $clave Clave
 	 * @param string $db Schema (base de datos)
+	 * @param integer $puerto Puerto
 	 * @return boolean
 	 */
 	public function conectar($servidor = false, $usuario = false, $clave = false, $db = false, $puerto = false){
@@ -288,7 +294,6 @@ class SQLazo_mysqli extends SQLazo_trazabilidad {
 	/**
 	 * Consulta a la base de datos, (si "SELECT", necesita de "SQLazo::leeFila()" para empezar a devolver resultados).
 	 *
-	 * @access public
 	 * @param string $query Query SQL
 	 * @param array $pars Parametros de la query
 	 * @param integer $cantidad Numero de registros a devolver
@@ -319,21 +324,25 @@ class SQLazo_mysqli extends SQLazo_trazabilidad {
 		pero esto impedira lanzar funciones que interactuen con el servidor (devolviendo error 'out of sync'), como otra query*/
 		/*nota: mysqli::use_result recupera sin colocar en bufer (unbuffered) las filas de resultado, mas rapido pero bloquea las tablas implicadas y da problemas con el recuento de resultados*/
 
-		if(!empty($this->oResultados->num_rows))
+		if(!empty($this->oResultados->num_rows)){
 			$this->oResultados->free(); //importante cuando se usa mysqli::store_result
+		}
 
-		if($this->bTrazabilidad)
+		if($this->bTrazabilidad){
 			$this->transaccionInicio(); //se inicia el guardado de trazas
+		}
 
 		$sTempUltIns = 0; //id de la ultima insercion, se guarda temporalmente para evitar que la pise el fin de la transaccion
 		if($this->sCharset) //codificacion en que se lanzan las consultas //si se lanza despues de mysqli::init casca
 			$this->oMysqli->set_charset($this->sCharset);
 
 		if($this->oMysqli->real_query($this->sQuery)){
-			if($this->sTipoQuery == 'insert')
+			if($this->sTipoQuery == 'insert'){
 				$sTempUltIns = $this->oMysqli->insert_id;
-			else
+			}
+			else{
 				$this->oResultados = $this->oMysqli->store_result(); //recurso de resultados
+			}
 		}
 		else{
 			$this->setError(__METHOD__.'1', $this->sQuery, $this->oMysqli->errno, $this->oMysqli->error);
@@ -421,7 +430,6 @@ class SQLazo_mysqli extends SQLazo_trazabilidad {
 	 * Metodo para consultas internas de la clase.
 	 * Devuelve el array de resultados completo (como "SQLazo::leeFilasTodos()") o falso si ha habido error.
 	 *
-	 * @access protected
 	 * @param string $sql Consulta SQL
 	 * @return array
 	 */
@@ -451,7 +459,6 @@ class SQLazo_mysqli extends SQLazo_trazabilidad {
 	/**
 	 * Desconexion del servidor.
 	 *
-	 * @access public
 	 * @return boolean
 	 */
 	public function desconectar(){
@@ -489,7 +496,6 @@ class SQLazo_mysqli extends SQLazo_trazabilidad {
 	 * Devuelve las banderas de los campos.
 	 * Tomada de phpMyAdmin.
 	 *
-	 * @access private
 	 * @param integer $i field
 	 * @return string Field flags
 	 */
@@ -533,7 +539,6 @@ class SQLazo_mysqli extends SQLazo_trazabilidad {
 	/**
 	 * Lee una fila de resultados.
 	 *
-	 * @access public
 	 * @return boolean
 	 */
 	public function leeFila(){
@@ -583,7 +588,6 @@ class SQLazo_mysqli extends SQLazo_trazabilidad {
 	/**
 	 * Crea un array con todas las filas de resultados.
 	 *
-	 * @access public
 	 * @return boolean
 	 */
 	public function leeFilasTodos(){
@@ -639,7 +643,6 @@ class SQLazo_mysqli extends SQLazo_trazabilidad {
 	 * Lista de los campos de la consulta
 	 * Devuelve tanto por posicion en el recordset de resultados como por nombre de campo.
 	 *
-	 * @access private
 	 * @return boolean
 	 */
 	private function listaCampos(){
@@ -706,7 +709,6 @@ class SQLazo_mysqli extends SQLazo_trazabilidad {
 	/**
 	 * Calcular el numero de filas devueltas o afectadas por la query.
 	 *
-	 * @access private
 	 * @return boolean
 	 */
 	private function numResultados(){
@@ -751,8 +753,9 @@ class SQLazo_mysqli extends SQLazo_trazabilidad {
 	}
 
 	/**
-	 * Construir query.
-	 * si ya se ha asignado una query mediante la propiedad "sQuery" y no se desea cambiar NO llamar a esta funcion y llamar al metodo "consulta" sin parametros
+	 * Construir query
+	 *
+	 * Si ya se ha asignado una query mediante la propiedad "sQuery" y no se desea cambiar NO llamar a esta funcion y llamar al metodo "consulta" sin parametros
 	 * ej: $obj->fQuery("SELECT * FROM tabla WHERE campo=%s AND b=%s", array('1', '2'))
 	 * cuando se requiera el comodin SQL "%" escribirlo doble "%%"; ej: $obj->consulta("SELECT * FROM tabla WHERE campo='%%%s%%'", array('hola')) ->producira la salida: "SELECT * FROM tabla WHERE campo='%hola%'"
 	 *
@@ -761,7 +764,6 @@ class SQLazo_mysqli extends SQLazo_trazabilidad {
 	 * %u -> entero sin signo
 	 * %F -> flotante (PHP>4.3)
 	 *
-	 * @access public
 	 * @param string $query Query SQL
 	 * @param array $pars Parametros de la query
 	 * @param integer $cantidad Numero de registros a devolver
@@ -808,27 +810,25 @@ class SQLazo_mysqli extends SQLazo_trazabilidad {
 	}
 
 	/**
-	 * Recolocar puntero en el array de resultados (solo para SELECT).
+	 * Recolocar puntero en el array de resultados (solo para SELECT)
 	 *
-	 * @access public
 	 * @param integer $pos Posicion puntero
 	 * @return boolean
 	 * @abstract
 	 */
 	public function recPuntero($pos = 0){
 		//mysqli_result::data_seek solo puede usarse con resultados en buffer como los obtenidos con mysqli::store_result() o mysqli:query()
-		if($this->iTotalFilas)
-			if(!$this->oResultados->data_seek($pos)){
-				$this->setError(__METHOD__.'1', $this->oMysqli->errno, $this->oMysqli->error);
-				return false;
-			}
+		if($this->iTotalFilas && !$this->oResultados->data_seek($pos)){
+			$this->setError(__METHOD__.'1', $this->oMysqli->errno, $this->oMysqli->error);
+			return false;
+		}
+
 		return true;
 	}
 
 	/**
-	 * Seleccion de base de datos.
+	 * Seleccion de base de datos
 	 *
-	 * @access public
 	 * @param string $db Base de datos
 	 * @return boolean
 	 */
@@ -865,7 +865,6 @@ class SQLazo_mysqli extends SQLazo_trazabilidad {
 	 * Devuelve falso si no se ha podido cambiar
 	 *
 	 * @since 2010-09-09
-	 * @access public
 	 * @param string $charset Juego de caracteres, reconocible por MYSQL
 	 * @param string $collation reconocible por MYSQL
 	 * @return boolean
@@ -919,7 +918,6 @@ class SQLazo_mysqli extends SQLazo_trazabilidad {
 	/**
 	 * Tipo de array que devolvera la query.
 	 *
-	 * @access private
 	 * @param string $tipo Tipo de array que devolvera la consulta
 	 * @return boolean
 	 */
@@ -957,7 +955,6 @@ class SQLazo_mysqli extends SQLazo_trazabilidad {
 	 * Sobreescribir en la clase hija si interesa; por ejemplo "mysqli" tiene funciones propias para controlar transacciones.
 	 * Nota: en mysql solo funcionara con tablas transaccionales (como innodb)
 	 *
-	 * @access protected
 	 * @return boolean
 	 */
 	protected function transaccionFinal(){
@@ -984,7 +981,6 @@ class SQLazo_mysqli extends SQLazo_trazabilidad {
 	 * Sobreescribir en la clase hija si interesa; por ejemplo "mysqli" tiene funciones propias para controlar transacciones.
 	 * Nota: en mysql solo funcionara con tablas transaccionales (como innodb)
 	 *
-	 * @access protected
 	 * @return boolean
 	 */
 	protected function transaccionInicio(){

@@ -1,20 +1,20 @@
 <?php
-# Copyright (C) 2015 José M. Carnero <jm_carnero@sargazos.net>
-#
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License along
-# with this program; if not, write to the Free Software Foundation, Inc.,
-# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-# http://www.gnu.org/copyleft/gpl.html
+/*Copyright (C) 2015 José M. Carnero <jm_carnero@sargazos.net>
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along
+with this program; if not, write to the Free Software Foundation, Inc.,
+51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+http://www.gnu.org/copyleft/gpl.html*/
 
 //Constante con el directorio donde se encuentran las clases derivadas y/o dependientes de esta
 defined('CLASSES_DIR') or define('CLASSES_DIR', dirname(__FILE__));
@@ -63,6 +63,7 @@ class Formazo {
 	/**
 	 * Elementos del formulario
 	 *
+	 * Descripción:
 	 * clave -> nombre (mismos que la tabla donde lanzar la SQL)
 	 *  'tipo' -> tipo de cada elemento; tipos: ('checkbox', 'group', 'heading', 'hidden', 'multiple', 'password', 'radio', 'select', 'text', 'textarea'), siendo cada elemento del array el nombre del tag o de tipo de INPUT, excepto "group" que crea agrupaciones de elementos (todos aquellos que tengan 'group' => id_grupo) y "heading" que solo crea cabeceras (titulos de secciones o similar); se ignoran los elementos sin tipo
 	 *  'validacion' -> validacion, tipo de datos que contendra; validado por javascript; la cadena se pondra directamente en el atributo "class", asi permite varios tipos de validacion para el mismo campo y es completamente externa a la clase
@@ -157,7 +158,7 @@ class Formazo {
 	/**
 	 * Constructor
 	 */
-	function __construct(){
+	public function __construct(){
 		if(empty(self::$iTabIndex)) self::$iTabIndex = 1; //tabindex estatico
 
 		$this->sAction = $_SERVER['PHP_SELF']; //por defecto llama a la misma pagina
@@ -171,14 +172,13 @@ class Formazo {
 	/**
 	 * Destructor
 	 */
-	function __destruct(){
+	public function __destruct(){
 		//parent::__destruct();
 	}
 
 	/**
 	 * Agrupa los elementos y devuelve la cadena total
 	 *
-	 * @access protected
 	 * @param array $elementos Elementos preparados en pintado
 	 * @return string
 	 */
@@ -203,7 +203,7 @@ class Formazo {
 	/**
 	 * Calcula CRC (16) para los datos pasados
 	 *
-	 * @param $data Cadena de texto o numero
+	 * @param string $data Cadena de texto o numero
 	 * @return string
 	 */
 	private function crc16($data){
@@ -474,7 +474,7 @@ class Formazo {
 	 * @since 201-12-24
 	 * @access public
 	 * @param mixed $clave Clave del array CSS; array completo o false para valores por defecto
-	 * @param mixed $clave Clase(s) CSS para la clave
+	 * @param mixed $clase Clase(s) CSS para la clave
 	 * @return boolean
 	 */
 	public function setCss($clave = false, $clase = false){
@@ -597,7 +597,13 @@ abstract class FormazoElementos {
 
 	protected $sFormNombre; //Nombre del formulario
 
-	function __construct($clave, $valor){
+	/**
+	 * Constructor
+	 *
+	 * @param string $clave Clave del campo
+	 * @param string $valor Array de datos del campo
+	 */
+	public function __construct($clave, $valor){
 		$this->sClave = $clave;
 		//$aTemp = explode(' ', $this->aFormulario['elementos'][$clave]['propiedades']); //0 tipo, 1 validacion, 2 obligatorio, 3 longitud maxima (=0 -> disabled)
 		$this->setDatos($valor);
@@ -614,7 +620,7 @@ abstract class FormazoElementos {
 	abstract protected function elemento();
 
 	/**
-	 * clases CSS, usadas tambien para validaciones
+	 * Clases CSS, usadas tambien para validaciones
 	 *
 	 * @since 2015-05-16
 	 * @return string
@@ -766,6 +772,12 @@ abstract class FormazoElementos {
 		return true;
 	}
 
+	/**
+	 * Asigna datos
+	 *
+	 * @param string $datos Array de datos
+	 * @return boolean
+	 */
 	protected function setDatos($datos){
 		$this->aDatos = empty($datos) ? array() : $datos;
 
@@ -804,10 +816,21 @@ abstract class FormazoElementos {
  */
 class FormazoCheckbox extends FormazoElementos {
 
-	function __construct($clave, $valor){
+	/**
+	 * Constructor
+	 *
+	 * @param string $clave Clave del campo
+	 * @param string $valor Array de datos del campo
+	 */
+	public function __construct($clave, $valor){
 		parent::__construct($clave, $valor); //constructor de la clase padre
 	}
 
+	/**
+	 * Construye el elemento
+	 *
+	 * @return string
+	 */
 	protected function elemento(){
 		$aElemento = array();
 
@@ -817,6 +840,12 @@ class FormazoCheckbox extends FormazoElementos {
 		return $aElemento;
 	}
 
+	/**
+	 * Suma la parte "checked" del elemento
+	 *
+	 * @param mixed $valor Valor del elemento
+	 * @return string
+	 */
 	protected function getValor($valor = false){
 		$sRet = parent::getValor($valor);
 		$sRet .= $this->aDatos['valor'] ? ' checked="checked"' : '';
@@ -833,10 +862,21 @@ class FormazoCheckbox extends FormazoElementos {
  */
 class FormazoFile extends FormazoElementos {
 
-	function __construct($clave, $valor){
+	/**
+	 * Constructor
+	 *
+	 * @param string $clave Clave del campo
+	 * @param string $valor Array de datos del campo
+	 */
+	public function __construct($clave, $valor){
 		parent::__construct($clave, $valor); //constructor de la clase padre
 	}
 
+	/**
+	 * Construye el elemento
+	 *
+	 * @return string
+	 */
 	protected function elemento(){
 		$aElemento = array();
 		$this->aDatos['rutaFichero'] = empty($this->aDatos['rutaFichero']) ? '.' : $this->aDatos['rutaFichero']; //TODO evita problemas si no se ha puesto ruta en el fichero, pero no comprueba si esta es valida, deberia ser /tmp por defecto?
@@ -882,10 +922,21 @@ class FormazoFile extends FormazoElementos {
  */
 class FormazoGroup extends FormazoElementos {
 
-	function __construct($clave, $valor){
+	/**
+	 * Constructor
+	 *
+	 * @param string $clave Clave del campo
+	 * @param string $valor Array de datos del campo
+	 */
+	public function __construct($clave, $valor){
 		parent::__construct($clave, $valor); //constructor de la clase padre
 	}
 
+	/**
+	 * Construye el elemento
+	 *
+	 * @return string
+	 */
 	protected function elemento(){
 		$aElemento = $aCssTag = array();
 
@@ -904,10 +955,21 @@ class FormazoGroup extends FormazoElementos {
  */
 class FormazoHidden extends FormazoElementos {
 
-	function __construct($clave, $valor){
+	/**
+	 * Constructor
+	 *
+	 * @param string $clave Clave del campo
+	 * @param string $valor Array de datos del campo
+	 */
+	public function __construct($clave, $valor){
 		parent::__construct($clave, $valor); //constructor de la clase padre
 	}
 
+	/**
+	 * Construye el elemento
+	 *
+	 * @return string
+	 */
 	protected function elemento(){
 		$aElemento = array();
 
@@ -929,10 +991,21 @@ class FormazoHidden extends FormazoElementos {
  */
 class FormazoMultiple extends FormazoElementos {
 
-	function __construct($clave, $valor){
+	/**
+	 * Constructor
+	 *
+	 * @param string $clave Clave del campo
+	 * @param string $valor Array de datos del campo
+	 */
+	public function __construct($clave, $valor){
 		parent::__construct($clave, $valor); //constructor de la clase padre
 	}
 
+	/**
+	 * Construye el elemento
+	 *
+	 * @return string
+	 */
 	protected function elemento(){
 		$aElemento = array();
 
@@ -999,10 +1072,21 @@ class FormazoMultiple extends FormazoElementos {
  */
 class FormazoPassword extends FormazoElementos {
 
-	function __construct($clave, $valor){
+	/**
+	 * Constructor
+	 *
+	 * @param string $clave Clave del campo
+	 * @param string $valor Array de datos del campo
+	 */
+	public function __construct($clave, $valor){
 		parent::__construct($clave, $valor); //constructor de la clase padre
 	}
 
+	/**
+	 * Construye el elemento
+	 *
+	 * @return string
+	 */
 	protected function elemento(){
 		$aElemento = array();
 
@@ -1021,10 +1105,21 @@ class FormazoPassword extends FormazoElementos {
  */
 class FormazoRadio extends FormazoElementos {
 
-	function __construct($clave, $valor){
+	/**
+	 * Constructor
+	 *
+	 * @param string $clave Clave del campo
+	 * @param string $valor Array de datos del campo
+	 */
+	public function __construct($clave, $valor){
 		parent::__construct($clave, $valor); //constructor de la clase padre
 	}
 
+	/**
+	 * Construye el elemento
+	 *
+	 * @return string
+	 */
 	protected function elemento(){
 		$aElemento = array();
 
@@ -1042,6 +1137,12 @@ class FormazoRadio extends FormazoElementos {
 		return $aElemento;
 	}
 
+	/**
+	 * Suma la parte "checked" del elemento
+	 *
+	 * @param mixed $valor Valor del elemento
+	 * @return string
+	 */
 	protected function getValor($valor = false){
 		$sRet = '';
 		if($this->aDatos['valor'] == $valor){
@@ -1061,10 +1162,21 @@ class FormazoRadio extends FormazoElementos {
  */
 class FormazoSelect extends FormazoElementos {
 
-	function __construct($clave, $valor){
+	/**
+	 * Constructor
+	 *
+	 * @param string $clave Clave del campo
+	 * @param string $valor Array de datos del campo
+	 */
+	public function __construct($clave, $valor){
 		parent::__construct($clave, $valor); //constructor de la clase padre
 	}
 
+	/**
+	 * Construye el elemento
+	 *
+	 * @return string
+	 */
 	protected function elemento(){
 		$aElemento = array();
 
@@ -1112,10 +1224,21 @@ class FormazoSelect extends FormazoElementos {
  */
 class FormazoText extends FormazoElementos {
 
-	function __construct($clave, $valor){
+	/**
+	 * Constructor
+	 *
+	 * @param string $clave Clave del campo
+	 * @param string $valor Array de datos del campo
+	 */
+	public function __construct($clave, $valor){
 		parent::__construct($clave, $valor); //constructor de la clase padre
 	}
 
+	/**
+	 * Construye el elemento
+	 *
+	 * @return string
+	 */
 	protected function elemento(){
 		$aElemento = array();
 
@@ -1134,10 +1257,21 @@ class FormazoText extends FormazoElementos {
  */
 class FormazoTextarea extends FormazoElementos {
 
-	function __construct($clave, $valor){
+	/**
+	 * Constructor
+	 *
+	 * @param string $clave Clave del campo
+	 * @param string $valor Array de datos del campo
+	 */
+	public function __construct($clave, $valor){
 		parent::__construct($clave, $valor); //constructor de la clase padre
 	}
 
+	/**
+	 * Construye el elemento
+	 *
+	 * @return string
+	 */
 	protected function elemento(){
 		$aElemento = array();
 
@@ -1147,6 +1281,12 @@ class FormazoTextarea extends FormazoElementos {
 		return $aElemento;
 	}
 
+	/**
+	 * Asigna valor al elemento
+	 *
+	 * @param mixed $valor Valor del elemento
+	 * @return string
+	 */
 	protected function getValor($valor = false){
 		$sRet = $this->aDatos['valor'];
 

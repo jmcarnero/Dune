@@ -1,20 +1,20 @@
 <?php
-# Copyright (C) 2009 José M. Carnero <jm_carnero@sargazos.net>
-#
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License along
-# with this program; if not, write to the Free Software Foundation, Inc.,
-# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-# http://www.gnu.org/copyleft/gpl.html
+/*Copyright (C) 2009 José M. Carnero <jm_carnero@sargazos.net>
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along
+with this program; if not, write to the Free Software Foundation, Inc.,
+51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+http://www.gnu.org/copyleft/gpl.html*/
 
 /**
  * Generador de listados, con caja de busqueda, filtrado y paginacion
@@ -176,8 +176,9 @@ class Listazo { //FIXME revisar id's de elementos HTML
 	 * Constructor
 	 *
 	 * @param array $aFilas Filas a listar
+	 * @param array $aCampos Campos del listado
 	 */
-	function __construct($aFilas = array(), $aCampos = array()){
+	public function __construct($aFilas = array(), $aCampos = array()){
 		$this->sCssBase = 'Listazo';
 
 		$this->sFrmMetodo = 'post';
@@ -239,44 +240,66 @@ class Listazo { //FIXME revisar id's de elementos HTML
 	/**
 	 * Devuelve un identificador para clases css segun la imagen/icono del fichero pasado
 	 *
+	 * @todo ruta donde se encuentren los iconos configurable; no esta en uso, se puede aprovechar la parte "formulario" del array de campos para identificar los que la usen
 	 * @param string $sFile nombre.extension de fichero
 	 * @return array
 	 */
-	//TODO ruta donde se encuentren los iconos configurable; no esta en uso, se puede aprovechar la parte "formulario" del array de campos para identificar los que la usen
 	protected function fileIcons($sFile){
 		$ext = explode('.', $sFile);
 		$sTipo = 'ico';
 
 		switch(strtolower(array_pop($ext))){
-			/*audio*/
-			case 'aif': case 'mp3': case 'wav':
+			case 'aif': /*audio*/
+			case 'mp3':
+			case 'wav':
 				$sTipo .= 'Aud';
 				break;
-			/*imagenes*/
-			case 'bmp': case 'gif': case 'jpg': case 'jpeg': case 'png': case 'tga': case 'tif': case 'tiff':
+			case 'bmp': /*imagenes*/
+			case 'gif':
+			case 'jpg':
+			case 'jpeg':
+			case 'png':
+			case 'tga':
+			case 'tif':
+			case 'tiff':
 				$sTipo .= 'Img';
 				break;
-			/*comprimidos*/
-			case 'ace': case 'arj': case 'lhz': case 'rar': case 'zip':
+			case 'ace': /*comprimidos*/
+			case 'arj':
+			case 'lhz':
+			case 'rar':
+			case 'zip':
 				$sTipo .= 'Zip';
 				break;
-			/*video*/
-			case 'avi': case 'flv': case 'mpeg': case 'mpg': case 'wmv':
+			case 'avi': /*video*/
+			case 'flv':
+			case 'mpeg':
+			case 'mpg':
+			case 'wmv':
 				$sTipo .= 'Vid';
 				break;
-			/*texto*/
-			case 'doc'/*ms word*/: case 'docx'/*ms word >= 2007*/: case 'fodt'/*open document (plain xml)*/: case 'rtf'/*texto enriquecido*/: case 'txt'/*texto generico*/: case 'sxw'/*open office = 1*/: case 'sdw'/*starwriter*/:
+			case 'doc'/*ms word*/: /*texto*/
+			case 'docx'/*ms word >= 2007*/:
+			case 'fodt'/*open document (plain xml)*/:
+			case 'rtf'/*texto enriquecido*/:
+			case 'txt'/*texto generico*/:
+			case 'sxw'/*open office = 1*/:
+			case 'sdw'/*starwriter*/:
 				$sTipo .= 'Txt';
 				break;
-			/*hojas de calculo*/
-			case 'csv'/*datos en texto plano*/: case 'fods'/*open document (plain xml)*/: case 'ods'/*open office*/: case 'sdc'/*starcalc*/: case 'sxc'/*open office = 1*/: case 'xls'/*ms excel*/: case 'xlsx'/*ms excel >= 2007*/:
+			case 'csv'/*datos en texto plano*/: /*hojas de calculo*/
+			case 'fods'/*open document (plain xml)*/:
+			case 'ods'/*open office*/:
+			case 'sdc'/*starcalc*/:
+			case 'sxc'/*open office = 1*/:
+			case 'xls'/*ms excel*/:
+			case 'xlsx'/*ms excel >= 2007*/:
 				$sTipo .= 'Cal';
 				break;
 			case 'pdf': //pdf (portable document file)
 				$sTipo .= 'Pdf';
 				break;
-			/*desconocido*/
-			default:
+			default: /*desconocido*/
 				$sTipo .= 'Gen';
 		}
 
@@ -656,7 +679,7 @@ class Listazo { //FIXME revisar id's de elementos HTML
 	 * Suma una o mas filas al array de campos que define las filas del listado
 	 * (se ignoran las filas que no tengan 'banderas', ya que el array puede ser compartido con class.formulario.inc)
 	 *
-	 * cada elemento del array se define como:
+	 * Cada elemento del array se define como:
 	 * 'nombre_de_campo' => array(
 	 * 	'titulo' => 'Título del campo', //opcional
 	 * 	'campo' => '$field["nombre_de_campo"]', //opcional; necesario si el campo incorpora html o php; si no esta presente se toma la clave del elemento, que es el nombre del propio campo
@@ -706,12 +729,14 @@ class Listazo { //FIXME revisar id's de elementos HTML
 	 * )
 	 *
 	 * @param array $aFilas Filas a listar
+	 * @return void
 	 */
 	public function setFilas($aFilas = array()){
 		$this->aFilas = $aFilas;
 
-		if(empty($this->iFilasTotal))
+		if(empty($this->iFilasTotal)){
 			$this->iFilasTotal = count($this->aFilas);
+		}
 	}
 
 	/**

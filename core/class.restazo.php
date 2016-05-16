@@ -71,7 +71,10 @@ class Restazo extends Controlazo {
 	private $sMethod = null; //nombre del metodo REST solicitado (sin sufijo de metodo HTTP)
 	private $sHTTPMethod = null; //nombre del metodo HTTP
 
-	function __construct(){
+	/**
+	 * Constructor
+	 */
+	public function __construct(){
 		$this->request();
 	}
 
@@ -88,13 +91,14 @@ class Restazo extends Controlazo {
 	 *
 	 * @param array $aParams Nombre de los parametros recibidos por post
 	 * @param integer $iTiempo Tiempo de vida del intervalo para verificar el hash
-	 * return array Vacio si no es valido
+	 * @return array Vacio si no es valido
 	 */
 	protected function autentifica($aParams = array(), $iTiempo = 120){
 		$this->bAutentificado = true;
 
-		if(!$this->bAutentificado)
+		if(!$this->bAutentificado){
 			$this->envia(array('mensaje' => 'No se puede autentificar la petición'), 401);
+		}
 
 		return $this->bAutentificado;
 	}
@@ -105,8 +109,9 @@ class Restazo extends Controlazo {
 	 * Cada llamada a este metodo (esto es: cada metodo del usuario) puede indicar si la respuesta es cacheable, permitiendo al cliente reducir las peticiones a metodos cacheables; de momento solo tiene proposito informativo para la implementacion del cliente, y depende completamente de la decision del desarrollador
 	 *
 	 * @param array $aDatos Datos a enviar
-	 * @param integer $iResp Codigo de respuesta HTTP
+	 * @param integer $iCodHTTP Codigo de respuesta HTTP
 	 * @param boolean $bCacheable Indica si la respuesta enviable es cacheable //TODO indicar tambien durante cuanto tiempo debe mantenerse cache?
+	 * @return void
 	 */
 	protected function envia($aDatos, $iCodHTTP = 200, $bCacheable = false){
 		$iCodHTTP = (int) $iCodHTTP;
@@ -187,6 +192,7 @@ class Restazo extends Controlazo {
 	 *
 	 * @param array $aDatos Datos a formatear
 	 * @param string $sFormato Formato de salida
+	 * @return string
 	 */
 	private function formatea($aDatos, $sFormato = 'json'){
 		$sRet = null;
@@ -205,7 +211,6 @@ class Restazo extends Controlazo {
 	 * Recoge GET, POST, etc. Segun el que se haya utilizado para llegar a esta pagina
 	 *
 	 * @todo si el servidor no soporta alguno de los metodos devuelve 403, 404 y no llega a lanzar el servidor REST, debe controlarse la situacion en "dune.php"
-	 * @param string $nombreForm Nombre del formulario
 	 * @return boolean
 	 */
 	private function request(){

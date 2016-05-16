@@ -1,20 +1,20 @@
 <?php
-# Copyright (C) 2011 José M. Carnero <jm_carnero@sargazos.net>
-#
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License along
-# with this program; if not, write to the Free Software Foundation, Inc.,
-# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-# http://www.gnu.org/copyleft/gpl.html
+/*Copyright (C) 2011 José M. Carnero <jm_carnero@sargazos.net>
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along
+with this program; if not, write to the Free Software Foundation, Inc.,
+51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+http://www.gnu.org/copyleft/gpl.html*/
 
 //Constante con el directorio donde se encuentran las clases derivadas y/o dependientes de esta
 defined('CLASSES_DIR') or define('CLASSES_DIR', dirname(__FILE__));
@@ -37,6 +37,7 @@ defined('CLASSES_DIR') or define('CLASSES_DIR', dirname(__FILE__));
  * @param string $sDirTrads Directorio donde encontrar las traducciones ('l10n' por defecto)
  * @param array $aDatosConsulta Parametros para la clase de recuperación de datos
  * @param boolean $bVerTiempos Ver los tiempos empleados
+ * @return object
  */
 function &l10n_sel($sLang = false, $sClass = false, $sClassDatos = 'csv', $sDirTrads = false, $aDatosConsulta = array(), $bVerTiempos = false){
 	static $oObj = null;
@@ -85,7 +86,8 @@ function _locale($idm = ''){
 /**
  * Devuelve (echo/return) el termino "traducido"
  *
- * @param numero de parametros variable, el primero es la clave a buscar y el resto los argumentos (%s) que precise
+ * Numero de parametros variable, el primero es la clave a buscar y el resto los argumentos (%s) que precise
+ *
  * @return string
  */
 function _trad(){
@@ -100,7 +102,8 @@ function _trad(){
 /**
  * Devuelve (return) el termino "traducido"
  *
- * @param numero de parametros variable, el primero es la clave a buscar y el resto los argumentos (%s) que precise
+ * Numero de parametros variable, el primero es la clave a buscar y el resto los argumentos (%s) que precise
+ *
  * @return array
  */
 function _tradR(){
@@ -330,12 +333,17 @@ class L10n {
 	 * Muestra informacion de depuracion
 	 *
 	 * @since 2012-02-10
+	 * @return void
 	 */
 	private function debug(){
-		if(!$this->debug) return false;
+		if(!$this->debug){
+			return false;
+		}
 		$backtrace = debug_backtrace();
 
-		if(empty($backtrace)) return false;
+		if(empty($backtrace)){
+			return false;
+		}
 
 		$output = '<ul style="border:solid red 1px;">';
 		//quitar los pasos con referencias a esta clase/metodos/funciones
@@ -358,7 +366,7 @@ class L10n {
 			$output .= '</li>';
 		}
 		$output .= '</ul>';
-		echo($output);
+		echo $output;
 	}
 
 	/**
@@ -399,7 +407,8 @@ class L10n {
 	/**
 	 * Busca la clave pasada en el array de traducciones y devuelve la traduccion con parametros.
 	 *
-	 * @param numero de parametros variable, el primero es la clave a buscar y el resto los argumentos (%s) que precise
+	 * Numero de parametros variable, el primero es la clave a buscar y el resto los argumentos (%s) que precise
+	 *
 	 * @return string
 	 */
 	public function getTrad(){
@@ -488,7 +497,7 @@ class L10n {
 			return false;
 		}
 		$sTraduccion = $sClave . $this->aDatosConsulta['separadorCampos'] . $sClave . "\n";
-		if(fwrite($fichero, $sTraduccion) === FALSE){
+		if(fwrite($fichero, $sTraduccion) === false){
 			$this->setError(__METHOD__ . '_3', $sClave, $this->aDatosConsulta['fichero']);
 			return false;
 		}
@@ -522,8 +531,9 @@ class L10n {
 	 * @param string $sDirTrads Directorio donde encontrar las traducciones ('l10n' por defecto)
 	 * @param array $aDatosConsulta Parametros para la clase de recuperación de datos
 	 * @param string $sLang Lengua en la que se recuperan los textos
+	 * @return void
 	 */
-	function L10n($sClass = false, $sClassDatos = false, $sDirTrads = false, $aDatosConsulta = array(), $sLang = false){
+	public function L10n($sClass = false, $sClassDatos = false, $sDirTrads = false, $aDatosConsulta = array(), $sLang = false){
 		$this->aError = array();
 		$this->aErrorMensajes = array();
 		$this->setErrorMensaje(); //inicializacion de los mensajes de error
@@ -748,14 +758,14 @@ class L10n {
 			case 'ms': //Malésien
 			case 'mt': //Maltés
 			case 'no': //Noruego (bokmal)
-			//case 'no': //Noruego (Nynorsk)
+				//case 'no': //Noruego (Nynorsk)
 			case 'pl': //Polaco
 			case 'rm': //Rhaeto-Romanic
 			case 'sb': //Sorbian
 			case 'sk': //Eslovaco
 			case 'sl': //Eslovenio
 			case 'sq': //Albanes
-			//case 'sr': //Serbio (Cyrillic)
+				//case 'sr': //Serbio (Cyrillic)
 			case 'sr': //Serbio (Latin)
 			case 'sx': //Estonio
 			case 'th': //Thaïlandais
@@ -845,6 +855,7 @@ class L10n {
 	 * Asigna el nivel de debug (false inactivo, true activo). Devuelve el actual nivel de debug
 	 *
 	 * @since 2012-02-10
+	 * @param boolean $debug Activar/desactivar debug
 	 * @return boolean
 	 */
 	public function setDebug($debug){

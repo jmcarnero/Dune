@@ -32,6 +32,7 @@ class Controlazo {
 	protected $aSesion = array();
 
 	protected $oModelo; //modelo correspondiente a este controlador ("Modulo_model")
+
 	private $sModulo = ''; //nombre del modulo que se ha cargado, lo envia el constructor hijo
 
 	/**
@@ -56,10 +57,18 @@ class Controlazo {
 	 */
 	protected $sContenidos = '';
 
-	function __construct($file = false){
-		if($file === false) $file = __FILE__;
+	/**
+	 * Constructor
+	 *
+	 * @throws ErrorException
+	 * @param string $sFile Ruta del modulo a cargar
+	 */
+	public function __construct($sFile = false){
+		if($sFile === false){
+			$sFile = __FILE__;
+		}
 
-		$this->rutaModulo($file); //TODO depende de que el usuario haga la llamada correcta a este constructor
+		$this->rutaModulo($sFile); //TODO depende de que el usuario haga la llamada correcta a este constructor
 		if(empty($this->sModulo)){
 			throw new ErrorException('El constructor de su controlador debe incluir: "parent::__construct(__FILE__);"');
 		}
@@ -92,7 +101,7 @@ class Controlazo {
 
 	/**
 	 * Carga la libreria que se pida
-	 * si $lib = 'nombre_clase'
+	 * si $sLib = 'nombre_clase'
 	 * el fichero debe ser "class.nombre_clase.inc"
 	 * y la clase debe llamarse 'nombre_clase'
 	 *
@@ -129,9 +138,9 @@ class Controlazo {
 
 	/**
 	 * Carga el modelo de datos
-	 * , por defecto el de la propia pagina, que se asignara a $this->oModelo
 	 *
-	 * si $sModelo = 'nombre_modelo'
+	 * Por defecto carga el modelo de la propia pagina, que se asignara a $this->oModelo
+	 * Si $sModelo = 'nombre_modelo'
 	 * el fichero debe ser "nombre_modelo.php"
 	 * y la clase debe llamarse 'nombre_modelo'
 	 *
@@ -216,6 +225,7 @@ class Controlazo {
 	 *
 	 * @param string $sPlantilla nombre de la plantilla a cargar, en el directorio D_DIR_TPL, sin extension (extension .tpl)
 	 * @param string $sVista Vista a pintar, en el directorio D_DIR_VISTA, sin extension; por defecto se carga la que tenga el mismo nombre de controlador
+	 * @return void
 	 */
 	public function pinta($sPlantilla = false, $sVista = false){
 		if(empty($sVista)){
@@ -266,16 +276,26 @@ class Controlazo {
 		return $this->dato($sClave, 'post');
 	}
 
-	//separa ruta y nombre del modulo a partir de la constante __FILE__
-	//TODO no contempla rutas windows
-	private function rutaModulo($file){
-		$this->sModulo = substr(basename($file), 0, strpos(basename($file), '.'));
+	/**
+	 * Separa ruta y nombre del modulo a partir de la constante __FILE__
+	 *
+	 * @todo no contempla rutas windows
+	 * @param string $sFile Ruta del fichero
+	 * @return void
+	 */
+	private function rutaModulo($sFile){
+		$this->sModulo = substr(basename($sFile), 0, strpos(basename($sFile), '.'));
 
 		//puede instanciarse este controlador base (que no tiene sufijo); por ejemplo para llamar al modulo de error
-		if(empty($this->sModulo) && stripos(basename($file), __CLASS__) > 0) $this->sModulo = __CLASS__;
+		if(empty($this->sModulo) && stripos(basename($sFile), __CLASS__) > 0) $this->sModulo = __CLASS__;
 	}
 
-	//traduccion de textos
+	/**
+	 * Traduccion de textos
+	 *
+	 * @param string $sCadena Cadena a traducir
+	 * @return void
+	 */
 	protected function trad($sCadena = ''){
 		if(function_exists('_tradR')){
 			$sCadena = _tradR($sCadena);

@@ -29,17 +29,31 @@
 //Se muestran o no los errores y mensajes.
 if(!defined('D_DEBUG')) define('D_DEBUG', false);
 
-//Manejador de excepciones.
+/**
+ * Manejador de excepciones
+ *
+ * @param exception $exception Excepcion sucedida
+ * @return void
+ */
 function exception_handler($exception) {
 	errorHandler_sel(E_ERROR, $exception);
 	//return(true); //no se puede continuar la ejecucion despues de una excepcion no controlada
 }
 set_exception_handler('exception_handler');
 
-//Manejador de errores.
+/**
+ * Manejador de errores
+ *
+ * @param integer $iErrorNumber Numero de error
+ * @param integer $sErrorString Texto de error
+ * @param integer $sErrorFile Fichero donde ha sucedido el error
+ * @param integer $iErrorLine Linea del fichero donde ha sucedido el error
+ * @param integer $aErrorContext Contexto del error
+ * @return boolean
+ */
 function error_handler($iErrorNumber, $sErrorString, $sErrorFile, $iErrorLine, $aErrorContext){
 	errorHandler_sel($iErrorNumber, $sErrorString, $sErrorFile, $iErrorLine, $aErrorContext);
-	return(true);
+	return true;
 }
 //$error_handler = set_error_handler("error_handler"); //si devuelve FALSE se continua con el gestor de errores normal
 set_error_handler('error_handler');
@@ -52,6 +66,7 @@ set_error_handler('error_handler');
  * @param string $sErrorFile Specifies the filename in which the error occurred (optional).
  * @param integer $iErrorLine Specifies the line number in which the error occurred (optional).
  * @param array $aErrorContext Specifies an array containing every variable and their values in use when the error occurred (optional).
+ * @return object
  */
 function &errorHandler_sel($iErrorNumber, $sErrorString, $sErrorFile = false, $iErrorLine = false, $aErrorContext = array()){
 	static $obj = null;
@@ -76,7 +91,7 @@ function &errorHandler_sel($iErrorNumber, $sErrorString, $sErrorFile = false, $i
 			else $obj->setError($iErrorNumber, $sErrorString, $sErrorFile, $iErrorLine, $aErrorContext);
 	}
 
-	return($obj);
+	return $obj;
 }
 
 /**
@@ -89,7 +104,7 @@ function &errorHandler_sel($iErrorNumber, $sErrorString, $sErrorFile = false, $i
 function getError($sClave = false){
 	$oError = errorHandler_sel(0, ''); //objeto de errores
 
-	return(call_user_func(array($oError, 'getError'), $sClave));
+	return call_user_func(array($oError, 'getError'), $sClave);
 }
 
 /**
@@ -124,49 +139,43 @@ class ErrorHandler {
 	/**
 	 * Backtrace del error
 	 *
-	 * @access private
 	 * @var array
 	 */
-	//var $backtrace;
+	//private $backtrace;
 
 	/**
 	 * Errores que se hayan producido
 	 *
-	 * @access private
 	 * @var array
 	 */
-	var $aError;
+	private $aError;
 
 	/**
 	 * Texto del error
 	 *
-	 * @access private
 	 * @var string
 	 */
-	var $sError = "";
+	private $sError = "";
 
 	/**
 	 * Clase/funcion en la que se ha producido el error
 	 *
-	 * @access private
 	 * @var string
 	 */
-	var $sErrorClass;
+	private $sErrorClass;
 
 	/**
 	 * Ruta y nombre del fichero de log
 	 * Solo se guardan en fichero si esta asignado este nombre
 	 *
 	 * @see ErrorHandler::setLogFile($file)
-	 * @access private
 	 * @var array
 	 */
-	var $sLogFile;
+	private $sLogFile;
 
 	/**
 	 * Devuelve (return) el termino "traducido", si existe la funcion de traduccion "_tradR"
 	 *
-	 * @access private
 	 * @param string $texto Texto a traducir
 	 * @return array
 	 */
@@ -174,13 +183,15 @@ class ErrorHandler {
 		//if(function_exists('_tradR')) $texto = _tradR($texto);
 
 		//trigger_error($this->getMensaje(__METHOD__), E_USER_NOTICE);
-		return($texto);
+		return $texto;
 	}
 
-	/*
-	diz at ysagoon dot com 23-Nov-2004 10:40
-	And here are my two cents for a useful and good looking backtrace function.
-	*/
+	/**
+	 * And here are my two cents for a useful and good looking backtrace function.
+	 *
+	 * @author diz at ysagoon dot com 23-Nov-2004 10:40
+	 * @return string
+	 */
 	private function backtrace(){
 		/*$output = '<div class="backtrace">'."\n";
 		$output .= "<p>Backtrace:</p><ul>\n";*/
@@ -246,24 +257,28 @@ class ErrorHandler {
 
 	/**
 	 * Muestra el error y lo guarda en fichero (log de errores)
+	 *
+	 * @return boolean
 	 */
 	private function errorLog(){
 		echo($this->sError);
-		if(empty($this->sLogFile)) return(false);
+		if(empty($this->sLogFile)){
+			return false;
+		}
 
 		//TODO Write error to log file (CSV format)
 		$errfile = fopen($this->sLogFile, 'a');
 		fwrite($errfile, $this->sError."\n\n");
 		fclose($errfile);
-		return(true);
+		return true;
 	}
 
 	/**
 	 * Constructor
 	 *
-	 * @access public
+	 * @return void
 	 */
-	function ErrorHandler(){
+	public function ErrorHandler(){
 		$this->aError = array();
 		$this->sLogFile = false;
 	}
@@ -271,13 +286,12 @@ class ErrorHandler {
 	/**
 	 * Devuelve todos los errores producidos, o los que correspondan con una clave (como los de una clase concreta)
 	 *
-	 * @access public
-	 * @param string $clave Clave del grupo de errores a devolver
+	 * @param string $sClave Clave del grupo de errores a devolver
 	 * @return array
 	 */
-	public function getError($clave = false){
-		if($clave === false || !isset($this->aError[$clave])) return($this->aError);
-		return($this->aError[$clave]);
+	public function getError($sClave = false){
+		if($sClave === false || !isset($this->aError[$sClave])) return($this->aError);
+		return $this->aError[$sClave];
 	}
 
 	/**
@@ -285,38 +299,41 @@ class ErrorHandler {
 	 * Si no se pasa ninguna clave se muestran todos.
 	 *
 	 * @since 2012-09-17
-	 * @access public
-	 * @param $clave Clave del mensaje
+	 * @param string $sClave Clave del mensaje
 	 * @return string
 	 */
-	public function getMensaje($clave = false){
+	public function getMensaje($sClave = false){
 		$aMensajes = array(
 		'ErrorHandler::_t' => $this->_t('Traducciones no disponibles'),
 		'ErrorHandler::setLogFile' => $this->_t('No se pueden escribir logs en')
 		);
 
-		if($clave === false) return($aMensajes);
-		return($aMensajes[$clave]);
+		if($sClave === false){
+			return $aMensajes;
+		}
+
+		return $aMensajes[$sClave];
 	}
 
 	/**
 	 * Devuelve microtime en segundos
 	 *
-	 * @access private
-	 * @param boolean $float Si true devuelve un numero flotante, si false devuelve formateado "legible para humanos" (parecido a ISO 8601)
+	 * @param boolean $bFloat Si true devuelve un numero flotante, si false devuelve formateado "legible para humanos" (parecido a ISO 8601)
 	 * @return float
 	 */
-	private function microtimeSeg($float = false){
+	private function microtimeSeg($bFloat = false){
 		list($mseg, $seg) = explode(" ", microtime());
 
-		if($float) return((float)$mseg + (float)$seg);
-		else return(date('Y-m-d H:i:s', $seg).substr($mseg, 1));
+		if($bFloat){
+			return (float)$mseg + (float)$seg;
+		}
+
+		return date('Y-m-d H:i:s', $seg) . substr($mseg, 1);
 	}
 
 	/**
 	 * Crea el texto del mensaje de error
 	 *
-	 * @access public
 	 * @param integer $iErrorNumber Specifies the error report level for the user-defined error. Must be a value number (required).
 	 * @param string $sErrorString Specifies the error message for the user-defined error (required).
 	 * @param string $sErrorFile Specifies the filename in which the error occurred (optional).
@@ -325,9 +342,8 @@ class ErrorHandler {
 	 * @return boolean
 	 */
 	public function setError($iErrorNumber = false, $sErrorString = false, $sErrorFile = false, $iErrorLine = false, $aErrorContext = false){
-		if(!(error_reporting() & $iErrorNumber)){
-			//Este código de error no está incluido en error_reporting
-			return;
+		if(!(error_reporting() & $iErrorNumber)){ //Este código de error no está incluido en error_reporting
+			return; //TODO indicar esta situacion?
 		}
 
 		$this->sError = '';
@@ -410,6 +426,7 @@ class ErrorHandler {
 				$this->sError .= $this->_t('Unknown error');
 				break;
 		}
+
 		//if(!empty($aErrorContext)) $this->sError .= '<p>' . $this->_t('context') . ': ' . $aErrorContext."</p>\n";
 		//$this->sError .= '<p>PHP '.PHP_VERSION.' ('.PHP_OS.")</p>\n";
 		$this->sError = "\n** " . $this->sError . ' ** [' . $iErrorNumber . ']{' . $this->microtimeSeg() . '} ' . $sErrorString . "\n"; //pone la fecha/hora del error
@@ -428,14 +445,14 @@ class ErrorHandler {
 		}
 
 		//if($iErrorNumber & error_reporting()){
-			if(empty($this->sErrorClass)){
-				$this->aError[] = $this->sError;
-			}
-			else{
-				$this->aError[$this->sErrorClass][] = $this->sError;
-			}
+		if(empty($this->sErrorClass)){
+			$this->aError[] = $this->sError;
+		}
+		else{
+			$this->aError[$this->sErrorClass][] = $this->sError;
+		}
 
-			//echo($this->sError);
+		//echo($this->sError);
 		//}
 
 		$this->errorLog();
@@ -452,7 +469,6 @@ class ErrorHandler {
 	 * Crea el texto del mensaje de excepcion
 	 *
 	 * @since 2012-09-13
-	 * @access public
 	 * @param object $oException Objeto excepcion
 	 * @param integer $iErrorNumber Se pasa como parametro para igualarlo en el singleton, pero ya que son errores fatales siempre vale E_ERROR
 	 * @return boolean
@@ -487,7 +503,6 @@ class ErrorHandler {
 	 * Si no se ha asignado nada no se guarda log
 	 *
 	 * @since 2012-09-13
-	 * @access public
 	 * @param string $sFichero Ruta y nombre del fichero de log
 	 * @return boolean
 	 */

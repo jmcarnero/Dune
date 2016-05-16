@@ -1,20 +1,20 @@
 <?php
-# Copyright (C) 2015 José M. Carnero <jm_carnero@sargazos.net>
-#
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License along
-# with this program; if not, write to the Free Software Foundation, Inc.,
-# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-# http://www.gnu.org/copyleft/gpl.html
+/*Copyright (C) 2015 José M. Carnero <jm_carnero@sargazos.net>
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along
+with this program; if not, write to the Free Software Foundation, Inc.,
+51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+http://www.gnu.org/copyleft/gpl.html*/
 
 //Constante con el directorio donde se encuentran las clases derivadas y/o dependientes de esta
 defined('CLASSES_DIR') or define('CLASSES_DIR', dirname(__FILE__));
@@ -97,6 +97,14 @@ class Redatazo_ddbb implements iRedatazo {
 	private $sPrefijo;
 
 	/**
+	 * Total de filas, sin limit
+	 *
+	 * @var integer
+	 * @see Redatazo_ddbb::totalFilas($limit)
+	 */
+	private $iTotalFilas;
+
+	/**
 	 * Usuario que lanza las consultas (id del usuario)
 	 *
 	 * @var string
@@ -121,14 +129,16 @@ class Redatazo_ddbb implements iRedatazo {
 	 * Ultima consulta lanzada; tal como la haya enviado el usuario o como se haya construido (sin parametros)
 	 *
 	 * @var string
-	 * @see rdatazo_ddbb::getConsulta()
+	 * @see Redatazo_ddbb::getConsulta()
 	 */
 	private $sUltimaSql = '';
 
 	/**
 	 * Constructor
+	 *
+	 * @param array $aDatos Datos para la consulta
 	 */
-	function __construct($aDatos = array()){
+	public function __construct($aDatos = array()){
 		$this->setParametros($aDatos);
 
 		$this->iTotalFilas = 0;
@@ -138,7 +148,10 @@ class Redatazo_ddbb implements iRedatazo {
 		$this->conectar();
 	}
 
-	function __destruct(){
+	/**
+	 * Destructor
+	 */
+	public function __destruct(){
 		$this->oDDBB->desconectar();
 	}
 
@@ -272,8 +285,10 @@ class Redatazo_ddbb implements iRedatazo {
 	 * @return integer Id insertada
 	 */
 	public function getFilas(){
-		if($this->oDDBB->leeFilasTodos())
+		if($this->oDDBB->leeFilasTodos()){
+			$this->iTotalFilas = $this->oDDBB->iTotalFilas;
 			return $this->oDDBB->aFilaTodos;
+		}
 
 		return false;
 	}
@@ -364,6 +379,11 @@ class Redatazo_ddbb implements iRedatazo {
 		return true;
 	}
 
+	/**
+	 * Limpia la consulta y sus datos, para comenzar en limpio la siguiente
+	 *
+	 * @return void
+	 */
 	private function limpiaConsulta(){
 		$this->sSql = '';
 		$this->aSql = array();
@@ -462,12 +482,23 @@ class Redatazo_ddbb implements iRedatazo {
 	}
 
 	/**
-	 * Devuelve el total de filas recuperadas, sin limit.
+	 * Devuelve el total de filas recuperadas, con y sin limit.
 	 *
+	 * @param boolean $limit Reales (true) o sin limit (false, por defecto)
 	 * @return integer
 	 */
-	public function totalFilas(){
-		return $this->oDDBB->iTotalFilas;
+	public function totalFilas($limit = false){
+		$this->iTotalFilas = $this->oDDBB->iTotalFilas;
+		$iRet = 0;
+
+		if($limit){
+			$iRet = count($this->oDDBB->aFilaTodos);
+		}
+		elseif(!empty($this->iTotalFilas)){
+			$iRet = $this->iTotalFilas;
+		}
+
+		return $iRet;
 	}
 
 	/**
