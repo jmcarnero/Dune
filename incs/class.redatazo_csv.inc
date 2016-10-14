@@ -20,8 +20,8 @@ http://www.gnu.org/copyleft/gpl.html*/
 defined('CLASSES_DIR') or define('CLASSES_DIR', dirname(__FILE__));
 
 //dependencias
-include_once CLASSES_DIR . '/interface.redatazo.inc';
-include_once CLASSES_DIR . '/class.importarCsv.inc';
+require_once CLASSES_DIR . '/interface.redatazo.inc';
+require_once CLASSES_DIR . '/class.importarCsv.inc';
 
 /**
  * Capa de abstracción para recuperación de datos de distintas fuentes con una única interfaz

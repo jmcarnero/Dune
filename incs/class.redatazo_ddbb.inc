@@ -20,8 +20,8 @@ http://www.gnu.org/copyleft/gpl.html*/
 defined('CLASSES_DIR') or define('CLASSES_DIR', dirname(__FILE__));
 
 //dependencias
-include_once (CLASSES_DIR . '/interface.redatazo.inc');
-include_once (CLASSES_DIR . '/class.sqlazo.inc');
+require_once (CLASSES_DIR . '/interface.redatazo.inc');
+require_once (CLASSES_DIR . '/class.sqlazo.inc');
 
 /**
  * Capa de abstracción para recuperación de datos de distintas fuentes con una única interfaz.
@@ -90,26 +90,12 @@ class Redatazo_ddbb implements iRedatazo {
 	private $iOffsetFilas;
 
 	/**
-	 * Prefijo de las tablas
-	 *
-	 * @var string
-	 */
-	private $sPrefijo;
-
-	/**
 	 * Total de filas, sin limit
 	 *
 	 * @var integer
 	 * @see Redatazo_ddbb::totalFilas($limit)
 	 */
 	private $iTotalFilas;
-
-	/**
-	 * Usuario que lanza las consultas (id del usuario)
-	 *
-	 * @var string
-	 */
-	private $sTrazabilidad;
 
 	/**
 	 * Parametros para la SQL
@@ -152,7 +138,7 @@ class Redatazo_ddbb implements iRedatazo {
 	 * Destructor
 	 */
 	public function __destruct(){
-		$this->oDDBB->desconectar();
+		//$this->oDDBB->desconectar();
 	}
 
 	/**
@@ -164,15 +150,10 @@ class Redatazo_ddbb implements iRedatazo {
 	private function conectar(){
 		//conexion a base de datos
 		//TODO control de errores
-		$this->oDDBB = sqlazo_sel($this->sDDBBTipo);
-		if(!$this->oDDBB->conectar($this->sDDBBServidor, $this->sDDBBUsuario, $this->sDDBBPassword, $this->sDDBB)){
+		$this->oDDBB = new SQLazo($this->sDDBBServidor, $this->sDDBBUsuario, $this->sDDBBPassword, $this->sDDBB, 'mysql');
+		if(!$this->oDDBB){
 			trigger_error('No se puede conectar al servidor: ' . $this->sDDBBServidor, E_USER_ERROR);
 			return false;
-		}
-		$this->oDDBB->sPrefijo = $this->sPrefijo;
-		if(!empty($this->sTrazabilidad)){
-			$this->oDDBB->bTrazabilidad = true;
-			$this->oDDBB->sIdUsuario = $this->sTrazabilidad;
 		}
 
 		return true;
@@ -199,22 +180,13 @@ class Redatazo_ddbb implements iRedatazo {
 		$this->limpiaConsulta(); //despues de lanzar una consulta debe limpiarse para empezar de cero la siguiente
 
 		if($this->oDDBB->consulta($aConsulta[0], $aConsulta[1], $aConsulta[2], $aConsulta[3])){
-			$this->sUltimaSql = $this->oDDBB->sQuery; //consulta lanzada
+			$this->sUltimaSql = $this->oDDBB->ultimaConsulta(); //consulta lanzada
 		}
 		else{
 			$sError = implode(' // ', $this->oDDBB->getError());
 			trigger_error('No se puede ejecutar la consulta: [' . $this->sUltimaSql . ']; error: [' . $sError . ']', E_USER_WARNING);
 			return false; //error
 		}
-
-		/*if($this->oDDBB->leeFilasTodos()){
-			$this->iTotalFilas = $this->oDDBB->iTotalFilas;
-			$this->aFilas = $this->oDDBB->aFilas;
-			$aReturn = true;
-		}
-		else{
-			$aReturn = null; //error
-		}*/
 
 		return true;
 	}
@@ -272,7 +244,7 @@ class Redatazo_ddbb implements iRedatazo {
 	 * @return string
 	 */
 	public function getConsulta($posicion = 'ultima'){
-		$sConsulta = $this->oDDBB->sQuery;
+		$sConsulta = $this->oDDBB->ultimaConsulta();
 		if(empty($sConsulta))
 			$sConsulta = '[ERROR] ' . $this->sUltimaSql; //si hay algun tipo de error devuelve la consulta que se ha enviado al controlador de datos
 
@@ -282,15 +254,11 @@ class Redatazo_ddbb implements iRedatazo {
 	/**
 	 * Devuelve las filas recuperadas en la consulta
 	 *
-	 * @return integer Id insertada
+	 * @return array
 	 */
 	public function getFilas(){
-		if($this->oDDBB->leeFilasTodos()){
-			$this->iTotalFilas = $this->oDDBB->iTotalFilas;
-			return $this->oDDBB->aFilaTodos;
-		}
-
-		return false;
+		$this->iTotalFilas = $this->oDDBB->totalFilas();
+		return $this->oDDBB->leeFilaTodas();
 	}
 
 	/**
@@ -319,7 +287,7 @@ class Redatazo_ddbb implements iRedatazo {
 		$aPreVal = $aPostVal = array();
 		foreach($datos as $clave => $valor){
 			$aPreVal[] = $clave;
-			$aPostVal[] = "'%s'";
+			$aPostVal[] = "?";
 			$this->aSql[] = $valor;
 		}
 
@@ -337,10 +305,7 @@ class Redatazo_ddbb implements iRedatazo {
 	 * @return integer Id insertada o null
 	 */
 	public function insert_id(){
-		if(!empty($this->oDDBB->sUltimaId))
-			return $this->oDDBB->sUltimaId;
-
-		return null;
+		return $this->oDDBB->ultimoId();
 	}
 
 	/**
@@ -475,10 +440,18 @@ class Redatazo_ddbb implements iRedatazo {
 		$this->sDDBBUsuario = empty($aDatos['usuario']) ? 'nadie' : $aDatos['usuario'];
 		$this->sDDBBPassword = empty($aDatos['clave']) ? 'clave' : $aDatos['clave'];
 		$this->sDDBB = empty($aDatos['database']) ? 'test' : $aDatos['database'];
-		$this->sPrefijo = empty($aDatos['prefijotablas']) ? '' : $aDatos['prefijotablas'];
-		$this->sTrazabilidad = empty($aDatos['trazabilidad']) ? false : $aDatos['trazabilidad'];
 
 		return true;
+	}
+
+	/**
+	 * Asigna como se devolveran los resultados
+	 *
+	 * @param string $sTipo Tipo a devolver: aso, both, num, obj
+	 * @return boolean
+	 */
+	public function setTipoResultados($sTipo){
+		return $this->oDDBB->setTipoResultados($sTipo);
 	}
 
 	/**
@@ -488,7 +461,7 @@ class Redatazo_ddbb implements iRedatazo {
 	 * @return integer
 	 */
 	public function totalFilas($limit = false){
-		$this->iTotalFilas = $this->oDDBB->iTotalFilas;
+		$this->iTotalFilas = $this->oDDBB->totalFilas();
 		$iRet = 0;
 
 		if($limit){
@@ -505,23 +478,23 @@ class Redatazo_ddbb implements iRedatazo {
 	 * Actualiza una o mas filas
 	 *
 	 * @todo generar una advertencia si no hay where
-	 * @param string $tabla Tabla en la que se hara la actualizacion
-	 * @param array $datos Datos a insertar, array asociativo ('campo' => valor)
-	 * @param array $condicion Condicion de actualizacion, array asociativo ('campo' => valor); tambien se pueden asignar en el metodo where
+	 * @param string $sTabla Tabla en la que se hara la actualizacion
+	 * @param array $aDatos Datos a insertar, array asociativo ('campo' => valor)
+	 * @param array $aCondicion Condicion de actualizacion, array asociativo ('campo' => valor); tambien se pueden asignar en el metodo where
 	 * @return boolean
 	 */
-	public function update($tabla, $datos, $condicion = array()){
-		$this->sSql = 'UPDATE ' . $tabla . ' SET';
+	public function update($sTabla, $aDatos, $aCondicion = array()){
+		$this->sSql = 'UPDATE ' . $sTabla . ' SET';
 
 		$aVals = array();
-		foreach($datos as $clave => $valor){
-			$aVals[] = "$clave = '%s'";
+		foreach($aDatos as $clave => $valor){
+			$aVals[] = "$clave = ?";
 			$this->aSql[] = $valor;
 		}
 		$this->sSql .= ' ' . implode(', ', $aVals);
 
-		if(!empty($condicion) && is_array($condicion)){
-			foreach($condicion as $clave => $valor){
+		if(!empty($aCondicion) && is_array($aCondicion)){
+			foreach($aCondicion as $clave => $valor){
 				$this->where($clave, $valor);
 			}
 		}
@@ -542,42 +515,39 @@ class Redatazo_ddbb implements iRedatazo {
 
 	/**
 	 * Condiciones de la consulta
-	 * $campo puede ser un nombre de campo, o una condicion con indicaciones de los valores a comparar: "campo1 = %s AND campo2 IN (%u, %u)" (en cuyo caso $valor sera un array con los valores a sustituir)
+	 * $sCampo puede ser un nombre de campo, o una condicion con indicaciones de los valores a comparar: "campo1 = ? AND campo2 IN (?, ?)" (en cuyo caso $valor sera un array con los valores a sustituir)
 	 *
 	 * @todo poner nombre de campos entre ` (tildes graves); decidir si el usuario puede enviar la palabra clave "where"
 	 * @todo condiciones like
-	 * @param string $campo Nombre del campo
+	 * @param string $sCampo Nombre del campo
 	 * @param string $valor Valor con el que comparar el campo o array de valores
 	 * @return boolean
 	 */
-	public function where($campo, $valor = null){
+	public function where($sCampo, $valor = null){
 		$sAux = '';
 
 		if(isset($valor)){
 			if(is_array($valor)){ //si se pasa un array de valores
-				if(empty($this->aConsulta['where_p'])){ //TODO detectar cada tipo de valor
+				if(empty($this->aConsulta['where_p'])){
 					$this->aConsulta['where_p'] = array();
 				}
 				$this->aConsulta['where_p'] = array_merge($this->aConsulta['where_p'], $valor);
-			}
-			elseif(is_numeric($valor)){
-				$sAux = " = %u";
-				$this->aConsulta['where_p'][] = $valor;
 			}
 			elseif(strtolower($valor) == 'null'){
 				$sAux = " IS NULL";
 			}
 			else{
-				$sAux = " = '%s'";
+				$sAux = " = ?";
 				$this->aConsulta['where_p'][] = $valor;
 			}
 		}
 
-		if(strpos($campo, ' ') !== false){ //se ha pasado una clausula where, no solo el nombre de campo, el valor (o los valores) si los hay se añadiran al array, pero no se modifica la cadena de $campo
+		//FIXME mejorar esta deteccion, ej.: "campo1='valor1'" (no contiene espacios))
+		if(strpos($sCampo, ' ') !== false){ //se ha pasado una clausula where, no solo el nombre de campo, el valor (o los valores) si los hay se añadiran al array, pero no se modifica la cadena de $sCampo
 			$sAux = '';
 		}
 
-		$this->aConsulta['where'][] = $campo . $sAux;
+		$this->aConsulta['where'][] = $sCampo . $sAux;
 	}
 
 }

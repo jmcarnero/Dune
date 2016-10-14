@@ -20,10 +20,10 @@ http://www.gnu.org/copyleft/gpl.html*/
 defined('CLASSES_DIR') or define('CLASSES_DIR', dirname(__FILE__));
 
 //dependencias
-include_once (CLASSES_DIR . '/interface.redatazo.inc');
+require_once (CLASSES_DIR . '/interface.redatazo.inc');
 
 /**
- * Capa de abstracción para recuperación de datos de distintas fuentes.
+ * Capa de abstracción para REcuperación de DATos de distintas fuentes.
  * Clase base de recuperacion de datos.
  *
  * @author José M. Carnero
@@ -72,7 +72,7 @@ class Redatazo implements iRedatazo {
 					throw new Exception('Fichero de Motor [redatazo_csv] no disponible');
 				break;
 			case 'mysql':
-			case 'oracle':
+			//case 'oracle':
 				if(is_readable(CLASSES_DIR . '/class.redatazo_ddbb.inc')){
 					include_once (CLASSES_DIR . '/class.redatazo_ddbb.inc');
 					$this->oRedatazo = new Redatazo_ddbb($this->aParametros);
@@ -270,6 +270,16 @@ class Redatazo implements iRedatazo {
 	 */
 	public function update($almacen, $datos, $condicion = array()){
 		return $this->oRedatazo->update($almacen, $datos, $condicion);
+	}
+
+	/**
+	 * Asigna como se devolveran los resultados
+	 *
+	 * @param string $sTipo Tipo a devolver: aso, both, num, obj
+	 * @return boolean
+	 */
+	public function setTipoResultados($sTipo){
+		return $this->oRedatazo->setTipoResultados($sTipo);
 	}
 
 	/**
