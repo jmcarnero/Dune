@@ -458,7 +458,7 @@ class ErrorHandler {
 		$this->errorLog();
 		if($iExit){
 			//exit($iExit);
-			throw new Exception(__METHOD__ . ' -> End of execution');
+			throw new Exception(__METHOD__ . ' -> ' . $this->_t('End of execution'));
 		}
 
 		//no ejecutar el gestor de errores interno de PHP
@@ -476,8 +476,8 @@ class ErrorHandler {
 	public function setException($oException, $iErrorNumber = E_ERROR){
 		$iErrorNumber = E_ERROR;
 
-		$this->sError = "\n## ".$this->_t('Fatal error').' ## ['.$this->_t('Uncaught exception').']{'.$this->microtimeSeg().'} '.get_class($oException).', '.$oException->getMessage()."\n"; //pone la fecha/hora del error
-		$this->sError .= "\t".$this->_t('line').': '.$oException->getLine().' '.$this->_t('in').' '.$this->_t('file').': '.$oException->getFile()."\n";
+		$this->sError = "\n## " . $this->_t('Fatal error') . ' ## [' . $this->_t('Uncaught exception') . ']{' . $this->microtimeSeg() . '} ' . get_class($oException) . ', ' . $oException->getMessage() . "\n"; //pone la fecha/hora del error
+		$this->sError .= "\t" . $this->_t('line') . ': ' . $oException->getLine() . ' ' . $this->_t('in') . ' ' . $this->_t('file') . ': ' . $oException->getFile() . "\n";
 
 		$this->sErrorClass = '';
 		$temp = $this->backtrace();
@@ -485,7 +485,7 @@ class ErrorHandler {
 			$this->sError .= $temp;
 		}
 
-		//if($iExit) $this->sError .= '** ** '.$this->_t('stoped execution')."** **\n";
+		//if($iExit) $this->sError .= '** ** ' . $this->_t('stoped execution') . "** **\n";
 
 		if(empty($this->sErrorClass)){
 			$this->aError[] = $this->sError;

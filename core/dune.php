@@ -227,8 +227,6 @@ class Dune {
 			$this->oRestazo = new $aux();
 		}
 		elseif(class_exists($aux) && $sParentClass == 'Controlazo'){ //controlador normal
-			$this->oControlazo = new $aux();
-
 			//si se ha pedido un metodo concreto (valor del parametro modulo) se carga y se le pasan el resto de parametros
 			//TODO eliminar nombres de metodo no permitidos? (construct, destruct, ...)
 			$sMethod = D_METODO_INICIO; //se intenta cargar el metodo por defecto
@@ -236,7 +234,9 @@ class Dune {
 				$sMethod = $_GET[$this->sModulo];
 			}
 
-			if(method_exists($this->oControlazo, $sMethod)){
+			if(method_exists($aux, $sMethod)){
+				$this->oControlazo = new $aux();
+
 				$aParametros = $_GET;
 				array_shift($aParametros); //quita el primer parametro, que es el controlador y el metodo
 				$mReturn = call_user_func_array(array($this->oControlazo, $sMethod), $aParametros); //TODO hacer algo con el return?
@@ -247,7 +247,6 @@ class Dune {
 				$sRutaControlador = D_BASE_DIR . D_DIR_CONTROL . $this->sModulo . '.php';
 
 				if(is_readable($sRutaControlador)){
-					unset($this->oControlazo);
 					include_once $sRutaControlador; //FIXME en caso de error, ya se ha cargado antes y aqui produce error sin el _once
 
 					$this->oControlazo = new $this->sModulo();
@@ -258,8 +257,7 @@ class Dune {
 			}
 		}
 		else{
-			//intenta cargar la vista con el mismo nombre
-			if(is_readable(D_BASE_DIR . D_DIR_VISTA . $this->sModulo . '.php')){
+			if(is_readable(D_BASE_DIR . D_DIR_VISTA . $this->sModulo . '.php')){ //intenta cargar la vista con el mismo nombre
 				$this->oControlazo = new Controlazo(D_BASE_DIR . D_DIR_VISTA . $this->sModulo . '.php');
 			}
 			elseif(class_exists('Controlazo')){ //si no existe el controlador del modulo pedido ni la vista se instancia el controlador base
