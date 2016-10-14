@@ -58,6 +58,84 @@ class Ayudazo {
 		return($cadCort.' ...');
 	}
 
+	/**
+	 * Recupera el contenido de una URL
+	 *
+	 * @param string $sUrl URL de la que recuperar información
+	 * @param array $aParams Parametros para la URL, se traducira "key": "value" a "[?|&]key=value"
+	 * @return boolean
+	 */
+	function getUrl($sUrl, $aParams, $sMetodo = 'GET'){
+		$sMetodo = strtoupper($sMetodo);
+
+		@ini_set('allow_url_fopen', true);
+		$bUrlFopen = ini_get('allow_url_fopen'); //estado de la directiva allow_url_fopen
+		$bCurl = function_exists('curl_init'); //estado de la extension CURL
+
+		//preparando los parametros para la url
+		$sParams = '';
+		$sUrlQueryMark = '';
+		if(!empty($aParams) && count($aParams)){
+			if(strpos($sUrl, '?') === false){
+				$sUrlQueryMark = '?';
+			}
+
+			$aAux = array();
+			foreach($aParams as $sClave => $sValor){
+				$aAux[] = urlencode($sClave) . '=' . urlencode($sValor);
+			}
+
+			$sParams .= implode('&', $aAux);
+		}
+
+		if($bCurl){
+			$oCurl = curl_init();
+			$oCurlOpts = array(
+				CURLOPT_HEADER => false,
+				CURLOPT_RETURNTRANSFER => true, //si no hay errores curl_exec devolvera lo que obtenga de la url
+
+				CURLOPT_SSL_VERIFYHOST => 0, //TODO no se verifica ssl, cambiar
+				CURLOPT_SSL_VERIFYPEER => 0,
+
+				CURLOPT_HTTPHEADER, array(
+					'Host: ' . $sUrl,
+					//'Content-type: application/x-www-form-urlencoded',
+					'Accept: application/json'
+				)
+			);
+
+			if($sMetodo == 'POST'){
+				curl_setopt($oCurl, CURLOPT_POST, true);
+				curl_setopt($oCurl, CURLOPT_POSTFIELDS, $sParams);
+				$sUrlQueryMark = '';
+				$sParams = '';
+			}
+
+			$oCurlOpts[CURLOPT_URL] = $sUrl . $sUrlQueryMark . $sParams;
+
+			curl_setopt_array($oCurl, $oCurlOpts);
+			$sRet = curl_exec($oCurl);
+
+			/*if($sRet === false){
+				$sError = 'Curl error: ' . curl_error($oCurl);
+			}*/
+
+			curl_close($oCurl);
+		}
+		elseif($bUrlFopen){
+			$oHeaders = stream_context_create(array(
+				'http' => array(
+					'header' => "Accept: application/json\r\n",
+					'method'  => $sMetodo,
+					'content' => $sParams,
+				)
+			));
+			$sRet = file_get_contents($sUrl, false, $oHeaders);
+		}
+
+		return $sRet; //si $sRet == false no se puede recuperar la imagen de la URL
+	}
+
 	/*
 	 * Two simple functions for encrypting and decrypting with RIJNDAEL 256
 	//example
@@ -76,5 +154,35 @@ class Ayudazo {
 		//I used trim to remove trailing spaces
 		return trim(mcrypt_decrypt(MCRYPT_RIJNDAEL_256, $key, base64_decode($text), MCRYPT_MODE_ECB, $iv));
 	}*/
+
+	/**
+	 * Guarda en un fichero
+	 *
+	 * @todo controlar permisos de creacion/edicion del fichero
+	 * @param string $sFichero Fichero en el que guardar los datos
+	 * @param array $aDatos Datos a guardar, cada registro se guarda en una linea, si esta vacio y $bAppend == false vaciara el fichero o lo creara vacio
+	 * @param boolean $bAppend Si true pone los nuevos datos despues de los existentes, si false sustituye los viejos con los nuevos
+	 * @return boolean
+	 */
+	function saveFile($sFichero, $aDatos, $bAppend = false){
+		if(empty($sFichero)){ //nada que hacer
+			return null;
+		}
+
+		if(!is_array($aDatos)){
+			$aDatos = array($aDatos);
+		}
+
+		$bAppend = empty($bAppend) ? 0 : FILE_APPEND;
+
+		$bRes = file_put_contents($sFichero, implode("\n", $aDatos), $bAppend);
+		if($bRes === false){
+			echo 'Error en la escritura de [' . $sFichero . ']';
+			return false;
+		}
+
+		echo 'Escritura de [' . $sFichero . '] completada';
+		return true;
+	}
 
 }

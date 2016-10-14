@@ -346,7 +346,6 @@ class importarCsv{
 	 * Valida los campos recogidos del CSV
 	 * Solo se usa si $this->aCamposVal no es un array vacio
 	 *
-	 * @access private
 	 * @return boolean
 	 */
 	private function validarCampos(){
