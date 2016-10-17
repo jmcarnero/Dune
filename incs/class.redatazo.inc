@@ -250,6 +250,16 @@ class Redatazo implements iRedatazo {
 	}
 
 	/**
+	 * Asigna como se devolveran los resultados
+	 *
+	 * @param string $sTipo Tipo a devolver: aso, both, num, obj
+	 * @return boolean
+	 */
+	public function setTipoResultados($sTipo){
+		return $this->oRedatazo->setTipoResultados($sTipo);
+	}
+
+	/**
 	 * Devuelve el total de filas recuperadas, sin limit.
 	 *
 	 * @access public
@@ -270,16 +280,6 @@ class Redatazo implements iRedatazo {
 	 */
 	public function update($almacen, $datos, $condicion = array()){
 		return $this->oRedatazo->update($almacen, $datos, $condicion);
-	}
-
-	/**
-	 * Asigna como se devolveran los resultados
-	 *
-	 * @param string $sTipo Tipo a devolver: aso, both, num, obj
-	 * @return boolean
-	 */
-	public function setTipoResultados($sTipo){
-		return $this->oRedatazo->setTipoResultados($sTipo);
 	}
 
 	/**

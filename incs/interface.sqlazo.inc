@@ -47,10 +47,9 @@ interface iSQLazo {
 	/**
 	 * Muestra la ultima consulta lanzada y sus parametros
 	 *
-	 * @param boolean $bCruda Si true devuelve la consulta y sus parametros tal como hayan sido proporcionados a la clase; si false devuelve la consulta lanzada por la base de datos (si no se ha producido error que lo impida)
-	 * return array
+	 * return string
 	 */
-	public function ultimaConsulta($bCruda = false);
+	public function ultimaConsulta();
 
 	/**
 	 * Devuelve el ultimo Id (en consultas INSERT con clave primaria autonumerica) insertado

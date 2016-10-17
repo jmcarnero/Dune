@@ -84,10 +84,10 @@ class Redatazo_ddbb implements iRedatazo {
 	private $aFilas = array();
 
 	//numero de filas a devolver, false si no se limita
-	private $iNumeroFilas;
+	private $iFilasCantidad;
 
 	//numero de fila en la que empezar a devolver
-	private $iOffsetFilas;
+	private $iFilasPagina;
 
 	/**
 	 * Total de filas, sin limit
@@ -128,8 +128,8 @@ class Redatazo_ddbb implements iRedatazo {
 		$this->setParametros($aDatos);
 
 		$this->iTotalFilas = 0;
-		$this->iNumeroFilas = false;
-		$this->iOffsetFilas = 0;
+		$this->iFilasCantidad = false;
+		$this->iFilasPagina = 0;
 
 		$this->conectar();
 	}
@@ -162,24 +162,22 @@ class Redatazo_ddbb implements iRedatazo {
 	/**
 	 * Ejecucion de consulta
 	 *
-	 * @todo pasar $numFilas y $numPagina a $this->limit; teniendo en cuenta no pisar si no se pasa nada
-	 * @param string $consulta Consulta a lanzar para recuperar datos; puede omitirse si se ha construido con select/from/...
-	 * @param array $parametros Parametros para la consulta, si no se pasa la consulta en el primer parametro, tal como los requiera el motor de datos concreto
-	 * @param integer $numFilas Numero de filas a devolver
-	 * @param integer $numPagina Numero de pagina en la que empezar a devolver filas
+	 * @todo pasar $iNumFilas y $numPagina a $this->limit; teniendo en cuenta no pisar si no se pasa nada
+	 * @param string $sConsulta Consulta a lanzar para recuperar datos; puede omitirse si se ha construido con select/from/...
+	 * @param array $aParametros Parametros para la consulta, si no se pasa la consulta en el primer parametro, tal como los requiera el motor de datos concreto
+	 * @param integer $iNumFilas Numero de filas a devolver
+	 * @param integer $iNumPagina Numero de pagina en la que empezar a devolver filas
 	 * @return boolean
 	 */
-	public function consulta($consulta = null, $parametros = array(), $numFilas = null, $numPagina = null){
-		$this->setConsulta($consulta, $parametros);
+	public function consulta($sConsulta = null, $aParametros = array(), $iNumFilas = null, $iNumPagina = null){
+		$this->setConsulta($sConsulta, $aParametros);
 
-		if(!empty($numFilas)) $this->iNumeroFilas = $numFilas;
-		if(!empty($numPagina)) $this->iOffsetFilas = ($numFilas * $numPagina);
+		if(!empty($iNumFilas)) $this->iFilasCantidad = $iNumFilas;
+		if(!empty($iNumPagina)) $this->iFilasPagina = $iNumPagina; //($iNumFilas * $iNumPagina);
 
-		$aConsulta = array($this->sSql, $this->aSql, $this->iNumeroFilas, $this->iOffsetFilas);
 		$this->sUltimaSql = $this->sSql;
-		$this->limpiaConsulta(); //despues de lanzar una consulta debe limpiarse para empezar de cero la siguiente
 
-		if($this->oDDBB->consulta($aConsulta[0], $aConsulta[1], $aConsulta[2], $aConsulta[3])){
+		if($this->oDDBB->consulta($this->sSql, $this->aSql, $this->iFilasCantidad, $this->iFilasPagina)){
 			$this->sUltimaSql = $this->oDDBB->ultimaConsulta(); //consulta lanzada
 		}
 		else{
@@ -187,6 +185,7 @@ class Redatazo_ddbb implements iRedatazo {
 			trigger_error('No se puede ejecutar la consulta: [' . $this->sUltimaSql . ']; error: [' . $sError . ']', E_USER_WARNING);
 			return false; //error
 		}
+		$this->limpiaConsulta(); //despues de lanzar una consulta debe limpiarse para empezar de cero la siguiente
 
 		return true;
 	}
@@ -207,7 +206,7 @@ class Redatazo_ddbb implements iRedatazo {
 			}
 		}
 		if(!empty($this->aConsulta['where'])){
-			$this->sSql .= ' WHERE ' . implode(' AND ', $this->aConsulta['where']) . "\n";
+			$this->sSql .= "\n" . 'WHERE ' . implode(' AND ', $this->aConsulta['where']);
 			$this->aSql = array_merge($this->aSql, $this->aConsulta['where_p']);
 
 			if($this->consulta($this->sSql, $this->aSql))
@@ -277,6 +276,7 @@ class Redatazo_ddbb implements iRedatazo {
 	/**
 	 * Inserta una fila
 	 *
+	 * @todo aceptar inserciones multiples
 	 * @param string $tabla Tabla en la que se hara la insercion
 	 * @param array $datos Datos a insertar, array asociativo ('campo' => valor)
 	 * @return integer Id insertada o null (cuando error)
@@ -291,7 +291,8 @@ class Redatazo_ddbb implements iRedatazo {
 			$this->aSql[] = $valor;
 		}
 
-		$this->sSql .= ' (' . implode(', ', $aPreVal) . ') VALUES (' . implode(', ', $aPostVal) . ')';
+		$this->sSql .= ' (' . implode(', ', $aPreVal) . ')';
+		$this->sSql .= "\n" . 'VALUES (' . implode(', ', $aPostVal) . ')';
 
 		if($this->consulta($this->sSql, $this->aSql))
 			return $this->oDDBB->sUltimaId;
@@ -319,11 +320,11 @@ class Redatazo_ddbb implements iRedatazo {
 	 */
 	public function join($tabla, $condicion = null, $tipo = 'inner'){
 		if(strtolower($tipo) == 'left')
-		 $tipo = ' LEFT JOIN ';
+		 $tipo = 'LEFT JOIN ';
 		elseif(strtolower($tipo) == 'right')
-		$tipo = ' RIGHT JOIN ';
+		$tipo = 'RIGHT JOIN ';
 		else
-			$tipo = ' INNER JOIN ';
+			$tipo = 'INNER JOIN ';
 
 		if(empty($condicion))
 			$this->aConsulta['join'][] = $tipo . $tabla;
@@ -334,13 +335,14 @@ class Redatazo_ddbb implements iRedatazo {
 	/**
 	 * Limita el numero de filas devuelto
 	 *
-	 * @param integer $cantidad Cantidad de filas a devolver
-	 * @param integer $offset Numero de fila desde la cual empezar a devolver
+	 * @param integer $iCantidad Cantidad de filas a devolver
+	 * @param integer $iPagina Numero de pagina desde la cual empezar a devolver
 	 * @return boolean
 	 */
-	public function limit($cantidad, $offset = 0){
-		$this->iNumeroFilas = $cantidad;
-		$this->iOffsetFilas = $offset;
+	public function limit($iCantidad, $iPagina = 0){
+		$this->iFilasCantidad = $iCantidad;
+		$this->iFilasPagina = $iPagina;
+
 		return true;
 	}
 
@@ -353,8 +355,8 @@ class Redatazo_ddbb implements iRedatazo {
 		$this->sSql = '';
 		$this->aSql = array();
 
-		$this->iNumeroFilas = 0;
-		$this->iOffsetFilas = 0;
+		$this->iFilasCantidad = 0;
+		$this->iFilasPagina = 0;
 
 		$this->aConsulta = array('select' => array(), 'from' => '', 'join' => array(), 'where' => array(), 'where_p' => array(), 'order_by' => array());
 	}
@@ -395,22 +397,22 @@ class Redatazo_ddbb implements iRedatazo {
 		$this->aSql = array();
 
 		if(empty($consulta)){
-			if(!empty($this->aConsulta['select'])) $this->sSql .= 'SELECT ' . implode(', ', $this->aConsulta['select']) . "\n";
+			if(!empty($this->aConsulta['select'])) $this->sSql .= 'SELECT ' . implode(', ', $this->aConsulta['select']);
 
-			if(!empty($this->aConsulta['from'])) $this->sSql .= ' FROM ' . $this->aConsulta['from'] . "\n";
+			if(!empty($this->aConsulta['from'])) $this->sSql .= "\n" . 'FROM ' . $this->aConsulta['from'];
 
-			if(!empty($this->aConsulta['join'])) $this->sSql .= implode("\n", $this->aConsulta['join']) . "\n";
+			if(!empty($this->aConsulta['join'])) $this->sSql .= "\n" . implode("\n", $this->aConsulta['join']);
 
 			if(!empty($this->aConsulta['where'])){
-				$this->sSql .= ' WHERE ' . implode(' AND ', $this->aConsulta['where']) . "\n";
+				$this->sSql .= "\n" . 'WHERE ' . implode(' AND ', $this->aConsulta['where']);
 				if(!empty($this->aConsulta['where_p'])){
 					$this->aSql += $this->aConsulta['where_p'];
 				}
 			}
 
-			if(!empty($this->aConsulta['group_by'])) $this->sSql .= ' GROUP BY ' . implode(', ', $this->aConsulta['group_by']) . "\n";
+			if(!empty($this->aConsulta['group_by'])) $this->sSql .= "\n" . 'GROUP BY ' . implode(', ', $this->aConsulta['group_by']);
 
-			if(!empty($this->aConsulta['order_by'])) $this->sSql .= ' ORDER BY ' . implode(', ', $this->aConsulta['order_by']) . "\n";
+			if(!empty($this->aConsulta['order_by'])) $this->sSql .= "\n" . 'ORDER BY ' . implode(', ', $this->aConsulta['order_by']);
 		}
 		else{
 			$this->sSql = $consulta;
@@ -462,13 +464,10 @@ class Redatazo_ddbb implements iRedatazo {
 	 */
 	public function totalFilas($limit = false){
 		$this->iTotalFilas = $this->oDDBB->totalFilas();
-		$iRet = 0;
+		$iRet = $this->iTotalFilas;
 
 		if($limit){
 			$iRet = count($this->oDDBB->aFilaTodos);
-		}
-		elseif(!empty($this->iTotalFilas)){
-			$iRet = $this->iTotalFilas;
 		}
 
 		return $iRet;
@@ -499,7 +498,7 @@ class Redatazo_ddbb implements iRedatazo {
 			}
 		}
 		if(!empty($this->aConsulta['where'])){
-			$this->sSql .= ' WHERE ' . implode(' AND ', $this->aConsulta['where']) . "\n";
+			$this->sSql .= "\n" . 'WHERE ' . implode(' AND ', $this->aConsulta['where']);
 			$this->aSql = array_merge($this->aSql, $this->aConsulta['where_p']);
 		}
 		else{

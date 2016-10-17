@@ -71,10 +71,12 @@ class SQLazo_pdo implements iSQLazo {
 	private $sDbUsuario; //nombre o identificador del usuario que conecta a la base de datos
 	private $iTipoResultados; //tipo de resultados a devolver
 
+	private $iFilasCantidad = null;
+	private $iFilasPagina = null;
+
 	private $iFilasAfectadas; //filas afectadas por la ultima consulta (numero de filas en select, filas tocadas en insert/update/delete)
 	private $aSqlParametros; //ultimos parametros utilizados con la ultima consulta, tal como hayan sido proporcionadas a la clase
-	private $sSqlUltima; //ultima SQL lanzada (tal como se haya lanzado en la base de datos)
-	private $sSqlUltimaCruda; //ultima SQL cruda, tal como haya sido proporcionada a la clase
+	private $sSqlUltima; //ultima SQL lanzada
 	private $iUltimoId; //ultimo id insertado (solo tiene sentido en consultas INSERT sobre tablas con clave autonumerica)
 
 	/**
@@ -89,9 +91,10 @@ class SQLazo_pdo implements iSQLazo {
 		$this->iFilasAfectadas = 0;
 		$this->iUltimoId = null;
 
-		$this->aSqlParametros = array();
 		$this->sSqlUltima = null;
-		$this->sSqlUltimaCruda = null;
+		$this->aSqlParametros = array();
+
+		$this->sUltimaConsulta = null;
 
 		$this->setMotor($aParametros);
 		$this->setConexion($aParametros);
@@ -132,13 +135,38 @@ class SQLazo_pdo implements iSQLazo {
 	 * @param string $sConsulta Consulta a preparar
 	 * @param array $aParametros Parametros para la consulta, en el mismo orden que aparezcan en la SQL; se sustituira cada ? por el parametro en la posicion correspondiente
 	 * @param integer $iCantidad Numero de registros a devolver
-	 * @param integer $iInicial Registro inicial a devolver
+	 * @param integer $iPagina Pagina desde la que devolver
 	 * @return void
 	 */
-	public function consulta($sConsulta, $aParametros = array(), $iCantidad = 0, $iInicial = 0){
-		$this->_preparaConsulta($sConsulta, $aParametros, $iCantidad, $iInicial);
+	public function consulta($sConsulta, $aParametros = array(), $iCantidad = 0, $iPagina = 0){
+		$this->sSqlUltima = $sConsulta;
+		$this->aSqlParametros = $aParametros;
+		$this->iFilasCantidad = $iCantidad;
+		$this->iFilasPagina = $iPagina;
+
+		$this->_preparaConsulta();
 
 		return $this->_resultados();
+	}
+
+	/**
+	 * Devuelve el total de resultados independiente de LIMIT
+	 *
+	 * @todo construir para otros motores ademas de mysql
+	 */
+	private function _cuentaFilas(){
+		$this->iFilasAfectadas = null; //valor devuelto para motores no soportados
+
+		if($this->sDbMotor == 'mysql'){
+			$this->iFilasAfectadas = $this->oStatement->rowCount();
+
+			if(strpos($this->sSqlUltima, 'SQL_CALC_FOUND_ROWS') !== false && strpos($this->sSqlUltima, 'LIMIT') !== false){ //calculo de resultados para consultas con LIMIT
+				$oCuentaStmt = $this->oDB->query('SELECT FOUND_ROWS() AS totalRows', PDO::FETCH_ASSOC);
+				$aCuentaResultados = $oCuentaStmt->fetchAll();
+				$this->iFilasAfectadas = (int) $aCuentaResultados[0]['totalRows'];
+				$oCuentaStmt->closeCursor();
+			}
+		}
 	}
 
 	/**
@@ -178,20 +206,17 @@ class SQLazo_pdo implements iSQLazo {
 	 * Establece la clausula LIMIT (o lo que corresponda segun el motor de base de datos)
 	 *
 	 * @todo comprobar que en la consulta no exista clausula LIMIT; y que sea consulta tipo SELECT
-	 * @param string $sConsulta Consulta a limitar
-	 * @param integer $iCantidad Numero de registros a devolver
-	 * @param integer $iInicial Registro inicial a devolver
 	 */
-	private function _limit($sConsulta, $iCantidad = 0, $iInicial = 0){
-		$iCantidad = (int) $iCantidad;
-		$iInicial = (int) $iInicial;
+	private function _limit(){
+		$this->iFilasCantidad = (int) $this->iFilasCantidad;
+		$this->iFilasPagina = (int) $this->iFilasPagina;
 
-		if($iCantidad){
+		if($this->iFilasCantidad){
 			//si "$inicial=0" devuelve "$cantidad" de registros desde el primero
 			//si se quieren devolver todos los que haya desde un "$inicial=x", dar como "$cantidad" un valor mayor al total de registros que pueda devolver la consulta (un numero al azar suficientemente grande, por ejemplo 123456789123456789123456789)
 			switch($this->sDbMotor){
 				case 'mysql':
-					$sConsulta .= "\nLIMIT " . $iInicial . ',' . $iCantidad;
+					$this->sSqlUltima .= "\nLIMIT " . $this->iFilasPagina . ',' . $this->iFilasCantidad;
 
 					break;
 				case 'mssql':
@@ -202,30 +227,28 @@ class SQLazo_pdo implements iSQLazo {
 					//LIMIT desconocido, no existente o no implementado
 			}
 		}
-
-		return $sConsulta;
 	}
 
 	/**
 	 * @throws PDOException
-	 * @param string $sConsulta Consulta a preparar
-	 * @param array $aParametros Parametros para la consulta, en el mismo orden que aparezcan en la SQL; se sustituira cada ? por el parametro en la posicion correspondiente
-	 * @param integer $iCantidad Numero de registros a devolver
-	 * @param integer $iInicial Registro inicial a devolver
 	 * @return void
 	 */
-	private function _preparaConsulta($sConsulta, $aParametros = array(), $iCantidad = 0, $iInicial = 0){
+	private function _preparaConsulta(){
 		//reiniciar valores de resultados de consulta
 		$this->iFilasAfectadas = 0;
 		$this->iUltimoId = null;
 
-		$sConsulta = $this->_limit($sConsulta, $iCantidad, $iInicial);
+		$this->_limit();
 
-		$this->aSqlParametros = $aParametros;
-		$this->sSqlUltima = '';
-		$this->sSqlUltimaCruda = $sConsulta;
+		//suma a la consulta "SQL_CALC_FOUND_ROWS", permite tener el total de filas en consultas limitadas con "SELECT FOUND_ROWS()", sin volver a lanzar la consulta
+		if($this->sDbMotor == 'mysql' && $this->iFilasCantidad){
+			$iSelectPos = strpos(strtoupper($this->sSqlUltima), 'SELECT ');
+			if($iSelectPos !== false && strpos($this->sSqlUltima, 'SQL_CALC_FOUND_ROWS') === false){
+				$this->sSqlUltima = substr($this->sSqlUltima, 0, $iSelectPos + 7).'SQL_CALC_FOUND_ROWS '.substr($this->sSqlUltima, $iSelectPos + 7);
+			}
+		}
 
-		$this->oStatement = $this->oDB->prepare($sConsulta);
+		$this->oStatement = $this->oDB->prepare($this->sSqlUltima);
 
 		//unnamed placeholders: $this->oStatement = $this->oDB->prepare("INSERT INTO folks (name, addr, city) values (?, ?, ?);
 		//						$this->oStatement->bindParam(1, 'patata', PDO::PARAM_STR);
@@ -239,23 +262,29 @@ class SQLazo_pdo implements iSQLazo {
 		//						$this->oStatement = $this->oDB->prepare("INSERT INTO folks (name, addr, city) value (:name, :addr, :city)");
 		//						$this->oStatement->execute($data);
 
-		$this->oStatement->execute($aParametros);
+		$this->oStatement->execute($this->aSqlParametros);
 
 		//recupera informacion de la ultima consulta enviada en la instruccion anterior (execute)
-		ob_start();
+		/*ob_start();
 		$this->oStatement->debugDumpParams();
 		$this->sSqlUltima = ob_get_contents();
-		ob_end_clean();
+		ob_end_clean();*/
 
 		$this->iUltimoId = $this->oDB->lastInsertId();
-		$this->iFilasAfectadas = $this->oStatement->rowCount();
+		$this->_cuentaFilas();
 	}
 
+	/**
+	 * Recuperacion de resultados
+	 */
 	private function _resultados(){
 		$this->oStatement->setFetchMode($this->iTipoResultados);
 
 		//showing the results
-		return $this->oStatement->fetchAll();
+		$aResultados = $this->oStatement->fetchAll();
+		$this->oStatement->closeCursor();
+
+		return $aResultados;
 	}
 
 	/**
@@ -381,18 +410,25 @@ class SQLazo_pdo implements iSQLazo {
 	/**
 	 * Muestra la ultima consulta lanzada y sus parametros
 	 *
-	 * @param boolean $bCruda Si true devuelve la consulta y sus parametros tal como hayan sido proporcionados a la clase; si false devuelve la consulta lanzada por la base de datos (si no se ha producido error que lo impida)
-	 * return array
+	 * return string
 	 */
-	public function ultimaConsulta($bCruda = true){
-		$bCruda = (boolean) $bCruda;
+	public function ultimaConsulta(){
+		$this->sUltimaConsulta = str_replace('SQL_CALC_FOUND_ROWS ', '', $this->sSqlUltima); //no es necesario despues de calcular el total de filas y no es algo puesto por el usuario
 
-		//stmt -> si true indica que la consulta ha sido lanzada, si false la consulta no ha sido lanzada en la base de datos
-		if($bCruda || empty($this->sSqlUltima)){
-			return array('sql' => $this->sSqlUltimaCruda, 'parametros' => $this->aSqlParametros, 'stmt' => !empty($this->sSqlUltima));
+		$bNumerados = $this->aSqlParametros == array_values($this->aSqlParametros);
+		foreach($this->aSqlParametros as $sClave => $sValor){
+			if(is_string($sValor)){
+				$sValor = "'$sValor'";
+			}
+
+				$this->sUltimaConsulta = preg_replace('/\?/', $sValor, $this->sUltimaConsulta, 1);
+			if(!$bNumerados){
+				$this->sUltimaConsulta = str_replace(":$sClave", $sValor, $this->sUltimaConsulta);
+			}
 		}
 
-/* $this->sSqlUltima recoge el texto (para parametros con nombre):
+		return $this->sUltimaConsulta;
+/* $this->oStatement->queryString recoge el texto (para parametros con nombre):
 SQL: [96] SELECT name, colour, calories
     FROM fruit
     WHERE calories < :calories AND colour = :colour
@@ -424,9 +460,6 @@ name=[0] ""
 is_param=1
 param_type=2
 */
-		//TODO extraer de la informacion de $this->sSqlUltima la consulta presuntamente lanzada
-		//existe $this->oStatement->queryString, pero devuelve la misma cadena que $this->sSqlUltima
-		return array('sql' => $this->sSqlUltima, 'parametros' => $this->aSqlParametros, 'stmt' => true);
 	}
 
 	/**
