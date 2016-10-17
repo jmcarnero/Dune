@@ -360,10 +360,10 @@ class Listazo { //FIXME revisar id's de elementos HTML
 	 *
 	 * @since 2010-11-19
 	 * @param boolean $iniciales Recupera solo los parametros no construidos por la propia clase (true) o todos (false)
-	 * @param string $amp Separador de campos de la URL //TODO si la URL se cambia aqui deberia ser cambiable (y estar sincronizado con $this->paginacion() )
+	 * @param string $sAmp Separador de campos de la URL //TODO si la URL se cambia aqui deberia ser cambiable (y estar sincronizado con $this->paginacion() )
 	 * @return boolean
 	 */
-	public function getParametrosUrl($iniciales = true, $amp = '&'){
+	public function getParametrosUrl($iniciales = true, $sAmp = '&'){
 		$aRet = $this->aParamsUrl;
 
 		if($iniciales){
@@ -376,7 +376,7 @@ class Listazo { //FIXME revisar id's de elementos HTML
 			}
 		}
 
-		return implode($amp, $aRet);
+		return implode($sAmp, $aRet);
 	}
 
 	/**
@@ -807,25 +807,6 @@ class Listazo { //FIXME revisar id's de elementos HTML
 	}
 
 	/**
-	 * Asigna los parametros iniciales para la URL.
-	 * Uno solo o array; cada elemento debe ser: 'parametro1=valor_de_parametro1'
-	 *
-	 * @param array $campos Parametros por defecto de la URL
-	 * @return boolean
-	 */
-	public function setParametrosUrl($campos = array()){
-		if(empty($campos))
-			return false;
-
-		if(is_array($campos)){
-			foreach($campos as $valor) $this->aParamsUrl[] = $valor;
-		}
-		else $this->aParamsUrl[] = $campos;
-
-		return true;
-	}
-
-	/**
 	 * Asigna la paginacion: numero total de resultados y cantidad por pagina
 	 *
 	 * @param integer $iTotal Total de resultados
@@ -840,19 +821,40 @@ class Listazo { //FIXME revisar id's de elementos HTML
 	}
 
 	/**
+	 * Asigna los parametros iniciales para la URL.
+	 * Uno solo o array; cada elemento debe ser: 'parametro1=valor_de_parametro1'
+	 *
+	 * @param array $campos Parametros por defecto de la URL
+	 * @return boolean
+	 */
+	public function setParametrosUrl($campos = array()){
+		if(empty($campos)){
+			return false;
+		}
+
+		if(is_array($campos)){
+			foreach($campos as $valor) $this->aParamsUrl[] = $valor;
+		}else{
+			$this->aParamsUrl[] = $campos;
+		}
+
+		return true;
+	}
+
+	/**
 	 * Asigna la URL para paginación y búsquedas.
 	 *
 	 * @todo verificar url que pase el usuario
 	 * @since 2012-07-14
-	 * @param string $url Url que se usara para formularios y enlaces
+	 * @param string $sUrl Url que se usara para formularios y enlaces
 	 * @return string
 	 */
-	public function setUrl($url = false){
-		if($url == false)
-			$this->sUrl = $_SERVER['REQUEST_URI'];
+	public function setUrl($sUrl = false){
+		$this->sUrl = ($sUrl == false) ? $_SERVER['REQUEST_URI'] : $sUrl;
 
-		if(strpos($this->sUrl, '?') !== false)
+		if(strpos($this->sUrl, '?') !== false){
 			$this->sUrl = substr($this->sUrl, 0, strpos($this->sUrl, '?'));
+		}
 
 		$this->sUrl .= '?';
 
@@ -867,20 +869,29 @@ class Listazo { //FIXME revisar id's de elementos HTML
 	private function setVariablesRequest(){
 		$this->aVariablesRequest = array();
 
-		if($_SERVER['REQUEST_METHOD'] == 'GET') $aTemp = &$_GET;
-		elseif($_SERVER['REQUEST_METHOD'] == 'POST') $aTemp = &$_POST;
-		else $aTemp = &$_REQUEST;
+		$aTemp = &$_REQUEST;
+		if($_SERVER['REQUEST_METHOD'] == 'GET'){
+			$aTemp = &$_GET;
+		}
+		elseif($_SERVER['REQUEST_METHOD'] == 'POST'){
+			$aTemp = &$_POST;
+		}
 
-		if(isset($aTemp['ListazoBuscKeyword'])) //palabra a buscar
+		if(isset($aTemp['ListazoBuscKeyword'])){ //palabra a buscar
 			$this->aVariablesRequest['ListazoBuscKeyword'] = $aTemp['ListazoBuscKeyword'];
-		if(isset($aTemp['ListazoBuscTipo'])) //busqueda por tipos
+		}
+		if(isset($aTemp['ListazoBuscTipo'])){ //busqueda por tipos
 			$this->aVariablesRequest['ListazoBuscTipo'] = $aTemp['ListazoBuscTipo'];
-		if(isset($aTemp['ListazoBuscCant'])) //cantidad de filas a mostrar
+		}
+		if(isset($aTemp['ListazoBuscCant'])){ //cantidad de filas a mostrar
 			$this->aVariablesRequest['ListazoBuscCant'] = $aTemp['ListazoBuscCant'];
-		if(isset($aTemp['ListazoOrderBy'])) //criterio de ordenacion
+		}
+		if(isset($aTemp['ListazoOrderBy'])){ //criterio de ordenacion
 			$this->aVariablesRequest['ListazoOrderBy'] = $aTemp['ListazoOrderBy'];
-		if(isset($aTemp['ListazoRowPos'])) //posicion de paginacion
+		}
+		if(isset($aTemp['ListazoRowPos'])){ //posicion de paginacion
 			$this->aVariablesRequest['ListazoRowPos'] = $aTemp['ListazoRowPos'];
+		}
 
 		return true;
 	}
@@ -893,8 +904,9 @@ class Listazo { //FIXME revisar id's de elementos HTML
 	 * @return string
 	 */
 	protected function sublistado($aSublistado, $iPos = 0){
-		if(empty($aSublistado))
+		if(empty($aSublistado)){
 			return '';
+		}
 
 		$sTemp = '<ul class="' . $this->sCssBase . ' sublistazo">';
 
