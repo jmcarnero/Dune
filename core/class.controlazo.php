@@ -103,7 +103,7 @@ class Controlazo {
 	 * Carga la libreria que se pida
 	 * si $sLib = 'nombre_clase'
 	 * el fichero debe ser "class.nombre_clase.inc"
-	 * y la clase debe llamarse 'nombre_clase'
+	 * y la clase debe llamarse 'Nombre_clase'
 	 *
 	 * @todo no permitir la carga de redatazo (ya lo hace el modelo)
 	 * @todo restringir nombres en uso de Dune para valores de $sLib
@@ -116,19 +116,22 @@ class Controlazo {
 		if(empty($sLib)){
 			return false; //no se ha pedido nada para cargar
 		}
-		if(empty($sNombre))
+		if(empty($sNombre)){
 			$sNombre = $sLib;
+		}
 
 		if(is_readable(D_BASE_DIR . D_DIR_LIBS . 'class.' . $sLib . '.inc')){
 			include_once(D_BASE_DIR . D_DIR_LIBS . 'class.' . $sLib . '.inc');
 		}
 
+		$sClase = ucfirst($sLib); //$sLib == 'nombre_clase', el fichero es "class.nombre_clase.inc", la clase debe ser "Nombre_clase"
+
 		//carga la clase si existe
-		if(class_exists($sLib) && !isset($this->$sLib)){
+		if(class_exists($sClase) && !isset($this->$sClase)){
 			if(empty($aParametros))
-				$this->$sNombre = new $sLib();
+				$this->$sNombre = new $sClase();
 			else
-				$this->$sNombre = new $sLib($aParametros); //TODO de momento solo acepta un array de parametros o nada
+				$this->$sNombre = new $sClase($aParametros); //TODO de momento solo acepta un array de parametros o nada
 
 			return true;
 		}
