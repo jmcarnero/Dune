@@ -61,12 +61,18 @@ class Ayudazo {
 	/**
 	 * Recupera el contenido de una URL
 	 *
-	 * @param string $sUrl URL de la que recuperar información
+	 * @param string $sUrl URL de la que recuperar información; debe ser FQDN
 	 * @param array $aParams Parametros para la URL, se traducira "key": "value" a "[?|&]key=value"
-	 * @return boolean
+	 * @return array
 	 */
-	function getUrl($sUrl, $aParams, $sMetodo = 'GET'){
+	function getUrl($sUrl, $aParams = array(), $sMetodo = 'GET'){
 		$sMetodo = strtoupper($sMetodo);
+
+		$sRet = array(
+			'response' => null, //respuesta de la pagina: imagen, texto, json o lo que sea que genere la url pedida
+			'info' => array(), //informacion de la peticion (cabeceras de la respuesta); se rellenan despues de enviar la peticion
+			'error' => null
+		);
 
 		@ini_set('allow_url_fopen', true);
 		$bUrlFopen = ini_get('allow_url_fopen'); //estado de la directiva allow_url_fopen
@@ -94,19 +100,23 @@ class Ayudazo {
 				CURLOPT_HEADER => false,
 				CURLOPT_RETURNTRANSFER => true, //si no hay errores curl_exec devolvera lo que obtenga de la url
 
-				CURLOPT_SSL_VERIFYHOST => 0, //TODO no se verifica ssl, cambiar
-				CURLOPT_SSL_VERIFYPEER => 0,
+				CURLOPT_SSL_VERIFYHOST => false, //TODO no se verifica ssl, cambiar
+				CURLOPT_SSL_VERIFYPEER => false,
 
 				CURLOPT_HTTPHEADER, array(
 					'Host: ' . $sUrl,
 					//'Content-type: application/x-www-form-urlencoded',
 					'Accept: application/json'
-				)
+				),
+				CURLOPT_REFERER => $sUrl,
+				CURLOPT_FOLLOWLOCATION => true
 			);
 
 			if($sMetodo == 'POST'){
-				curl_setopt($oCurl, CURLOPT_POST, true);
-				curl_setopt($oCurl, CURLOPT_POSTFIELDS, $sParams);
+				$oCurlOpts[CURLOPT_POST] = true;
+				$oCurlOpts[CURLOPT_POSTFIELDS] = $sParams;
+				/*curl_setopt($oCurl, CURLOPT_POST, true);
+				curl_setopt($oCurl, CURLOPT_POSTFIELDS, $sParams);*/
 				$sUrlQueryMark = '';
 				$sParams = '';
 			}
@@ -114,23 +124,42 @@ class Ayudazo {
 			$oCurlOpts[CURLOPT_URL] = $sUrl . $sUrlQueryMark . $sParams;
 
 			curl_setopt_array($oCurl, $oCurlOpts);
-			$sRet = curl_exec($oCurl);
+			$sRet['response'] = curl_exec($oCurl);
 
-			/*if($sRet === false){
-				$sError = 'Curl error: ' . curl_error($oCurl);
-			}*/
+			if(!curl_errno($oCurl)){
+				$sRet['info'] = curl_getinfo($oCurl);
+			}
+
+			if($sRet['response'] === false){
+				$sRet['error'] = 'Curl error: ' . curl_error($oCurl);
+			}
 
 			curl_close($oCurl);
 		}
 		elseif($bUrlFopen){
 			$oHeaders = stream_context_create(array(
 				'http' => array(
-					'header' => "Accept: application/json\r\n",
 					'method'  => $sMetodo,
+					'header' => "Accept: application/json\r\n",
+					//'header' => 'Content-Type: image/png',
+					'user_agent' => 'Dune Framework',
 					'content' => $sParams,
-				)
+					//'ignore_errors' => true
+				)/*,
+				'ssl' => array(
+					'peer_name'	=> 'itaca',
+					'verify_peer' => true,
+					'verify_peer_name'   => false,
+					'allow_self_signed'  => true
+				)*/
 			));
-			$sRet = file_get_contents($sUrl, false, $oHeaders);
+
+			$sRet['response'] = file_get_contents($sUrl, false, $oHeaders);
+			$sRet['info'] = $http_response_header;
+
+			if($sRet['response'] === false){
+				$sRet['error'] = 'file_get_contents error';
+			}
 		}
 
 		return $sRet; //si $sRet == false no se puede recuperar la imagen de la URL
