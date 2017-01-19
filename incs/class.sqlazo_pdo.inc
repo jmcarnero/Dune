@@ -80,6 +80,7 @@ class SQLazo_pdo implements iSQLazo {
 	private $iUltimoId; //ultimo id insertado (solo tiene sentido en consultas INSERT sobre tablas con clave autonumerica)
 
 	/**
+	 * Constructor
 	 *
 	 * @param array $aParametros Parametros de conexion y configuracion de la base de datos
 	 */
@@ -103,12 +104,17 @@ class SQLazo_pdo implements iSQLazo {
 		$this->_conexion();
 	}
 
+	/**
+	 * Destructor
+	 */
 	public function __destruct(){
 		# close the connection
 		$this->oDB = null;
 	}
 
 	/**
+	 * Establece la conexion a la base de datos
+	 *
 	 * @throws PDOException
 	 * @return void
 	 */
@@ -243,7 +249,7 @@ class SQLazo_pdo implements iSQLazo {
 		//suma a la consulta "SQL_CALC_FOUND_ROWS", permite tener el total de filas en consultas limitadas con "SELECT FOUND_ROWS()", sin volver a lanzar la consulta
 		if($this->sDbMotor == 'mysql' && $this->iFilasCantidad){
 			$iSelectPos = strpos(strtoupper($this->sSqlUltima), 'SELECT ');
-			if($iSelectPos !== false && strpos($this->sSqlUltima, 'SQL_CALC_FOUND_ROWS') === false){
+			if($iSelectPos !== false && strpos($this->sSqlUltima, 'SQL_CALC_FOUND_ROWS') === false){ //TODO mejorar deteccion de tipo de consulta
 				$this->sSqlUltima = substr($this->sSqlUltima, 0, $iSelectPos + 7).'SQL_CALC_FOUND_ROWS '.substr($this->sSqlUltima, $iSelectPos + 7);
 			}
 		}
@@ -278,11 +284,16 @@ class SQLazo_pdo implements iSQLazo {
 	 * Recuperacion de resultados
 	 */
 	private function _resultados(){
-		$this->oStatement->setFetchMode($this->iTipoResultados);
+		$aResultados = array();
 
-		//showing the results
-		$aResultados = $this->oStatement->fetchAll();
-		$this->oStatement->closeCursor();
+		$iSelectPos = strpos(strtoupper($this->sSqlUltima), 'SELECT ');
+		if($iSelectPos !== false){ //no hay resultados que devolver si no se pide una cantidad de filas (consultas SELECT) //FIXME puede dar problemas con subconsultas
+			$this->oStatement->setFetchMode($this->iTipoResultados);
+
+			//showing the results
+			$aResultados = $this->oStatement->fetchAll();
+			$this->oStatement->closeCursor();
+		}
 
 		return $aResultados;
 	}
@@ -330,7 +341,7 @@ class SQLazo_pdo implements iSQLazo {
 	}
 
 	/**
-	 *
+	 * Asigna el motor de base de datos que se usuara en las consultas
 	 *
 	 * @throws PDOException
 	 * @param array/string $sMotor Motor de base de datos; si se pasa como array se intenta usar el contenido de la clave "motor"
@@ -421,7 +432,7 @@ class SQLazo_pdo implements iSQLazo {
 				$sValor = "'$sValor'";
 			}
 
-				$this->sUltimaConsulta = preg_replace('/\?/', $sValor, $this->sUltimaConsulta, 1);
+			$this->sUltimaConsulta = preg_replace('/\?/', $sValor, $this->sUltimaConsulta, 1);
 			if(!$bNumerados){
 				$this->sUltimaConsulta = str_replace(":$sClave", $sValor, $this->sUltimaConsulta);
 			}

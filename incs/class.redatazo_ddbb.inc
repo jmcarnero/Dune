@@ -294,8 +294,9 @@ class Redatazo_ddbb implements iRedatazo {
 		$this->sSql .= ' (' . implode(', ', $aPreVal) . ')';
 		$this->sSql .= "\n" . 'VALUES (' . implode(', ', $aPostVal) . ')';
 
-		if($this->consulta($this->sSql, $this->aSql))
-			return $this->oDDBB->sUltimaId;
+		if($this->consulta($this->sSql, $this->aSql)){
+			return $this->oDDBB->ultimoId();
+		}
 
 		return null;
 	}

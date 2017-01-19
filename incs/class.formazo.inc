@@ -65,12 +65,13 @@ class Formazo {
 	 *
 	 * Descripción:
 	 * clave -> nombre (mismos que la tabla donde lanzar la SQL)
-	 *  'tipo' -> tipo de cada elemento; tipos: ('checkbox', 'group', 'heading', 'hidden', 'multiple', 'password', 'radio', 'select', 'text', 'textarea'), siendo cada elemento del array el nombre del tag o de tipo de INPUT, excepto "group" que crea agrupaciones de elementos (todos aquellos que tengan 'group' => id_grupo) y "heading" que solo crea cabeceras (titulos de secciones o similar); se ignoran los elementos sin tipo
+	 *  'tipo' -> tipo de cada elemento; tipos: ('checkbox', 'group', 'hidden', 'multiple', 'password', 'radio', 'select', 'text', 'textarea'), siendo cada elemento del array el nombre del tag o de tipo de INPUT, excepto "group" que crea agrupaciones de elementos (todos aquellos que tengan 'group' => id_grupo); se ignoran los elementos sin tipo
 	 *  'validacion' -> validacion, tipo de datos que contendra; validado por javascript; la cadena se pondra directamente en el atributo "class", asi permite varios tipos de validacion para el mismo campo y es completamente externa a la clase
 	 *  'obligatorio' -> not null; 0 (opcional), 1 (obligatorio), string (llamada a una funcion que controle su obligatoriedad, tanto en creacion de formulario como en procesado, la cadena pasada es el nombre de la funcion -sin parentesis-); pasar "0" si se necesitan los siguientes y no es obligatorio
 	 *  'longitud' -> longitud maxima (input text, input password, textarea), si =0 -> solo lectura (disabled="disabled"); longitud maxima en caso de ficheros (se pasa en bytes); opcional
 	 *  'titulo' -> titulo (humano) del campo
 	 *  'valor' -> valor del campo; en caso de "SELECT" el valor es el que toma por defecto
+	 *  'noset' -> por defecto se rellena el valor del campo con el ultimo recogido por post/get, si esta opcion esta a false se ignora el valor recogido por get/post y se deja el que se asigne en la creacion de campos
 	 *  'valores' -> array con los valores para los "OPTION" o para radioButtons, siendo la clave el valor del "OPTION" y [0] su texto; en select y multiple si cualquier valor es un array se convierte en agrupado (la clave sera la etiqueta del agrupado y el array los options contenidos, en el mismo formato que cualquier option)
 	 *  'group' -> id del grupo al que pertenece; si vacio no pertenece a ningun grupo
 	 *  'separador' -> solo para campos "multiple", guarda el separador de la lista de valores
@@ -240,7 +241,9 @@ class Formazo {
 
 		//crear formulario
 		foreach($this->aCampos as $clave => $valor){
-			if(empty($valor['tipo'])) continue; //ignora los elementos que no tengan "tipo"; permite leer selectivamente arrays comunes para este y el generador de listados
+			if(empty($valor['tipo'])){ //ignora los elementos que no tengan "tipo"; permite leer selectivamente arrays comunes para este y el generador de listados
+				continue;
+			}
 
 			$oElemento = null;
 
@@ -348,8 +351,9 @@ class Formazo {
 	 * @return string
 	 */
 	public function pinta($aCampos = array(), $bEcho = true){
-		if(count($aCampos) && !count($this->aFormulario))
+		if(count($aCampos) && !count($this->aFormulario)){
 			$this->crea($aCampos);
+		}
 
 		$sEcho = $this->aFormulario['inicio']['campo'] . $this->aFormulario['inicio']['texto'];
 		$iAuxCont = 0;
@@ -426,6 +430,8 @@ class Formazo {
 	/**
 	 * Recoge y prepara los campos que formaran el formulario
 	 *
+	 * Asigna el valor recogido por GET/POST, pisando el asignado en la creacion de campos, si la clave "noset" esta a true se ignora el valor recogido por GET/POST dejando el valor asignado por el usuario
+	 *
 	 * @since 2011-07-20
 	 * @param array $campos Array con los campos que formaran el formulario
 	 * @return boolean
@@ -457,10 +463,9 @@ class Formazo {
 		elseif($this->sMethod == 'post'){
 			$this->aRequest = &$_POST;
 		}
-		//TODO opcion para recogerlos o no
 
 		foreach($this->aCampos as $clave => $valor){
-			if(isset($this->aRequest[$clave]) && $this->aRequest[$clave] != ''){
+			if(empty($this->aCampos[$clave]['noset']) && isset($this->aRequest[$clave]) && $this->aRequest[$clave] != ''){
 				$this->aCampos[$clave]['valor'] = $this->aRequest[$clave];
 			}
 		}

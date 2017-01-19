@@ -97,7 +97,7 @@ class SQLazo {
 			//$this->oSQLazo->setConexion($aParametros); //solo es necesario para cambiar parametros o si no se han asignado con el constructor
 		}
 		catch(PDOException $pdoEx){
-			var_dump('Error: ', $pdoEx->getMessage());
+			var_dump('[' . __METHOD__ . '] Error: ', $pdoEx->getMessage());
 		}
 	}
 
@@ -117,7 +117,7 @@ class SQLazo {
 			$this->aFilas = $this->oSQLazo->consulta($sSql, $aParams, $iCantidad, $iInicial);
 		}
 		catch(PDOException $pdoEx){
-			var_dump('Error: ', $pdoEx->getMessage());
+			var_dump('[' . __METHOD__ . '] Error: ', $pdoEx->getMessage());
 		}
 
 		return true;
