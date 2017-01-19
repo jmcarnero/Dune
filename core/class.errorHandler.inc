@@ -196,60 +196,62 @@ class ErrorHandler {
 		/*$output = '<div class="backtrace">'."\n";
 		$output .= "<p>Backtrace:</p><ul>\n";*/
 		$output = "\tBacktrace:\n";
-		$backtrace = debug_backtrace();
+		$aBacktraces = debug_backtrace();
 
-		if(empty($backtrace)) return(false);
+		if(empty($aBacktraces)) return(false);
 
-		foreach($backtrace as $bt){
+		foreach($aBacktraces as $aBackT){
 			//quitar los pasos con referencias a esta clase/metodos/funciones
-			$bt['class'] = empty($bt['class']) ? '' : $bt['class'];
-			$bt['function'] = empty($bt['function']) ? '' : $bt['function'];
-			if($bt['class'] == __CLASS__ || $bt['function'] == 'error_handler' || $bt['function'] == 'errorHandler_sel'){
+			$aBackT['class'] = empty($aBackT['class']) ? '' : $aBackT['class'];
+			$aBackT['function'] = empty($aBackT['function']) ? '' : $aBackT['function'];
+			if($aBackT['class'] == __CLASS__ || $aBackT['function'] == 'error_handler' || $aBackT['function'] == 'errorHandler_sel'){
 				continue;
 			}
 
-			$args = '';
-			if(isset($bt['args'])){
-				foreach($bt['args'] as $a){
-					if(!empty($args)) $args .= ', ';
+			$sArgs = '';
+			if(isset($aBackT['args'])){
+				foreach($aBackT['args'] as $mArg){
+					if(!empty($sArgs)){
+						$sArgs .= ', ';
+					}
 
-					switch (gettype($a)){
+					switch(gettype($mArg)){
 						case 'integer':
 						case 'double':
-							$args .= $a;
+							$sArgs .= $mArg;
 							break;
 						case 'string':
-							//$a = htmlspecialchars(substr($a, 0, 64)).((strlen($a) > 64) ? '...' : '');
-							$args .= '"' . htmlentities($a) . '"';
+							//$mArg = htmlspecialchars(substr($mArg, 0, 64)).((strlen($mArg) > 64) ? '...' : '');
+							$sArgs .= '"' . htmlentities($mArg) . '"';
 							break;
 						case 'array':
-							//$args .= 'Array('.count($a).')';
-							$args .= (function_exists('json_encode') ? json_encode($a) : serialize($a));
+							//$sArgs .= 'Array('.count($mArg).')';
+							$sArgs .= (function_exists('json_encode') ? json_encode($mArg) : serialize($mArg));
 							break;
 						case 'object':
-							$args .= 'Object(' . get_class($a) . ')';
+							$sArgs .= 'Object(' . get_class($mArg) . ')';
 							break;
 						case 'resource':
-							$args .= 'Resource(' . strstr($a, '#') . ')';
+							$sArgs .= 'Resource(' . strstr(get_resource_type($mArg), '#') . ')';
 							break;
 						case 'boolean':
-							$args .= $a ? 'True' : 'False';
+							$sArgs .= $mArg ? 'True' : 'False';
 							break;
 						case 'NULL':
-							$args .= 'Null';
+							$sArgs .= 'Null';
 							break;
 						default:
-							$args .= 'Unknown';
+							$sArgs .= 'Unknown';
 					}
 				}
 			}
 
-			$bt['class'] = empty($bt['class']) ? '' : $bt['class'];
-			if($this->sErrorClass == '') $this->sErrorClass = $bt['class'];
+			$aBackT['class'] = empty($aBackT['class']) ? '' : $aBackT['class'];
+			if($this->sErrorClass == '') $this->sErrorClass = $aBackT['class'];
 
-			/*$output .= '<li>file: ' . (empty($bt['line']) ? '' : $bt['line']) . ' - ' . (empty($bt['file']) ? '' : $bt['file']) . "<br />\n";
-			$output .= 'call: ' . $bt['class'] . (empty($bt['type']) ? '' : $bt['type']) . $bt['function'] . '(' . $args . ")</li>\n";*/
-			$output .= "\t\tcall: " . $bt['class'] . (empty($bt['type']) ? '' : $bt['type']) . $bt['function'] . '(' . $args . ') -> line: ' . (empty($bt['line']) ? '' : $bt['line']) . ' -- file: ' . (empty($bt['file']) ? '' : $bt['file']) . "\n";
+			/*$output .= '<li>file: ' . (empty($aBackT['line']) ? '' : $aBackT['line']) . ' - ' . (empty($aBackT['file']) ? '' : $aBackT['file']) . "<br />\n";
+			$output .= 'call: ' . $aBackT['class'] . (empty($aBackT['type']) ? '' : $aBackT['type']) . $aBackT['function'] . '(' . $sArgs . ")</li>\n";*/
+			$output .= "\t\tcall: " . $aBackT['class'] . (empty($aBackT['type']) ? '' : $aBackT['type']) . $aBackT['function'] . '(' . $sArgs . ') -> line: ' . (empty($aBackT['line']) ? '' : $aBackT['line']) . ' -- file: ' . (empty($aBackT['file']) ? '' : $aBackT['file']) . "\n";
 		}
 		//$output .= "</ul></div>\n";
 		return $output;

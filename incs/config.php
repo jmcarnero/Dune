@@ -25,3 +25,4 @@ define('D_MAIL_FROM', 'info@sargazos.net');
 //otras
 define('D_DEBUG', true);
 //defined('D_IDIOMA_DEFECTO') or define('D_IDIOMA_DEFECTO', 'es'); //lenguaje por defecto
+date_default_timezone_set('Europe/Madrid');
