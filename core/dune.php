@@ -132,8 +132,9 @@ class Dune {
 	}
 
 	/**
-	 * Crea las constantes BASE_DIR y BASE_URL,
-	 * por esto la clase init debe estar en el directorio raiz
+	 * Crea las constantes BASE_DIR, BASE_URL y D_BASE_URL_FQDN
+	 *
+	 * D_BASE_URL_FQDN es igual que D_BASE_URL pero con protocolo, servidor y demas
 	 *
 	 * @param string $sRet Devuelve la URL (si se pasa 'url') o directorio base (si se pasa 'dir'); si no devuelve null
 	 * @return string
@@ -141,12 +142,19 @@ class Dune {
 	public static function baseDir($sRet = null){
 		if(!defined('D_BASE_DIR')) define('D_BASE_DIR', str_replace('\\', '/', realpath(dirname(__FILE__).'/..')).'/');
 		if(!defined('D_BASE_URL')){
+			$sUrl = $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['SERVER_NAME'] . $_SERVER['SCRIPT_NAME'] . '/imgs/captcha.php';
+
 			$aBaseDir = explode('/', trim(D_BASE_DIR, '/'));
 			$cadBase = array_pop($aBaseDir);
 			$phpSelf = trim(dirname($_SERVER['PHP_SELF']), '/');
 			$cadBase = substr($phpSelf, strpos($phpSelf, $cadBase) + strlen($cadBase));
 			$cadBase = ($cadBase === false) ? array() : explode('/', trim($cadBase, '/'));
 			define('D_BASE_URL', str_repeat('../', count($cadBase)));
+
+			if(!defined('D_BASE_URL_FQDN')){
+				$sUrl = $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['SERVER_NAME'] . (empty($phpSelf) ? '' : '/' . $phpSelf) . '/';
+				define('D_BASE_URL_FQDN', $sUrl . D_BASE_URL);
+			}
 		}
 
 		switch($sRet){
