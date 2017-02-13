@@ -71,10 +71,21 @@ class Restazo extends Controlazo {
 	private $sMethod = null; //nombre del metodo REST solicitado (sin sufijo de metodo HTTP)
 	private $sHTTPMethod = null; //nombre del metodo HTTP
 
+	private $sFormato; //formato en que se devolveran los datos
+
 	/**
 	 * Constructor
 	 */
 	public function __construct(){
+		$this->setFormato();
+
+		$this->aDatos = array( //evita recoger claves innecesarias de este array, creado en Controlazo
+			'datos' => array(), //datos recuperados
+			'filas' => 0, //numero de filas recuperadas
+			'total' => 0, //total de filas que es posible recuperar para la peticion actual, mas que "filas" cuando hay paginacion
+			'http_code' => 0, //codigo de respuesta HTTP
+			'error' => '' //mensaje o codigo de error
+		);
 		$this->request();
 	}
 
@@ -101,6 +112,47 @@ class Restazo extends Controlazo {
 		}
 
 		return $this->bAutentificado;
+	}
+
+	/**
+	 * Convierte el array de datos a XML
+	 *
+	 * @param array $aDatos Array de datos a convertir
+	 * @param string $sNodo Nombre del nodo actual
+	 * @return string XML
+	 */
+	private function _datosXml($aDatos, $sNodo = "root") {
+		$oDom = new DOMDocument('1.0', 'UTF-8');
+		$oDom->formatOutput = true;
+		$oRoot = $oDom->createElement($sNodo);
+		$oDom->appendChild($oRoot);
+
+		$f2xml = function ($oNodo, $aDatos) use ($oDom, &$f2xml) {
+			foreach($aDatos as $sClave => $oValor){
+				if(is_numeric($sClave)){
+					$sClave = 'item_' . $sClave; //evitando problemas con claves numericas, XML no acepta tags solo numericos
+				}
+
+				if(is_array($oValor)){
+					$oNodoI = $oDom->createElement($sClave);
+					$oNodo->appendChild($oNodoI);
+					$f2xml($oNodoI, $oValor);
+				}
+				else{
+					$oNodoI = $oDom->createElement($sClave, $oValor);
+					$oNodo->appendChild($oNodoI);
+
+					/*$oAttr = $oDom->createAttribute($sClave);
+					$oAttr->value = $oValor;
+					$oNodo->appendChild($oAttr);*/
+
+				}
+			}
+		};
+
+		$f2xml($oRoot, $aDatos);
+
+		return $oDom->saveXML();
 	}
 
 	/**
@@ -157,8 +209,13 @@ class Restazo extends Controlazo {
 			511 => array('server' => 'Network Authentication Required'), //The client needs to authenticate to gain network access. Intended for use by intercepting proxies used to control access to the network (e.g., "captive portals" used to require agreement to Terms of Service before granting full Internet access via a Wi-Fi hotspot)
 		);
 
-		if(empty($iCodHTTP) || $iCodHTTP >= 300)
+		$aDatos['http_code'] = $iCodHTTP;
+		if(empty($iCodHTTP) || $iCodHTTP >= 300){
 			$aDatos = array_merge($aDatos, $aCodigosHTTP[$iCodHTTP]);
+		}
+		/*if($iCodHTTP >= 400){
+			$aDatos['error'] = $iCodHTTP;
+		}*/
 
 		//cabeceras
 		header('HTTP/1.1: ' . $iCodHTTP);
@@ -191,16 +248,17 @@ class Restazo extends Controlazo {
 	 * Prepara el formato de salida de los datos
 	 *
 	 * @param array $aDatos Datos a formatear
-	 * @param string $sFormato Formato de salida
 	 * @return string
 	 */
-	private function formatea($aDatos, $sFormato = 'json'){
+	private function formatea($aDatos){
 		$sRet = null;
-		switch($sFormato){
-			case 'json':
-				$sRet = json_encode($aDatos);
+		switch($this->sFormato){
+			case 'xml':
+				$sRet = $this->_datosXml($aDatos);
 				break;
+			case 'json':
 			default:
+				$sRet = json_encode($aDatos);
 		}
 
 		return $sRet;
@@ -260,6 +318,27 @@ class Restazo extends Controlazo {
 
 		$this->$sCallable();
 		return true;
+	}
+
+	/**
+	 * Elige el formato de salida de los datos
+	 *
+	 * @param string $sFormato
+	 * @return string
+	 */
+	public function setFormato($sFormato = 'json'){
+		$sFormato = strtolower($sFormato);
+
+		switch($sFormato){
+			case 'json':
+			case 'xml':
+				break;
+			default:
+				$sFormato = 'json';
+		}
+
+		$this->sFormato = $sFormato;
+		return $sFormato;
 	}
 
 }
