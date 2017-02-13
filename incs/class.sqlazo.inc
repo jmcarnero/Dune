@@ -29,7 +29,7 @@ include_once("./class.sqlazo.inc");
 $oSQLazo = new SQLazo('localhost', 'test', 'test', 'test', 'mysql');
 $oSQLazo->consulta('SELECT id, texto FROM tabla WHERE texto LIKE ?', array('test'), 6, 0);
 
-var_dump($oSQLazo->leeFilasTodas());
+var_dump($oSQLazo->leeFilaTodas());
  * \endcode
  *
  * @author José M. Carnero

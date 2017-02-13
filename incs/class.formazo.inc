@@ -21,12 +21,14 @@ defined('CLASSES_DIR') or define('CLASSES_DIR', dirname(__FILE__));
 
 /**
  * Generador de formularios
+ *
  * Clase generadora de formularios HTML.
  * Genera un formulario completo (entre "<form>" y "</form>", incluidos), con todo lo necesario para hacerlo funcionar, a partir de un array que defina que campos y con que caracteristicas.
  * La validacion javascript se apoya en los nombres de clases css, es completamente externa a la clase (no asi la validacion cuando se procesa en el servidor),
  * debe encontrarse en la seccion "head" (html) de la pagina:
 <script type="text/javaScript" src="JaSper.js"></script>
 <script type="text/javaScript" src="JaSper_formazo.js"></script>
+ *
  * Ejemplo de uso:
  * \code{.php}
 $aCampos = array(

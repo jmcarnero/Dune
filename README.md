@@ -11,10 +11,13 @@
 
 #Librerías incluidas:
 
+- Captchas.
 - Envío de correos.
+- Feeds RSS
 - Formularios.
 - Listados.
 - Miniaturas de imágenes.
+- Servicio REST.
 - Sistema unificado de acceso a datos: SQL, CSV
 
 ====
@@ -30,9 +33,12 @@
 
 #Included libraries:
 
+- Captchas.
 - Email sends.
+- Feeds RSS
 - Forms.
 - Lists.
+- REST Service.
 - Thumbnails.
 - Unified data access: SQL, CSV
 
