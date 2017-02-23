@@ -6,7 +6,7 @@
 - Ligero.
 - MVC.
 - Desacoplado.
-- REST (beta).
+- Servicio REST.
 - Traducción automática de textos.
 
 #Librerías incluidas:
@@ -17,7 +17,6 @@
 - Formularios.
 - Listados.
 - Miniaturas de imágenes.
-- Servicio REST.
 - Sistema unificado de acceso a datos: SQL, CSV
 
 ====
@@ -28,7 +27,7 @@
 - Lightweight.
 - MVC.
 - Decoupled.
-- REST (beta).
+- REST service.
 - Translations.
 
 #Included libraries:
@@ -38,7 +37,6 @@
 - Feeds RSS
 - Forms.
 - Lists.
-- REST Service.
 - Thumbnails.
 - Unified data access: SQL, CSV
 
