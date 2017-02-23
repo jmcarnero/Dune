@@ -157,20 +157,21 @@ class Listazo { //FIXME revisar id's de elementos HTML
 	private $aParamsUrl;
 
 	/**
+	 * Recoge GET o POST segun el que se haya utilizado para llegar a esta pagina; REQUEST por defecto
+	 * Solo recoge el de los campos del formulario (y cajas de busqueda, paginacion, ...) que sean imprescindibles
+	 *
+	 * @var array
+	 * @see Listazo::setRequest(),Listazo::getRequest()
+	 */
+	private $aRequest;
+
+	/**
 	 * URL que procesara las peticiones, tanto busqueda como paginacion; por defecto la propia pagina
 	 *
 	 * @var string
 	 * @see Listazo::setUrl($url)
 	 */
 	private $sUrl;
-
-	/**
-	 * Recoge GET o POST segun el que se haya utilizado para llegar a esta pagina
-	 *
-	 * @var array
-	 * @see Listazo::setVariablesRequest(),Listazo::getVariablesRequest()
-	 */
-	private $aVariablesRequest;
 
 	/**
 	 * Constructor
@@ -182,8 +183,7 @@ class Listazo { //FIXME revisar id's de elementos HTML
 		$this->sCssBase = 'Listazo';
 
 		$this->sFrmMetodo = 'post';
-		$this->aRequest = '';
-		$this->setVariablesRequest(); //recoge las variables para busqueda y paginacion
+		$this->setRequest(); //recoge las variables para busqueda y paginacion
 		$this->aParamsUrl = array();
 		$this->aOrderBy = array();
 		$this->aNuevoFiltro = array();
@@ -312,9 +312,9 @@ class Listazo { //FIXME revisar id's de elementos HTML
 	 * @return boolean
 	 */
 	protected function filasMostradas(){
-		if(isset($this->aVariablesRequest['ListazoBuscCant']) && $this->aVariablesRequest['ListazoBuscCant'] != ''){
-			$this->iFilasCant = $this->aVariablesRequest['ListazoBuscCant'];
-			$this->aParamsUrl[] = 'ListazoBuscCant=' . $this->aVariablesRequest['ListazoBuscCant'];
+		if(isset($this->aRequest['ListazoBuscCant']) && $this->aRequest['ListazoBuscCant'] != ''){
+			$this->iFilasCant = $this->aRequest['ListazoBuscCant'];
+			$this->aParamsUrl[] = 'ListazoBuscCant=' . $this->aRequest['ListazoBuscCant'];
 		}
 
 		if(count($this->aFilasMostradas) > 1){
@@ -345,8 +345,8 @@ class Listazo { //FIXME revisar id's de elementos HTML
 		$this->ordenacion();
 
 		//toma la posicion de paginacion
-		if(isset($this->aVariablesRequest['ListazoRowPos']) && $this->aVariablesRequest['ListazoRowPos'] != ''){
-			$this->iFilasPag = $this->aVariablesRequest['ListazoRowPos'];
+		if(isset($this->aRequest['ListazoRowPos']) && $this->aRequest['ListazoRowPos'] != ''){
+			$this->iFilasPag = $this->aRequest['ListazoRowPos'];
 		}
 
 		//paginacion
@@ -384,8 +384,8 @@ class Listazo { //FIXME revisar id's de elementos HTML
 	 *
 	 * @return string
 	 */
-	public function getVariablesRequest(){
-		return $this->aVariablesRequest;
+	public function getRequest(){
+		return $this->aRequest;
 	}
 
 	/**
@@ -395,7 +395,7 @@ class Listazo { //FIXME revisar id's de elementos HTML
 	 */
 	protected function ordenacion(){
 		$aCampos = array(); //campos de la base de datos con los que se ordenara
-		$this->aVariablesRequest['ListazoOrderBy'] = isset($this->aVariablesRequest['ListazoOrderBy']) ? $this->aVariablesRequest['ListazoOrderBy'] : '';
+		$this->aRequest['ListazoOrderBy'] = isset($this->aRequest['ListazoOrderBy']) ? $this->aRequest['ListazoOrderBy'] : '';
 
 		foreach($this->aCampos as $sClave => $aValor){
 			if(strpos(strtolower($aValor['banderas']), 'o') !== false)
@@ -407,15 +407,15 @@ class Listazo { //FIXME revisar id's de elementos HTML
 		$this->aOrderBy = $aCampos; //array de los campos de ordenacion, por si quiere pintarse sin ayuda de la clase
 
 		//ordenacion
-		if(isset($this->aVariablesRequest['ListazoOrderBy']) && $this->aVariablesRequest['ListazoOrderBy'] != '' && isset($this->aOrderBy[$this->aVariablesRequest['ListazoOrderBy']])){
-			//$this->sOrderBy .= ', ' . $this->aVariablesRequest['ListazoOrderBy'];
-			$this->aParamsUrl[] = 'ListazoOrderBy=' . $this->aVariablesRequest['ListazoOrderBy'];
+		if(isset($this->aRequest['ListazoOrderBy']) && $this->aRequest['ListazoOrderBy'] != '' && isset($this->aOrderBy[$this->aRequest['ListazoOrderBy']])){
+			//$this->sOrderBy .= ', ' . $this->aRequest['ListazoOrderBy'];
+			$this->aParamsUrl[] = 'ListazoOrderBy=' . $this->aRequest['ListazoOrderBy'];
 		}
 
 		$sTemp = '<' . $this->aHtml['ordenacion'] . ' class="' . $this->sCssBase . ' ordenacion"><label for="">' . $this->_t('Ordenado por') . ':</label><select name="ListazoOrderBy">' . "\n";
-		$sTemp .= '<option ' . ($this->aVariablesRequest['ListazoOrderBy'] == '' ? ' selected="selected"' : '') . ' value="">' . $this->_t('Sin orden') . '</option>' . "\n";
+		$sTemp .= '<option ' . ($this->aRequest['ListazoOrderBy'] == '' ? ' selected="selected"' : '') . ' value="">' . $this->_t('Sin orden') . '</option>' . "\n";
 		foreach($aCampos as $sClave => $sValor){
-			$sTemp .= '<option ' . ($this->aVariablesRequest['ListazoOrderBy'] == $sClave ? ' selected="selected"' : '') . ' value="' . $sClave . '">' . $this->_t(strip_tags($sValor != '' ? $sValor : $sClave)) . '</option>' . "\n";
+			$sTemp .= '<option ' . ($this->aRequest['ListazoOrderBy'] == $sClave ? ' selected="selected"' : '') . ' value="' . $sClave . '">' . $this->_t(strip_tags($sValor != '' ? $sValor : $sClave)) . '</option>' . "\n";
 		}
 		$sTemp .= '</select></' . $this->aHtml['ordenacion'] . '>' . "\n";
 		$this->aElementosFormulario['busqueda'][] = $sTemp . "\n";
@@ -439,8 +439,9 @@ class Listazo { //FIXME revisar id's de elementos HTML
 	 * @return array
 	 */
 	protected function paginacion(){
-		if(!empty($this->aElementosFormulario['paginacion'])) //elemento ya construido
+		if(!empty($this->aElementosFormulario['paginacion'])){ //elemento ya construido
 			return true;
+		}
 
 		if($this->iFilasTotal > $this->iFilasCant || $this->bPaginacion){
 			//parametros de la URL
@@ -480,20 +481,22 @@ class Listazo { //FIXME revisar id's de elementos HTML
 	 */
 	protected function palabrasClave(){
 		$aCampos = array(); //campos de la base de datos en los que se buscara
-		$this->aVariablesRequest['ListazoBuscKeyword'] = isset($this->aVariablesRequest['ListazoBuscKeyword']) ? $this->aVariablesRequest['ListazoBuscKeyword'] : '';
+		$this->aRequest['ListazoBuscKeyword'] = isset($this->aRequest['ListazoBuscKeyword']) ? $this->aRequest['ListazoBuscKeyword'] : '';
 
 		foreach($this->aCampos as $sClave => $aValor){
-			if(strpos(strtolower($aValor['banderas']), 'b') !== false)
+			if(strpos(strtolower($aValor['banderas']), 'b') !== false){
 				$aCampos[] = $sClave;
+			}
 		}
-		if(empty($aCampos)) //ningun campo en el que buscar, no se pinta este elemento
+		if(empty($aCampos)){ //ningun campo en el que buscar, no se pinta este elemento
 			return true;
-
-		if(isset($this->aVariablesRequest['ListazoBuscKeyword']) && $this->aVariablesRequest['ListazoBuscKeyword'] != ''){
-			$this->aParamsUrl[] = 'ListazoBuscKeyword=' . $this->aVariablesRequest['ListazoBuscKeyword'];
 		}
 
-		$this->aElementosFormulario['busqueda'][] = '<' . $this->aHtml['palabrasClave'] . ' class="' . $this->sCssBase . ' palabrasClave"><label for="ListazoBuscKeyword">' . $this->_t('Palabras clave') . ': </label><input id="ListazoBuscKeyword" type="text" name="ListazoBuscKeyword" value="' . $this->aVariablesRequest['ListazoBuscKeyword'] . '" /></' . $this->aHtml['palabrasClave'] . '>' . "\n";
+		if(isset($this->aRequest['ListazoBuscKeyword']) && $this->aRequest['ListazoBuscKeyword'] != ''){
+			$this->aParamsUrl[] = 'ListazoBuscKeyword=' . $this->aRequest['ListazoBuscKeyword'];
+		}
+
+		$this->aElementosFormulario['busqueda'][] = '<' . $this->aHtml['palabrasClave'] . ' class="' . $this->sCssBase . ' palabrasClave"><label for="ListazoBuscKeyword">' . $this->_t('Palabras clave') . ': </label><input id="ListazoBuscKeyword" type="text" name="ListazoBuscKeyword" value="' . $this->aRequest['ListazoBuscKeyword'] . '" /></' . $this->aHtml['palabrasClave'] . '>' . "\n";
 
 		return true;
 	}
@@ -519,8 +522,8 @@ class Listazo { //FIXME revisar id's de elementos HTML
 			echo $sBusqueda . $sListado . $sPaginacion;
 			return true;
 		}
-		else
-			return $sBusqueda . $sListado . $sPaginacion;
+
+		return $sBusqueda . $sListado . $sPaginacion;
 	}
 
 	/**
@@ -531,8 +534,9 @@ class Listazo { //FIXME revisar id's de elementos HTML
 	 * @return string
 	 */
 	public function pintarBusqueda($bEcho = true){
-		if(empty($this->aElementosFormulario['busqueda']))
+		if(empty($this->aElementosFormulario['busqueda'])){
 			$this->generar();
+		}
 
 		$sRet = '';
 		$sUrl = $this->getParametrosUrl(true);
@@ -542,8 +546,9 @@ class Listazo { //FIXME revisar id's de elementos HTML
 			$sRet .= '<' . $this->aHtml['busqueda'] . ' class="' . $this->sCssBase . ' busqueda"><form action="' . $sUrl . '" method="' . $this->sFrmMetodo . '">';
 			$sRet .= implode('', $this->aElementosFormulario['busqueda']) . "\n";
 
-			if(!empty($this->aNuevoFiltro) && is_array($this->aNuevoFiltro))
+			if(!empty($this->aNuevoFiltro) && is_array($this->aNuevoFiltro)){
 				$sRet .= implode('', $this->aNuevoFiltro) . "\n";
+			}
 
 			$sRet .= '<p><input type="submit" value="' . $this->_t('Enviar') . '" name="submit" /></p>' . "\n";
 			$sRet .= '</form></' . $this->aHtml['busqueda'] . '>' . "\n";
@@ -553,8 +558,8 @@ class Listazo { //FIXME revisar id's de elementos HTML
 			echo $sRet;
 			return true;
 		}
-		else
-			return $sRet;
+
+		return $sRet;
 	}
 
 	/**
@@ -584,8 +589,9 @@ class Listazo { //FIXME revisar id's de elementos HTML
 
 				$sTemp .= '<' . $this->aHtml['fila'] . ' id="Listazo_fila_' . $sClave . '"' . $sTempClass . '>' . "\n";
 				foreach($this->aCampos as $clavef => $valorf){ //recorre los campos de cada fila
-					if(strpos(strtolower($valorf['banderas']), 'l') === false)
+					if(strpos(strtolower($valorf['banderas']), 'l') === false){
 						continue;
+					}
 
 					$valorf['tag'] = empty($valorf['tag']) ? 'p' : $valorf['tag'];
 
@@ -602,12 +608,14 @@ class Listazo { //FIXME revisar id's de elementos HTML
 						$sCampo = $this->eval_html(str_replace('$field', '$this->aFilas[' . $sClave . ']', $sCampo));
 					}
 
-					if(!empty($sCampo))
+					if(!empty($sCampo)){
 						$sTemp .= $sTitulo . (empty($valorf['visibleCars']) ? $sCampo : $this->recortarCad($sCampo, $valorf['visibleCars']));
+					}
 
 					$sTemp .= '</' . $valorf['tag'] . '>' . "\n";
-					if(!empty($valorf['sublistazo']))
+					if(!empty($valorf['sublistazo'])){
 						$sTemp .= $this->sublistado($valorf['sublistazo'], $sClave);
+					}
 				}
 				$sTemp .= '</' . $this->aHtml['fila'] . '>' . "\n";
 			}
@@ -618,8 +626,8 @@ class Listazo { //FIXME revisar id's de elementos HTML
 			echo $sTemp;
 			return true;
 		}
-		else
-			return $sTemp;
+
+		return $sTemp;
 	}
 
 	/**
@@ -634,8 +642,9 @@ class Listazo { //FIXME revisar id's de elementos HTML
 			return;
 		}
 
-		if(empty($this->aElementosFormulario['paginacion']))
+		if(empty($this->aElementosFormulario['paginacion'])){
 			$this->generar();
+		}
 
 		$sTemp = '';
 
@@ -647,8 +656,8 @@ class Listazo { //FIXME revisar id's de elementos HTML
 			echo $sTemp;
 			return true;
 		}
-		else
-			return $sTemp;
+
+		return $sTemp;
 	}
 
 	/**
@@ -663,14 +672,19 @@ class Listazo { //FIXME revisar id's de elementos HTML
 	 * @return string
 	 */
 	protected function recortarCad($cad, $long, $punto = false){
-		if(strlen($cad) <= $long)
+		if(strlen($cad) <= $long){
 			return $cad;
+		}
 
 		$sFinal = ' [&hellip;]'; //&hellip; entidad de puntos suspensivos //TODO hacer personalizable
 		//$long -= strlen($sFinal);
 		$cadCort = substr(strip_tags($cad), 0, $long);
-		if($punto === false) $cadCort = substr($cadCort, 0, strrpos($cadCort, ' '));
-		else $cadCort = substr($cadCort, 0, strrpos($cadCort, $punto));
+		if($punto === false){
+			$cadCort = substr($cadCort, 0, strrpos($cadCort, ' '));
+		}
+		else{
+			$cadCort = substr($cadCort, 0, strrpos($cadCort, $punto));
+		}
 
 		return $cadCort . $sFinal;
 	}
@@ -707,16 +721,18 @@ class Listazo { //FIXME revisar id's de elementos HTML
 		}
 
 		foreach($aCampos as $clave => $valor){ //'banderas' es exclusivo de esta clase, si un campo no lo lleva se ignora el campo
-			if(isset($valor['banderas']))
+			if(isset($valor['banderas'])){
 				$this->aCampos[$clave] = $valor;
+			}
 		}
 
-		if(count($this->aCampos))
+		if(count($this->aCampos)){
 			return true;
-		else{ //ningun campo utilizable
-			trigger_error('Sólo se mostrarán filas vacías, el array de campos no contiene ninguno válido', E_USER_WARNING);
-			return false;
 		}
+
+		//ningun campo utilizable
+		trigger_error('Sólo se mostrarán filas vacías, el array de campos no contiene ninguno válido', E_USER_WARNING);
+		return false;
 	}
 
 	/**
@@ -799,8 +815,9 @@ class Listazo { //FIXME revisar id's de elementos HTML
 	 * @return boolean
 	 */
 	public function setNuevoFiltro($forme = false){
-		if(empty($forme))
+		if(empty($forme)){
 			return false;
+		}
 
 		$this->aNuevoFiltro[] = $forme;
 		return true;
@@ -833,9 +850,55 @@ class Listazo { //FIXME revisar id's de elementos HTML
 		}
 
 		if(is_array($campos)){
-			foreach($campos as $valor) $this->aParamsUrl[] = $valor;
-		}else{
+			foreach($campos as $valor){
+				$this->aParamsUrl[] = $valor;
+			}
+		}
+		else{
 			$this->aParamsUrl[] = $campos;
+		}
+
+		return true;
+	}
+
+	/**
+	 * Recoge las variables para busqueda.
+	 *
+	 * @return string
+	 */
+	private function setRequest(){
+		$this->aRequest = array();
+
+		$aRequestTemp = &$_REQUEST;
+		if($_SERVER['REQUEST_METHOD'] == 'GET'){
+			$aRequestTemp = &$_GET;
+		}
+		elseif($_SERVER['REQUEST_METHOD'] == 'POST'){
+			$aRequestTemp = &$_POST;
+		}
+
+		if(isset($aRequestTemp['ListazoBuscKeyword'])){ //palabra a buscar
+			$this->aRequest['ListazoBuscKeyword'] = $aRequestTemp['ListazoBuscKeyword'];
+			unset($aRequestTemp['ListazoBuscKeyword']);
+		}
+		if(isset($aRequestTemp['ListazoBuscCant'])){ //cantidad de filas a mostrar
+			$this->aRequest['ListazoBuscCant'] = $aRequestTemp['ListazoBuscCant'];
+			unset($aRequestTemp['ListazoBuscCant']);
+		}
+		if(isset($aRequestTemp['ListazoOrderBy'])){ //criterio de ordenacion
+			$this->aRequest['ListazoOrderBy'] = $aRequestTemp['ListazoOrderBy'];
+			unset($aRequestTemp['ListazoOrderBy']);
+		}
+		if(isset($aRequestTemp['ListazoRowPos'])){ //posicion de paginacion
+			$this->aRequest['ListazoRowPos'] = $aRequestTemp['ListazoRowPos'];
+			unset($aRequestTemp['ListazoRowPos']);
+		}
+
+		//busqueda por tipos
+		foreach($aRequestTemp as $sClave => $sValor){
+			if(strpos($sClave, 'ListazoBuscTipo_') === 0){
+				$this->aRequest[$sClave] = $sValor;
+			}
 		}
 
 		return true;
@@ -857,41 +920,6 @@ class Listazo { //FIXME revisar id's de elementos HTML
 		}
 
 		$this->sUrl .= '?';
-
-		return true;
-	}
-
-	/**
-	 * Recoge las variables para busqueda.
-	 *
-	 * @return string
-	 */
-	private function setVariablesRequest(){
-		$this->aVariablesRequest = array();
-
-		$aTemp = &$_REQUEST;
-		if($_SERVER['REQUEST_METHOD'] == 'GET'){
-			$aTemp = &$_GET;
-		}
-		elseif($_SERVER['REQUEST_METHOD'] == 'POST'){
-			$aTemp = &$_POST;
-		}
-
-		if(isset($aTemp['ListazoBuscKeyword'])){ //palabra a buscar
-			$this->aVariablesRequest['ListazoBuscKeyword'] = $aTemp['ListazoBuscKeyword'];
-		}
-		if(isset($aTemp['ListazoBuscTipo'])){ //busqueda por tipos
-			$this->aVariablesRequest['ListazoBuscTipo'] = $aTemp['ListazoBuscTipo'];
-		}
-		if(isset($aTemp['ListazoBuscCant'])){ //cantidad de filas a mostrar
-			$this->aVariablesRequest['ListazoBuscCant'] = $aTemp['ListazoBuscCant'];
-		}
-		if(isset($aTemp['ListazoOrderBy'])){ //criterio de ordenacion
-			$this->aVariablesRequest['ListazoOrderBy'] = $aTemp['ListazoOrderBy'];
-		}
-		if(isset($aTemp['ListazoRowPos'])){ //posicion de paginacion
-			$this->aVariablesRequest['ListazoRowPos'] = $aTemp['ListazoRowPos'];
-		}
 
 		return true;
 	}
@@ -921,8 +949,9 @@ class Listazo { //FIXME revisar id's de elementos HTML
 				$sCampo = $this->eval_html(str_replace('$field', '$this->aFilas[' . $iPos . ']', $sCampo));
 			}
 
-			if(!empty($sTitulo) || !empty($sCampo))
+			if(!empty($sTitulo) || !empty($sCampo)){
 				$sTemp .= '<li>' . $sTitulo . $sCampo . '</li>';
+			}
 		}
 		$sTemp .= '</ul>';
 
@@ -931,10 +960,11 @@ class Listazo { //FIXME revisar id's de elementos HTML
 
 	/**
 	 * Busqueda por tipo.
+	 *
+	 * El nombre del campo del formulario sera: "ListazoBuscTipo_" . -claveDelCampo-
 	 * Si la clase de recuperacion de datos lo permite,
 	 * debe ser posible incluir varios terminos de filtrado (en cualquier caso deben ir en un array parte de los valores del elemento, 'tipos' => array('Título de la opcion' => 'valor', ...),
-	 * separados por '%%' -> LIKE, separados por '-%' -> NOT LIKE
-	 * ej: 'tipos' => array('Imagenes' => '%%.bmp%%.jpg%%.jpeg%%.png', 'Comprimidos' => '-%.ace-%.rar-%.zip', 'Video' => '.mpg');
+	 * ej: 'tipos' => array('Imagenes' => '%.bmp%.jpg%.jpeg%.png', 'Comprimidos' => '%.ace%.rar%.zip', 'Video' => '.mpg');
 	 *
 	 * @return boolean
 	 */
@@ -942,27 +972,33 @@ class Listazo { //FIXME revisar id's de elementos HTML
 		$aCampos = array(); //opciones de tipo que se buscaran
 
 		foreach($this->aCampos as $clave => $valor){
-			if(!empty($valor['tipos'])) $aCampos[] = $clave;
+			if(!empty($valor['tipos'])){
+				$aCampos[] = $clave;
+			}
 		}
 
-		if(empty($aCampos))
+		if(empty($aCampos)){
 			return true; //ningun campo de tipo, no se pinta este elemento
+		}
 
 		for($i = 0;$i < count($aCampos); $i++){
-			if(isset($this->aVariablesRequest['ListazoBuscTipo'.$i]) && $this->aVariablesRequest['ListazoBuscTipo'.$i] != ''){
-				$this->aParamsUrl[] = 'ListazoBuscTipo' . $i . '=' . $this->aVariablesRequest['ListazoBuscTipo' . $i];
+			$sCampo = $aCampos[$i]; //clave del campo
+
+			if(isset($this->aRequest['ListazoBuscTipo_' . $sCampo]) && $this->aRequest['ListazoBuscTipo_' . $sCampo] != ''){
+				$this->aParamsUrl[] = 'ListazoBuscTipo_' . $sCampo . '=' . $this->aRequest['ListazoBuscTipo_' . $sCampo];
 			}
 
-			$sTitulo = isset($this->aCampos[$aCampos[$i]]['titulo']) ? $this->aCampos[$aCampos[$i]]['titulo'] : $aCampos[$i];
-			$sTemp = '<div class="' . $this->sCssBase . ' tipo"><label for="ListazoBuscTipo' . $i . '">' . $this->_t($sTitulo) . '</label><select id="ListazoBuscTipo' . $i . '" name="ListazoBuscTipo' . $i . '">' . "\n";
+			$sTitulo = isset($this->aCampos[$sCampo]['titulo']) ? $this->aCampos[$sCampo]['titulo'] : $sCampo;
+			$sTemp = '<div class="' . $this->sCssBase . ' tipo"><label for="ListazoBuscTipo_' . $sCampo . '">' . $this->_t($sTitulo) . '</label><select id="ListazoBuscTipo_' . $sCampo . '" name="ListazoBuscTipo_' . $sCampo . '">' . "\n";
 			//$sTemp .= '<option value="">Seleccione ...</option>' . "\n";
-			foreach($this->aCampos[$aCampos[$i]]['tipos'] as $clave => $valor){
-				$sVarRequest = isset($this->aVariablesRequest['ListazoBuscTipo' . $i]) ? $this->aVariablesRequest['ListazoBuscTipo' . $i] : '';
+			foreach($this->aCampos[$sCampo]['tipos'] as $clave => $valor){
+				$sVarRequest = isset($this->aRequest['ListazoBuscTipo_' . $sCampo]) ? $this->aRequest['ListazoBuscTipo_' . $sCampo] : '';
 				$sTemp .= '<option value="' . $valor . '"' . ($sVarRequest == $valor ? ' selected="selected"' : '') . '>' . $this->_t($clave) . '</option>' . "\n";
 			}
 			$sTemp .= '</select></div>' . "\n";
 			$this->aElementosFormulario['busqueda'][] = $sTemp . "\n";
 		}
+
 		return true;
 	}
 
