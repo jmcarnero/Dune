@@ -140,9 +140,12 @@ class Dune {
 	 * @return string
 	 */
 	public static function baseDir($sRet = null){
-		if(!defined('D_BASE_DIR')) define('D_BASE_DIR', str_replace('\\', '/', realpath(dirname(__FILE__).'/..')).'/');
-		if(!defined('D_BASE_URL')){
-			$sUrl = $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['SERVER_NAME'] . $_SERVER['SCRIPT_NAME'] . '/imgs/captcha.php';
+		if(!defined('D_BASE_DIR')){
+			define('D_BASE_DIR', str_replace('\\', '/', realpath(dirname(__FILE__).'/..')).'/');
+		}
+
+		if(!defined('D_BASE_URL')){ //TODO revisar como se construye, para urls con varios niveles donde no debe haberlos se confunde, como: dominio.tld?controlador (correcto), dominio.tld/nivel_falso/controlador (incorrecto), en este ultimo caso debe reconstruirse para que se pinte el controlador de error correctamente
+			//$sUrl = $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['SERVER_NAME'] . $_SERVER['SCRIPT_NAME'] . '/imgs/captcha.php';
 
 			$aBaseDir = explode('/', trim(D_BASE_DIR, '/'));
 			$cadBase = array_pop($aBaseDir);
@@ -209,6 +212,32 @@ class Dune {
 	}
 
 	/**
+	 * Devuelve la posicion que ocupa $sBuscarClase entre los antecesores de $sClase; ignora el nombre de la propia clase $sClase
+	 *
+	 * @param string $sClase Clase hija en la que buscar antecesores
+	 * @param string $sBuscarClase Clase antecesora a buscar en la jerarquia de clase hija
+	 * @return integer 0 si no se encuentra, 1 o mayor siendo la posicion donde se encuentre $sBuscarClase
+	 */
+	private function antecesores($sClase, $sBuscarClase){
+		$iPos = 0;
+		$sClaseAux = $sClase;
+
+		for($aClases[] = $sClaseAux; $sClaseAux = get_parent_class($sClaseAux); $aClases[] = $sClaseAux);
+
+		array_shift($aClases); //quita la clase en la que se ha buscado la jerarquia
+		if(count($aClases)){ //si la clase tenia herencia se busca la coincidencia
+			$aClases = array_reverse($aClases);
+			$iAux = array_search($sBuscarClase, $aClases);
+			if($iAux !== false){
+				$iPos = $iAux + 1;
+			}
+		}
+
+		//return $aClases;
+		return $iPos;
+	}
+
+	/**
 	 * Carga el controlador relacionado con el modulo, deja una instancia del controlador en $this->oControlazo
 	 *
 	 * Si el valor del parametro modulo es un metodo intenta cargarse y ejecutarse
@@ -228,13 +257,12 @@ class Dune {
 		}
 
 		//carga el controlador si existe
-		$aux = ucfirst(strtolower($this->sModulo));
-		$sParentClass = get_parent_class($aux);
+		$sControlador = ucfirst(strtolower($this->sModulo));
 
-		if($sParentClass == 'Restazo'){ //controlador Restazo
-			$this->oRestazo = new $aux();
+		if($this->antecesores($sControlador, 'Restazo')){ //controlador Restazo
+			$this->oRestazo = new $sControlador();
 		}
-		elseif(class_exists($aux) && $sParentClass == 'Controlazo'){ //controlador normal
+		elseif(class_exists($sControlador) && $this->antecesores($sControlador, 'Controlazo')){ ////controlador normal
 			//si se ha pedido un metodo concreto (valor del parametro modulo) se carga y se le pasan el resto de parametros
 			//TODO eliminar nombres de metodo no permitidos? (construct, destruct, ...)
 			$sMethod = D_METODO_INICIO; //se intenta cargar el metodo por defecto
@@ -242,8 +270,8 @@ class Dune {
 				$sMethod = $_GET[$this->sModulo];
 			}
 
-			if(method_exists($aux, $sMethod)){
-				$this->oControlazo = new $aux();
+			if(method_exists($sControlador, $sMethod)){
+				$this->oControlazo = new $sControlador();
 
 				$aParametros = $_GET;
 				array_shift($aParametros); //quita el primer parametro, que es el controlador y el metodo
@@ -314,6 +342,9 @@ class Dune {
 		if(D_DEBUG){
 			echo('Uso de traducciones:');
 			print_r(l10n_sel()->getTraduccionUso(-1));
+			//echo('URL:');
+			//print_r($_GET);
+			//print_r($_SERVER);
 		}
 	}
 

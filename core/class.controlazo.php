@@ -33,7 +33,13 @@ class Controlazo {
 
 	protected $oModelo; //modelo correspondiente a este controlador ("Modulo_model")
 
-	private $sModulo = ''; //nombre del modulo que se ha cargado, lo envia el constructor hijo
+	/**
+	 * Nombre del modulo que se ha cargado, lo envia el constructor hijo
+	 *
+	 * @see Controlazo::getModulo()
+	 * @var string
+	 */
+	private $sModulo = '';
 
 	/**
 	 * Este array contiene todos los datos que se podran usar como variables en los modulos/plantillas,
@@ -223,6 +229,13 @@ class Controlazo {
 	}
 
 	/**
+	 * Devuelve el modulo actualmente cargado
+	 */
+	protected function getModulo(){
+		return $this->sModulo;
+	}
+
+	/**
 	 * Compone la pagina y la envia al navegador
 	 * Si no se quiere plantilla (como cuando se ha de cargar la pagina por AJAX) sobreescribir este metodo en el controlador heredado sin parametro plantilla (o como sea necesario)
 	 *
@@ -290,7 +303,9 @@ class Controlazo {
 		$this->sModulo = substr(basename($sFile), 0, strpos(basename($sFile), '.'));
 
 		//puede instanciarse este controlador base (que no tiene sufijo); por ejemplo para llamar al modulo de error
-		if(empty($this->sModulo) && stripos(basename($sFile), __CLASS__) > 0) $this->sModulo = __CLASS__;
+		if(empty($this->sModulo) && stripos(basename($sFile), __CLASS__) > 0){
+			$this->sModulo = __CLASS__;
+		}
 	}
 
 	/**

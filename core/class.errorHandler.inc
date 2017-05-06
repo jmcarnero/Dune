@@ -16,6 +16,8 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 # http://www.gnu.org/copyleft/gpl.html
 
+//namespace Dune;
+
 /**
  * Gestión de errores y excepciones.
  * Es recomendable incluirla antes de nada para que recoja todos los errores.
