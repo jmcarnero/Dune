@@ -54,6 +54,13 @@ $oListado->pintar();
 class Listazo { //FIXME revisar id's de elementos HTML
 
 	/**
+	 * Muestra u oculta la caja de busqueda
+	 *
+	 * @var boolean
+	 */
+	protected $bBusqueda;
+
+	/**
 	 * Campos que se mostraran en el listado
 	 *
 	 * @var array
@@ -534,6 +541,10 @@ class Listazo { //FIXME revisar id's de elementos HTML
 	 * @return string
 	 */
 	public function pintarBusqueda($bEcho = true){
+		if(!$this->bBusqueda){
+			return;
+		}
+
 		if(empty($this->aElementosFormulario['busqueda'])){
 			$this->generar();
 		}
@@ -550,7 +561,7 @@ class Listazo { //FIXME revisar id's de elementos HTML
 				$sRet .= implode('', $this->aNuevoFiltro) . "\n";
 			}
 
-			$sRet .= '<p><input type="submit" value="' . $this->_t('Enviar') . '" name="submit" /></p>' . "\n";
+			$sRet .= '<p><input type="submit" value="' . $this->_t('Aplicar filtros') . '" name="submit" /></p>' . "\n";
 			$sRet .= '</form></' . $this->aHtml['busqueda'] . '>' . "\n";
 		}
 
@@ -821,6 +832,15 @@ class Listazo { //FIXME revisar id's de elementos HTML
 
 		$this->aNuevoFiltro[] = $forme;
 		return true;
+	}
+
+	/**
+	 * Muestra u oculta la caja de busqueda
+	 *
+	 * @param string $bBusqueda
+	 */
+	public function setBusqueda($bBusqueda = true){
+		$this->bBusqueda = (boolean) $bBusqueda;
 	}
 
 	/**
