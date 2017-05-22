@@ -204,6 +204,7 @@ class Listazo { //FIXME revisar id's de elementos HTML
 		$this->setHtml();
 
 		$this->setPaginacion(count($aFilas), 20);
+		$this->setBusqueda(true);
 	}
 
 	/**
