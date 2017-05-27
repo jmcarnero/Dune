@@ -21,15 +21,12 @@
 //constantes de core
 //son necesarias aqui o en algun lugar donde esta clase las tenga inicializadas
 defined('D_DIR_CORE') or define('D_DIR_CORE', 'core/'); //clases core
+defined('D_DIR_CONFIG') or define('D_DIR_CONFIG', 'config/'); //directorio de ficheros de configuracion
 defined('D_DIR_CONTROL') or define('D_DIR_CONTROL', 'mods/controladores/'); //modulos, directorio para los ficheros de controladores
 defined('D_DIR_LIBS') or define('D_DIR_LIBS', 'incs/'); //librerias
 defined('D_DIR_MODEL') or define('D_DIR_MODEL', 'mods/modelos/'); //modulos, directorio para los ficheros de modelos de cada modulo
 defined('D_DIR_TPL') or define('D_DIR_TPL', 'tpl/'); //plantillas, ficheros con extension ".tpl"
 defined('D_DIR_VISTA') or define('D_DIR_VISTA', 'mods/vistas/'); //modulos, directorio para los ficheros de vistas
-
-defined('D_MODULO_INICIO') or define('D_MODULO_INICIO', 'portada'); //modulo a cargar en inicio, ya sea nombre de vista o de controlador
-defined('D_METODO_INICIO') or define('D_METODO_INICIO', 'inicio'); //metodo a cargar por omision, si no se pasa ?modulo=metodo
-defined('D_MODULO_ERROR') or define('D_MODULO_ERROR', 'error'); //modulo a cargar en error
 
 /**
  * Inicializador
@@ -68,12 +65,18 @@ class Dune {
 	/**
 	 * Nombres de ficheros de configuracion, plantilla base, etc.
 	 * - config: fichero de configuracion
+	 * - database: fichero de configuracion de base de datos //TODO soportar multiples conexiones
 	 * - plantilla: fichero base de plantilla
 	 * - sesion: controlador de sesion //TODO de momento no integrado como objeto
 	 *
 	 * @var array
 	 */
-	protected $aFicheros = array('config' => 'config.php', 'plantilla' => 'dune', 'sesion' => 'sesion.php');
+	protected $aFicheros = array(
+		'config' => 'config.php',
+		'database' => 'database.php',
+		'plantilla' => 'dune',
+		'sesion' => 'sesion.php'
+	);
 
 	private $sModulo = 'error'; //nombre del modulo a cargar
 
@@ -88,9 +91,14 @@ class Dune {
 		Dune::baseDir();
 
 		//includes comunes
-		require D_BASE_DIR . D_DIR_LIBS . $this->aFicheros['config']; //parametros basicos de la aplicacion
+		require D_BASE_DIR . D_DIR_CONFIG . $this->aFicheros['config']; //parametros basicos de la aplicacion
+		require D_BASE_DIR . D_DIR_CONFIG . $this->aFicheros['database']; //parametros de base de datos
 		$this->setDebug();
 		require D_BASE_DIR . D_DIR_LIBS . $this->aFicheros['sesion']; //variables e inicio de sesion
+
+		defined('D_MODULO_INICIO') or define('D_MODULO_INICIO', 'portada'); //modulo a cargar en inicio, ya sea nombre de vista o de controlador
+		defined('D_METODO_INICIO') or define('D_METODO_INICIO', 'inicio'); //metodo a cargar por omision, si no se pasa ?modulo=metodo
+		defined('D_MODULO_ERROR') or define('D_MODULO_ERROR', 'error'); //modulo a cargar en error
 
 		//gestion de errores
 		if(D_DEBUG){
@@ -262,7 +270,7 @@ class Dune {
 		if($this->antecesores($sControlador, 'Restazo')){ //controlador Restazo
 			$this->oRestazo = new $sControlador();
 		}
-		elseif(class_exists($sControlador) && $this->antecesores($sControlador, 'Controlazo')){ ////controlador normal
+		elseif(class_exists($sControlador) && $this->antecesores($sControlador, 'Controlazo')){ //controlador normal
 			//si se ha pedido un metodo concreto (valor del parametro modulo) se carga y se le pasan el resto de parametros
 			//TODO eliminar nombres de metodo no permitidos? (construct, destruct, ...)
 			$sMethod = D_METODO_INICIO; //se intenta cargar el metodo por defecto
@@ -274,7 +282,7 @@ class Dune {
 				$this->oControlazo = new $sControlador();
 
 				$aParametros = $_GET;
-				array_shift($aParametros); //quita el primer parametro, que es el controlador y el metodo
+				array_shift($aParametros); //quita el primer parametro, que es el controlador y el metodo (dominio.tld?controlador=metodo)
 				$mReturn = call_user_func_array(array($this->oControlazo, $sMethod), $aParametros); //TODO hacer algo con el return?
 			}
 			else{ //TODO no se ha encontrado el metodo (ni el metodo por defecto)

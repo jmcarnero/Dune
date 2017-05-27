@@ -8,15 +8,6 @@ defined('D_MODULO_INICIO') or define('D_MODULO_INICIO', 'portada'); //modulo a c
 defined('D_METODO_INICIO') or define('D_METODO_INICIO', 'inicio'); //metodo a cargar por omision, si no se pasa ?modulo=metodo
 defined('D_MODULO_ERROR') or define('D_MODULO_ERROR', 'error'); //modulo a cargar en error
 
-//constantes de la base de datos
-define('D_DATOS_MOTOR', 'mysql'); //motor de la base de datos
-define('D_DATOS_SERVIDOR, 'localhost'); //servidor
-define('D_DATOS_DATABASE', 'sargazos_net');
-define('D_DATOS_USUARIO', 'dbuser');
-define('D_DATOS_CLAVE', 'dbpassword');
-define('D_DB_PREFIJOTABLAS', '');
-define('D_DB_TRAZABILIDAD', true);
-
 //constantes del servidor de correo
 define('D_MAIL_SERVIDOR', 'localhost');
 define('D_MAIL_USUARIO', 'Sargazos');

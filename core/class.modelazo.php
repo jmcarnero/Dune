@@ -18,6 +18,8 @@
 
 //namespace Dune;
 
+defined('D_SUFIJO_MODELO') or define('D_SUFIJO_MODELO', '_model'); //sufijo que llevan las clases modelo como nombre de fichero, ej.: Portada_model
+
 /**
  * Clase modelo de datos generico
  *

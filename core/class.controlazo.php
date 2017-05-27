@@ -18,6 +18,8 @@
 
 //namespace Dune;
 
+//defined('D_SUFIJO_CONTROLADOR') or define('D_SUFIJO_CONTROLADOR', '_contr'); //sufijo que llevan las clases controlador como nombre de fichero, ej.: portada_contr.php
+
 /**
  * Clase controlador generico
  *
@@ -113,6 +115,7 @@ class Controlazo {
 	 *
 	 * @todo no permitir la carga de redatazo (ya lo hace el modelo)
 	 * @todo restringir nombres en uso de Dune para valores de $sLib
+	 * @todo guardar la lista de librerias cargadas
 	 * @param string $sLib Nombre de la libreria a cargar; corresponde a nombres de clases en el directorio de librerias
 	 * @param array $aParametros Array de parametros a pasar al nuevo constructor
 	 * @param string $sNombre Nombre con que se instanciara la clase para ser usada en siguientes llamadas, por defecto el mismo que $sLib
@@ -154,6 +157,7 @@ class Controlazo {
 	 * y la clase debe llamarse 'nombre_modelo'
 	 *
 	 * @todo restringir nombres en uso de Dune para valores de $sModelo
+	 * @todo guardar la lista de modelos cargados
 	 * @param string $sFichero Nombre del modelo a cargar; corresponde a nombres de ficheros (sin extension) en el directorio de modelos
 	 * @param string $sNombre Nombre con que se instanciara el modelo para ser usado en siguientes llamadas, por defecto el mismo que $sModelo
 	 * @return boolean True si se ha cargado correctamente, false si no
@@ -249,8 +253,8 @@ class Controlazo {
 		}
 
 		if(!empty($this->aDatos)){
-			foreach($this->aDatos as $clave => $valor){
-				$$clave = $valor; //cada clave del array de datos se podra usar como una variable directa en la plantilla, igual que los contenidos obtenidos del modulo (abajo, $sContenidos)
+			foreach($this->aDatos as $sClave => $sValor){
+				$$sClave = $sValor; //cada clave del array de datos se podra usar como una variable directa en la plantilla, igual que los contenidos obtenidos del modulo (abajo, $sContenidos)
 			}
 		}
 
