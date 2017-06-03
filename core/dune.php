@@ -48,11 +48,13 @@ defined('D_DIR_VISTA') or define('D_DIR_VISTA', 'mods/vistas/'); //modulos, dire
  *
  * @author José M. Carnero
  * @since 2014-11-23
- * @version 1
+ * @version 1.1
  * @license http://www.gnu.org/copyleft/gpl.html
  * @package Dune
  */
 class Dune {
+
+	protected $aDebug = array(); //informacion de debug
 
 	protected $bVista = false; //si true se esta cargando una vista
 	protected $bControlador = false; //si true se esta cargando un controlador
@@ -75,10 +77,12 @@ class Dune {
 		'config' => 'config.php',
 		'database' => 'database.php',
 		'plantilla' => 'dune',
+		'rutas' => 'rutas.php',
 		'sesion' => 'sesion.php'
 	);
 
 	private $sModulo = 'error'; //nombre del modulo a cargar
+	private $aRutas = array(); //enrutado de url's
 
 	/**
 	 * Constructor
@@ -96,6 +100,10 @@ class Dune {
 		$this->setDebug();
 		require D_BASE_DIR . D_DIR_CONFIG . $this->aFicheros['sesion']; //variables e inicio de sesion
 
+		if(is_readable(D_BASE_DIR . D_DIR_CONFIG . $this->aFicheros['rutas'])){
+			$this->aRutas = require D_BASE_DIR . D_DIR_CONFIG . $this->aFicheros['rutas']; //enrutado de url's
+		}
+
 		defined('D_MODULO_INICIO') or define('D_MODULO_INICIO', 'portada'); //modulo a cargar en inicio, ya sea nombre de vista o de controlador
 		defined('D_METODO_INICIO') or define('D_METODO_INICIO', 'inicio'); //metodo a cargar por omision, si no se pasa ?modulo=metodo
 		defined('D_MODULO_ERROR') or define('D_MODULO_ERROR', 'error'); //modulo a cargar en error
@@ -105,6 +113,8 @@ class Dune {
 			include D_BASE_DIR . D_DIR_CORE . 'class.errorHandler.inc';
 			//logFile('errors.err');
 		}
+
+		$this->enrutado();
 
 		$this->ipCliente();
 		$this->tempDir();
@@ -301,6 +311,58 @@ class Dune {
 	}
 
 	/**
+	 * Enrutado de direcciones (URL's) meditante las reglas definidas en "config"rutas.php"
+	 *
+	 * Reconstruye el array $_GET si encuentra coincidencia en las rutas definidas; añade las coincidencias encontradas al principio de $_GET
+	 * Si no encuentra coincidencia deja todo como esta
+	 * El fichero de configuracion "config/rutas.php" debe devolver (return) un array donde cada elemento es: 'ruta_real' => 'expresion regular para coincidencia de url's limpias'
+	 * ej.: '?controlador=metodo&parametro1=%s&parametro2=%s' => 'controlador/metodo(/.+){0,2}'
+	 * No usar nombre de entidad (&amp;), solo el simbolo &, como separador en "ruta_real"
+	 *
+	 * @todo pensar mas las posibilidades de rutas tipo que pueden darse
+	 */
+	private function enrutado(){
+		$sRequestUri = $_SERVER['REQUEST_URI'];
+
+		foreach($this->aRutas as $sDestino => $sRegexp){
+			$sRegexp = '|' . $sRegexp . '|';
+			if(preg_match($sRegexp, $sRequestUri, $aResRegexp)){
+				$aParaGet = array();
+				$aOriginalGet = $_GET;
+
+				$iCont = count($aResRegexp);
+				if($iCont > 1){ //el primer elemento de los resultados de preg_match es la coincidencia completa, luego cada elemento es un parentesis encontrado
+					for($i = 1; $i < $iCont; $i++){
+						/*if(preg_match('/\$(\d+)$/', $aTemp[1], $aIndex)){ //sustitucion de parametro
+							$aTemp[1] = $aResRegexp[$aIndex[1]];
+						}*/
+
+						//FIXME puede dar problemas al sustituir $1 en $11, con lo cual esta de momento limitado a un maximo de 9 grupos de sustitucion y que no haya numeros tras el reemplazo
+						$sDestino = str_replace('$' . $i, $aResRegexp[$i], $sDestino);
+					}
+				}
+
+				$this->aDebug[__METHOD__] = array(
+					'URL solicitada: ' . $sRequestUri,
+					'URL destino: ' . $sDestino,
+				);
+
+				$aDestino = explode('&', ltrim(trim($sDestino), '?'));
+				foreach($aDestino as $iPos => $sValorDest){
+					$aTemp = explode('=', $sValorDest . (strpos($sValorDest, '=') === false ? '=' : ''));
+					$aParaGet[$aTemp[0]] = $aTemp[1];
+				}
+
+				//FIXME quizas deberia hacerse con location redirect, ya que sumara con get no cambia la url y habra que tratarla respecto a la de destino
+				$_GET = array_merge($aParaGet, $aOriginalGet);
+
+				return;
+			}
+		}
+
+	}
+
+	/**
 	 * Guarda la IP del cliente actual
 	 *
 	 * @return void
@@ -335,8 +397,10 @@ class Dune {
 		$this->cargaControlador();
 
 		if(D_DEBUG){
-			echo('Uso de traducciones:');
+			echo 'Uso de traducciones:';
 			print_r(l10n_sel()->getTraduccionUso(-1));
+			echo 'Información de debug:';
+			print_r($this->aDebug);
 			//echo('URL:');
 			//print_r($_GET);
 			//print_r($_SERVER);

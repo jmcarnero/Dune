@@ -1,4 +1,4 @@
-# Dune v1.0 [José M. Carnero](http://sargazos.net)
+# Dune v1.1 [José M. Carnero](https://sargazos.net)
 ===
 
 ## PHP framework.
@@ -7,9 +7,10 @@
 - MVC.
 - Desacoplado.
 - Servicio REST.
+- Sistema de URL's limpias, independente de *mod_rewrite*.
 - Traducción automática de textos.
 
-#Librerías incluidas:
+###Librerías incluidas:
 
 - Captchas.
 - Envío de correos.
@@ -24,13 +25,14 @@
 
 ## PHP framework.
 
+- Clean URL's, *mod_rewrite* independent.
 - Lightweight.
 - MVC.
 - Decoupled.
 - REST service.
 - Translations.
 
-#Included libraries:
+###Included libraries:
 
 - Captchas.
 - Email sends.
@@ -39,4 +41,3 @@
 - Lists.
 - Thumbnails.
 - Unified data access: SQL, CSV
-
