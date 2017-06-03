@@ -88,13 +88,13 @@ class Dune {
 	public function __construct(){
 		spl_autoload_register(array('Dune', 'autoload')); //autocarga de clases en demanda
 
-		Dune::baseDir();
+		$this->baseDir();
 
 		//includes comunes
 		require D_BASE_DIR . D_DIR_CONFIG . $this->aFicheros['config']; //parametros basicos de la aplicacion
 		require D_BASE_DIR . D_DIR_CONFIG . $this->aFicheros['database']; //parametros de base de datos
 		$this->setDebug();
-		require D_BASE_DIR . D_DIR_LIBS . $this->aFicheros['sesion']; //variables e inicio de sesion
+		require D_BASE_DIR . D_DIR_CONFIG . $this->aFicheros['sesion']; //variables e inicio de sesion
 
 		defined('D_MODULO_INICIO') or define('D_MODULO_INICIO', 'portada'); //modulo a cargar en inicio, ya sea nombre de vista o de controlador
 		defined('D_METODO_INICIO') or define('D_METODO_INICIO', 'inicio'); //metodo a cargar por omision, si no se pasa ?modulo=metodo
@@ -108,8 +108,6 @@ class Dune {
 
 		$this->ipCliente();
 		$this->tempDir();
-
-		define('LOGOUT', D_BASE_URL . '?logout');
 
 		/* final */
 		$this->pintaPagina();
@@ -143,40 +141,29 @@ class Dune {
 	 * Crea las constantes BASE_DIR, BASE_URL y D_BASE_URL_FQDN
 	 *
 	 * D_BASE_URL_FQDN es igual que D_BASE_URL pero con protocolo, servidor y demas
-	 *
-	 * @param string $sRet Devuelve la URL (si se pasa 'url') o directorio base (si se pasa 'dir'); si no devuelve null
-	 * @return string
 	 */
-	public static function baseDir($sRet = null){
+	private function baseDir(){
 		if(!defined('D_BASE_DIR')){
 			define('D_BASE_DIR', str_replace('\\', '/', realpath(dirname(__FILE__).'/..')).'/');
 		}
 
-		if(!defined('D_BASE_URL')){ //TODO revisar como se construye, para urls con varios niveles donde no debe haberlos se confunde, como: dominio.tld?controlador (correcto), dominio.tld/nivel_falso/controlador (incorrecto), en este ultimo caso debe reconstruirse para que se pinte el controlador de error correctamente
-			//$sUrl = $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['SERVER_NAME'] . $_SERVER['SCRIPT_NAME'] . '/imgs/captcha.php';
-
+		if(!defined('D_BASE_URL')){
 			$aBaseDir = explode('/', trim(D_BASE_DIR, '/'));
-			$cadBase = array_pop($aBaseDir);
-			$phpSelf = trim(dirname($_SERVER['PHP_SELF']), '/');
-			$cadBase = substr($phpSelf, strpos($phpSelf, $cadBase) + strlen($cadBase));
-			$cadBase = ($cadBase === false) ? array() : explode('/', trim($cadBase, '/'));
-			define('D_BASE_URL', str_repeat('../', count($cadBase)));
+			$sCadBase = array_pop($aBaseDir);
+			$sRequestUri = $_SERVER['REQUEST_URI'];
+
+			$sCadBase = strpos($sRequestUri, $sCadBase) === false ? $sRequestUri : ltrim(substr($sRequestUri, strpos($sRequestUri, $sCadBase) + strlen($sCadBase)), '/');
+			//$sCadBase = ($sCadBase === false) ? array() : explode('/', trim($sCadBase, '/'));
+			//define('D_BASE_URL', str_repeat('../', count($sCadBase)));
+			$iNumSaltos = substr_count($sCadBase, '/');
+			define('D_BASE_URL', str_repeat('../', $iNumSaltos));
 
 			if(!defined('D_BASE_URL_FQDN')){
-				$sUrl = $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['SERVER_NAME'] . (empty($phpSelf) ? '' : '/' . $phpSelf) . '/';
-				define('D_BASE_URL_FQDN', $sUrl . D_BASE_URL);
+				$sPhpSelf = trim(dirname($_SERVER['PHP_SELF']), '/');
+				//$sUrl = $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['SERVER_NAME'] . $_SERVER['SCRIPT_NAME'] . '/imgs/captcha.php';
+				$sUrl = $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['SERVER_NAME'] . (empty($sPhpSelf) ? '' : '/' . $sPhpSelf) . '/';
+				define('D_BASE_URL_FQDN', $sUrl);
 			}
-		}
-
-		switch($sRet){
-			case 'dir':
-				return D_BASE_DIR;
-				break;
-			case 'url':
-				return D_BASE_URL;
-				break;
-			default:
-				return null;
 		}
 	}
 
@@ -399,7 +386,7 @@ class Dune {
 			if($temp = getenv('TMPDIR')){
 				return $temp;
 			}
-			$temp = tempnam(__FILE__, '');
+			$temp = tempnam(dirname(__FILE__), '');
 			if(file_exists($temp)){
 				unlink($temp);
 				$sTempDir = dirname($temp);
