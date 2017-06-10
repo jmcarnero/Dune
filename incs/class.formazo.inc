@@ -912,7 +912,8 @@ class FormazoFile extends FormazoElementos {
 				$aElemento['file'] .= '<img id="img_' . $this->sClave . $this->sFormNombre . '" src="' . $this->aDatos['rutaUrl'] . rawurldecode($this->aDatos['valor']) . '" alt="Imagen actual" />';
 				break;
 			default:
-				$aElemento['file'] .= '<img id="img_' . $this->sClave . $this->sFormNombre . '" src="Imagen preview" alt="' . $this->aDatos['valor'] . '" />'; //TODO esta es la mejor manera de mostrar el valor actual?, usando una imagen inexistente como "placeholder" para la futura preview por javascript?
+				//imagen de 1px transparente, si se deja src="" o src="texto falso" hace una llamada al servidor para intentar recuperar la imagen (inexistente)
+				$aElemento['file'] .= '<img id="img_' . $this->sClave . $this->sFormNombre . '" src="data:image/gif;base64,R0lGODlhAQABAAAAACwAAAAAAQABAAA=" alt="' . $this->aDatos['valor'] . '" />'; //TODO esta es la mejor manera de mostrar el valor actual?, usando una imagen inexistente como "placeholder" para la futura preview por javascript?
 		}
 		$aElemento['file'] .= '</a></div>';
 
