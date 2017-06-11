@@ -583,7 +583,7 @@ class L10n {
 	 * De momento solo se usan los dos primeros caracteres; no se contemplan codigos regionales
 	 *
 	 * @todo gestionar variantes; por ahora solo se gestiona el lenguaje principal "es", no la variante "es_ar"
-	 * @param string $sLang Codigo de idioma (ISO 3166) a comprobar
+	 * @param string $sLang Codigo de idioma a comprobar (IETF BCP 47)
 	 * @param boolean $bLocale Asignar (true), o no (false) el locale; si true devolvera el "locale" que se haya asignado o false si no se ha conseguido asignar, si false devolvera el codigo de idioma que corresponda al proporcionado en parametro
 	 * @return boolean
 	 */
@@ -616,10 +616,14 @@ class L10n {
 				$sTemp = 'ar';
 				break;
 			case 'da': //Danés
-				if($bLocale) $sLocale = empty($sLocale) ? setlocale(LC_ALL, 'da_DK.ISO-8859-15', 'da_DK.iso885915') : false;
+				if($bLocale){
+					$sLocale = empty($sLocale) ? setlocale(LC_ALL, 'da_DK.ISO-8859-15', 'da_DK.iso885915') : false;
+				}
 				break;
 			case 'de': //Alemán
-				if($bLocale) $sLocale = empty($sLocale) ? setlocale(LC_ALL, 'de_DE@euro', 'de_DE', 'de', 'ge','deu_deu') : false;
+				if($bLocale){
+					$sLocale = empty($sLocale) ? setlocale(LC_ALL, 'de_DE@euro', 'de_DE', 'de', 'ge','deu_deu') : false;
+				}
 			case 'de_at': //Alemán (Austria)
 			case 'de_ch': //Alemán (Suiza)
 			case 'de_li': //Alemán (Liechtenstein)
@@ -639,7 +643,7 @@ class L10n {
 			case 'en_jm': //Jamaicano
 			case 'en_nz': //Neocelandes
 			case 'en_us': //Inglés (USA)
-				if($bLocale){
+				if($bLocale && $sLang == 'en_us'){
 					date_default_timezone_set('America/New_York');
 					$sLocale = empty($sLocale) ? setlocale(LC_ALL, 'en_US', 'en_US.utf8', 'en_US.UTF8', 'en_US.UTF-8', 'en_US.8859-1', 'en_US', 'American') : false;
 				}
@@ -648,8 +652,7 @@ class L10n {
 				break;
 			case 'es': //Español
 			case 'es_es': //Español (España)
-				//localizacion del entorno
-				if($bLocale){
+				if($bLocale){ //localizacion del entorno
 					date_default_timezone_set('Europe/Madrid');
 					$sLocale = empty($sLocale) ? setlocale(LC_ALL, 'es_ES', 'es_ES.UTF-8', 'es_ES@euro', 'spanish', 'Spanish_Spain.1252', 'Spanish_Spain.28605') : false;
 				}
@@ -680,27 +683,29 @@ class L10n {
 				}
 				break;
 			case 'fr': //Français
+			case 'fr_fr':
 				if($bLocale){
 					date_default_timezone_set('Europe/Paris');
-					$sLocale = empty($sLocale) ? setlocale(LC_ALL, 'fr_FR','fr.UTF8', 'fr.UTF-8') : false;
+					$sLocale = empty($sLocale) ? setlocale(LC_ALL, 'fr_FR', 'fr.UTF8', 'fr.UTF-8', 'fr_FR.UTF8', 'fr_FR.UTF-8') : false;
 				}
 			case 'fr_be': //Français (Belgique)
 			case 'fr_ca': //Français (Canada)
-				if($bLocale) $sLocale = empty($sLocale) ? setlocale(LC_ALL, 'fr_CA') : false;
-			case 'fr_ch': //Français (Suisse)
-			case 'fr_fr': //Français
-				if($bLocale){
-					date_default_timezone_set('Europe/Paris');
-					$sLocale = empty($sLocale) ? setlocale(LC_ALL, 'fr_FR', 'fr_FR.UTF8', 'fr_FR.UTF-8') : false;
+				if($bLocale && $sLang == 'fr_ca'){
+					$sLocale = empty($sLocale) ? setlocale(LC_ALL, 'fr_CA') : false;
 				}
+			case 'fr_ch': //Français (Suisse)
 			case 'fr_lu': //Français (Luxembourg)
 				$sTemp = 'fr';
 				break;
 			case 'in': //Indonesio
-				if($bLocale) $sLocale = empty($sLocale) ? setlocale(LC_ALL, 'id_ID.UTF8', 'id_ID.UTF-8', 'id_ID.8859-1', 'id_ID', 'IND.UTF8', 'IND.UTF-8', 'IND.8859-1', 'IND', 'Indonesian.UTF8', 'Indonesian.UTF-8', 'Indonesian.8859-1', 'Indonesian', 'Indonesia', 'id', 'ID', 'en_US.UTF8', 'en_US.UTF-8', 'en_US.8859-1', 'en_US', 'American', 'ENG', 'English') : false;
+				if($bLocale){
+					$sLocale = empty($sLocale) ? setlocale(LC_ALL, 'id_ID.UTF8', 'id_ID.UTF-8', 'id_ID.8859-1', 'id_ID', 'IND.UTF8', 'IND.UTF-8', 'IND.8859-1', 'IND', 'Indonesian.UTF8', 'Indonesian.UTF-8', 'Indonesian.8859-1', 'Indonesian', 'Indonesia', 'id', 'ID', 'en_US.UTF8', 'en_US.UTF-8', 'en_US.8859-1', 'en_US', 'American', 'ENG', 'English') : false;
+				}
 				break;
 			case 'it': //Italiano
-				if($bLocale) $sLocale = empty($sLocale) ? setlocale(LC_ALL, 'it_IT') : false;
+				if($bLocale){
+					$sLocale = empty($sLocale) ? setlocale(LC_ALL, 'it_IT') : false;
+				}
 			case 'it_ch': //Italiano (Suiza)
 				$sTemp = 'it';
 				break;
@@ -709,9 +714,13 @@ class L10n {
 				$sTemp = 'nl';
 				break;
 			case 'pt': //Portugués
-				if($bLocale) $sLocale = empty($sLocale) ? setlocale(LC_ALL, 'pt_PT', 'pt_PT.iso-8859-1', 'pt_PT.utf-8', 'portuguese') : false;
+				if($bLocale){
+					$sLocale = empty($sLocale) ? setlocale(LC_ALL, 'pt_PT', 'pt_PT.iso-8859-1', 'pt_PT.utf-8', 'portuguese') : false;
+				}
 			case 'pt_br': //Portugués (Brasil)
-				if($bLocale) $sLocale = empty($sLocale) ? setlocale(LC_ALL, 'pt_BR', 'pt_BR.iso-8859-1', 'pt_BR.utf-8', 'portuguese', 'pt_PT') : false;
+				if($bLocale && $sLang == 'pt_br'){
+					$sLocale = empty($sLocale) ? setlocale(LC_ALL, 'pt_BR', 'pt_BR.iso-8859-1', 'pt_BR.utf-8', 'portuguese', 'pt_PT') : false;
+				}
 				$sTemp = 'pt';
 				break;
 			case 'ro': //Roumain (Moldavie)
