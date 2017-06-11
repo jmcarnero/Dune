@@ -54,6 +54,8 @@ class SMTPazo {
 	private $sTo = '';
 	private $sVersion = '1.1b';
 
+	private $sCharset = 'utf-8';
+
 	private $sSmtpServer = null;
 	private $sSmtpUser = 'anon';
 	private $sSmtpPass = '';
@@ -114,7 +116,7 @@ class SMTPazo {
 	public function bcc($sBcc){
 		//$bcc_name = "=?UTF-8?B?".base64_encode($bcc_name)."?= <bcc_mail@email.mail>";
 
-		$this->sBcc = strip_tags($sBcc);
+		$this->sBcc = $this->limpiaTexto($sBcc, false);
 	}
 
 	/**
@@ -128,7 +130,7 @@ class SMTPazo {
 	public function cc($sCc){
 		//$cc_name = "=?UTF-8?B?".base64_encode($cc_name)."?= <cc_mail@email.mail>";
 
-		$this->sCc = strip_tags($sCc);
+		$this->sCc = $this->limpiaTexto($sCc, false);
 	}
 
 	/**
@@ -181,15 +183,15 @@ class SMTPazo {
 
 		//mensaje texto
 		$aMessage[] = $this->sRetornoCarro . '--' . $sLimiteContenido . $this->sRetornoCarro;
-		$aMessage[] = 'Content-Type: text/plain; charset=utf-8' . $this->sRetornoCarro;
-		$aMessage[] = 'Content-Transfer-Encoding: quoted-printable' . $this->sRetornoCarro;
+		$aMessage[] = 'Content-Type: text/plain; charset=' . $this->sCharset . $this->sRetornoCarro;
+		$aMessage[] = 'Content-Transfer-Encoding: quoted-printable' . $this->sRetornoCarro . $this->sRetornoCarro;
 		$aMessage[] = $this->sMessage . $this->sRetornoCarro;
 
 		//mensaje HTML
 		if($this->sMessageHTML){
 			$aMessage[] = $this->sRetornoCarro . "--" . $sLimiteContenido . $this->sRetornoCarro;
-			$aMessage[] = 'Content-Type: text/html; charset=utf-8' . $this->sRetornoCarro;
-			$aMessage[] = 'Content-Transfer-Encoding: quoted-printable' . $this->sRetornoCarro;
+			$aMessage[] = 'Content-Type: text/html; charset=' . $this->sCharset . $this->sRetornoCarro;
+			$aMessage[] = 'Content-Transfer-Encoding: quoted-printable' . $this->sRetornoCarro . $this->sRetornoCarro;
 			$aMessage[] = $this->sRetornoCarro . $this->sMessageHTML . $this->sRetornoCarro;
 		}
 
@@ -233,7 +235,7 @@ class SMTPazo {
 	public function from($sFrom){
 		//$from_name = "=?UTF-8?B?".base64_encode($from_name)."?= <from_mail@email.mail>";
 
-		$this->sFrom = strip_tags($sFrom);
+		$this->sFrom = $this->limpiaTexto($sFrom, false);
 	}
 
 	/**
@@ -243,6 +245,53 @@ class SMTPazo {
 	 */
 	public function getDebug(){
 		return $this->aDebug;
+	}
+
+	/**
+	 * Get SMTP data
+	 *
+	 * @return	string
+	 */
+	protected function _get_smtp_data(){
+		$data = '';
+
+		while($str = fgets($this->rSmtpConnect, 512)){
+			$data .= $str;
+
+			if ($str[3] === ' '){
+				break;
+			}
+		}
+
+		return $data;
+	}
+
+	/**
+	 * Limpia el texto recibido de caracteres problematicos en el email
+	 *
+	 * @param string $sTexto Texto a limpiar
+	 * @param boolean $bCambiaRN Si true cambia los retornos de carro problematicos, si false los elimina
+	 * @param boolean $bStripTags Si true quita los tags HTML
+	 * @return string
+	 */
+	private function limpiaTexto($sTexto, $bCambiaRN = true, $bStripTags = true){
+		if($bStripTags){
+			$sTexto = strip_tags($sTexto);
+		}
+		$sTexto = str_replace(array("\r\n", "\n", "\r"), ($bCambiaRN ? $this->sRetornoCarro : ''), $sTexto); //convierte todos los retornos de carro
+		//$sTexto = str_replace("=", "=3D", $sTexto);
+		$sTexto = quoted_printable_encode($sTexto);
+
+		/*$aPrefs = array(
+			'scheme' => 'Q', //"B" stands for base64 encoding scheme and "Q" stands for quoted-printable encoding scheme
+			//'input-charset' => "ISO-8859-1",
+			//'output-charset' => strtoupper($sCharset),
+			'line-length' => 72,
+			'line-break-chars' => $this->sRetornoCarro,
+		);
+		$sTexto = iconv_mime_encode('', $sTexto, $aPrefs);*/
+
+		return $sTexto;
 	}
 
 	/**
@@ -260,7 +309,7 @@ class SMTPazo {
 	 * @return void
 	 */
 	public function message($sMensaje, $bEsHtml = false){
-		$sMensaje = str_replace("=", "=3D", $sMensaje);
+		$sMensaje = $this->limpiaTexto($sMensaje, true, false);
 
 		//In case any of our lines are larger than 70 characters, we should use wordwrap()
 		$sMensaje = wordwrap($sMensaje, 70, $this->sRetornoCarro);
@@ -271,7 +320,7 @@ class SMTPazo {
 		}
 
 		if(empty($this->sMessage) || !$bEsHtml){
-			$sMensaje = strip_tags($sMensaje);
+			$sMensaje = htmlspecialchars($sMensaje);
 			$this->sMessage = $sMensaje;
 		}
 	}
@@ -285,7 +334,7 @@ class SMTPazo {
 	public function reply($sReply){
 		//$reply_name = "=?UTF-8?B?" . base64_encode($reply_name) . "?= <reply_mail@email.mail>";
 
-		$this->sReply = strip_tags($sReply);
+		$this->sReply = $this->limpiaTexto($sReply, false);
 	}
 
 	/**
@@ -536,25 +585,6 @@ class SMTPazo {
 	}
 
 	/**
-	 * Get SMTP data
-	 *
-	 * @return	string
-	 */
-	protected function _get_smtp_data(){
-		$data = '';
-
-		while($str = fgets($this->rSmtpConnect, 512)){
-			$data .= $str;
-
-			if ($str[3] === ' '){
-				break;
-			}
-		}
-
-		return $data;
-		}
-
-	/**
 	 * Asigna el servidor SMTP y su puerto
 	 *
 	 * Si se asigna servidor se interpreta automaticamente este sistema como envio
@@ -577,10 +607,8 @@ class SMTPazo {
 	 * @return void
 	 */
 	public function subject($sSubject){
-		$sSubject = strip_tags($sSubject);
 		//$sSubject = "=?UTF-8?B?".base64_encode($sSubject)."?=";
-
-		$this->sSubject = $sSubject;
+		$this->sSubject = $this->limpiaTexto($sSubject, false, true);
 	}
 
 	/**
@@ -602,7 +630,7 @@ class SMTPazo {
 	 */
 	public function to($sTo){
 		//$to_name = "=?UTF-8?B?" . base64_encode($to_name) . "?= <to_mail@email.mail>";
-		$this->sTo = strip_tags($sTo);
+		$this->sTo = $this->limpiaTexto($sTo, false, true);
 	}
 
 }
