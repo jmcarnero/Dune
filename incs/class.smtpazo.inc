@@ -157,7 +157,7 @@ class SMTPazo {
 
 		$aHeaders[] = 'Message-ID: <' . $_SERVER['REQUEST_TIME'] . md5($_SERVER['REQUEST_TIME']) . '@' . $sServerName . '>';
 		if(!empty($this->sSmtpServer)){
-			$aHeaders[] = 'Subject: ' . $this->sSubject;
+			$aHeaders[] = 'Subject: =?UTF-8?B?' . imap_8bit($this->sSubject) . '?=';
 		}
 		$aHeaders[] = 'From: ' . $this->sFrom;
 		if($this->sCc){
@@ -279,8 +279,8 @@ class SMTPazo {
 			$sTexto = strip_tags($sTexto);
 		}
 		$sTexto = str_replace(array("\r\n", "\n", "\r"), ($bCambiaRN ? $this->sRetornoCarro : ''), $sTexto); //convierte todos los retornos de carro
-		//$sTexto = str_replace("=", "=3D", $sTexto);
-		$sTexto = quoted_printable_encode($sTexto);
+		$sTexto = str_replace("=", "=3D", $sTexto);
+		//$sTexto = quoted_printable_encode($sTexto);
 
 		/*$aPrefs = array(
 			'scheme' => 'Q', //"B" stands for base64 encoding scheme and "Q" stands for quoted-printable encoding scheme
@@ -320,7 +320,7 @@ class SMTPazo {
 		}
 
 		if(empty($this->sMessage) || !$bEsHtml){
-			$sMensaje = htmlspecialchars($sMensaje);
+			//$sMensaje = htmlspecialchars($sMensaje); //TODO limpiar/quitar? un mensaje de texto plano... que debe hacer?
 			$this->sMessage = $sMensaje;
 		}
 	}
@@ -349,10 +349,16 @@ class SMTPazo {
 
 		if(empty($this->sSmtpServer)){
 			$bMail = mail($this->sTo, $this->sSubject, $this->sMensaje, $this->sHeaders);
+			$this->aDebug[__METHOD__]['to'] = $this->sTo;
+			$this->aDebug[__METHOD__]['subject'] = $this->sSubject;
+			$this->aDebug[__METHOD__]['mensaje'] = $this->sMensaje;
+			$this->aDebug[__METHOD__]['headers'] = $this->sHeaders;
 		}
 		else{ //envio con servidor SMTP
 			$bMail = $this->sendSMTP();
 		}
+
+		$this->aDebug[__METHOD__]['resultado'] = $bMail;
 
 		if($bMail === false){
 			//limpia posibles errores anteriores
@@ -381,18 +387,22 @@ class SMTPazo {
 		if(!$this->_send_command('from', $this->sFrom)){
 			return false;
 		}
+		$this->aDebug[__METHOD__]['from'] = $this->sFrom;
 
 		if(!$this->_send_command('to', $this->sTo)){
 			return false;
 		}
+		$this->aDebug[__METHOD__]['to'] = $this->sTo;
 
 		if($this->sCc && !$this->_send_command('to', $this->sCc)){
 			return false;
 		}
+		$this->aDebug[__METHOD__]['cc'] = $this->sCc;
 
 		if($this->sBcc && !$this->_send_command('to', $this->sBcc)){
 			return false;
 		}
+		$this->aDebug[__METHOD__]['bcc'] = $this->sBcc;
 
 		if(!$this->_send_command('data')){
 			return false;
@@ -400,6 +410,8 @@ class SMTPazo {
 
 		// perform dot transformation on any lines that begin with a dot
 		$this->_send_data($this->sHeaders . preg_replace('/^\./m', '..$1', $this->sMensaje));
+		$this->aDebug[__METHOD__]['headers'] = $this->sHeaders;
+		$this->aDebug[__METHOD__]['mensaje'] = $this->sMensaje;
 
 		$this->_send_data('.');
 
@@ -502,7 +514,6 @@ class SMTPazo {
 
 		return true;
 	}
-
 
 	/**
 	 * SMTP Authenticate
@@ -608,6 +619,9 @@ class SMTPazo {
 	 */
 	public function subject($sSubject){
 		//$sSubject = "=?UTF-8?B?".base64_encode($sSubject)."?=";
+		//$sSubject = "Subject: =?UTF-8?B?".base64_encode($subject)."?=";
+		//$sSubject = "Subject: =?UTF-8?Q?".imap_8bit($subject)."?=";
+
 		$this->sSubject = $this->limpiaTexto($sSubject, false, true);
 	}
 
