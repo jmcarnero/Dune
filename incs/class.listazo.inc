@@ -228,15 +228,20 @@ class Listazo { //FIXME revisar id's de elementos HTML
 		global $oResultados, $aGlobalListado, $op;
 
 		ob_start();
-		eval("$string[2]");
+		$bEval = eval("$string[2]");
 		$sRet = ob_get_contents();
 		ob_end_clean();
+
+		if($bEval === false && ($aError = error_get_last())){
+			trigger_error($aError['message'], E_USER_ERROR ); //$aError['file'], $aError['line'], $aError['type']
+			exit;
+		}
 
 		return $sRet;
 	}
 
 	/**
-	 * Evalua el codigo (html y php) que se le pase
+	 * Prapara para evaluar el codigo (html y php) que se le pase
 	 *
 	 * @param string $sString Cadena a evaluar
 	 * @return string
